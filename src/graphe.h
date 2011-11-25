@@ -36,6 +36,7 @@ int** tVoisins; // tableau qui pour chaque noeud contient la liste des voisins
 int* tNbVoisins; // tableau qui pour chaque noeud contient le nombre de voisins
 
 /// caracterisation d'une instance de solution
+// tPopulationColor is a matrix where each line is an individual, each column is a color of node
 int** tPopulationColor; // tableau d'individus, chaque individu etant un tColor
 int* tColor; // tableau contenant pour chaque noeud sa couleur. tColor pointe sur l'instance a intensifier (pas de malloc !)
 int* tConflicts; // tableau contenant le nombre de conflits de chaque noeud

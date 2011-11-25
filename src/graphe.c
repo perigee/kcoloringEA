@@ -110,6 +110,9 @@ void loadGraphe(char* filename){
 }
 
 
+/*!
+ * represent the graph as adjacent list
+ */
 void buildVoisins(){
 	tNbVoisins=malloc(sizeof(int)*nbSommets);
 	tVoisins=malloc(sizeof(int*)*nbSommets);
@@ -131,6 +134,9 @@ void buildVoisins(){
 }
 
 
+/*!
+ *  randomly assign the color on nodes
+ */
 void initRandomColor(){
 	for (int i=0; i<populationSize; i++) {
 		for (int j=0; j<nbSommets; j++) {
@@ -221,7 +227,10 @@ void determineBestImprove(){
 			int color = tColor[i];
 			for (int j=0; j<nbColor; j++) {
 				int currentImprove=tNewConflitsWithColor[i][j]; 
-				if(j!=color && (tTabou[i][j]<nbIterations || (currentImprove+nbEdgesConflict) < nbBestEdgesConflict)){ // si la couleur n'est pas taboue
+				if(j!=color && (tTabou[i][j]<nbIterations || 
+						(currentImprove+nbEdgesConflict) 
+						< nbBestEdgesConflict)){ // si la couleur n'est pas taboue
+
 					if(currentImprove<bestVal){
 						bestVal=currentImprove;
 						bestNode=i;
