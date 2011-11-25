@@ -267,7 +267,9 @@ void determineBestImprove(){
 	}
 }
 
-
+/*!
+ * update the gamma table 
+ */
 void updateTables(int node, int color){
 	
 	int prevColor=tColor[node];
