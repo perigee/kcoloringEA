@@ -5,11 +5,13 @@ VPATH = src/util:src #space seperate the different dirs
 #BIN_DIR = bin
 OBJECTS = $(wildcard *.o)
 
-all : main.o gfile.o graphe.o analyseGraphe.o
+all : main.o datas.o gfile.o graphe.o analyseGraphe.o
 	$(CC) -o $(TARGET) $^
 
 #create obj files
 main.o: main.c gfile.h graphe.h
+	$(CC) -c $(CFLAGS) $< -o $@
+datas.o : datas.c datas.h
 	$(CC) -c $(CFLAGS) $< -o $@
 gfile.o : gfile.c gfile.h
 	$(CC) -c $(CFLAGS) $< -o $@
