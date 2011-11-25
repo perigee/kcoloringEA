@@ -17,7 +17,7 @@
 float lambda;
 int L;
 
-int nbColor;
+int nbColor; // number of colors given
 int populationSize;
 int nbLocalSearch;
 
