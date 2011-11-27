@@ -1,4 +1,3 @@
-
 #include "datas.h"
 
 
@@ -7,15 +6,13 @@
 ///========================================
 
 
-typedef int* ElementType;
-typedef int KeyType;
 
-typedef struct TreeNode{
+struct node{
   KeyType key;  // the comparing key of node
-  ElementType* element; 
-  struct TreeNode* left;
-  struct TreeNode* right;
-} TreeNode;
+  ElementType element; 
+  struct node* left;
+  struct node* right;
+};
 
 
 /*!
@@ -42,7 +39,7 @@ TreeNode* insertNode(TreeNode* root,TreeNode* node){
   if(root == NULL)
     return node;
   
-  if (root->key => node->key) 
+  if (root->key >= node->key) 
     node->left = insertNode(root->left, node); 
   else 
     node->right = insertNode(root->right, node);
@@ -50,19 +47,10 @@ TreeNode* insertNode(TreeNode* root,TreeNode* node){
   return root;
 }
 
-TreeNode* insertNode(TreeNode* root, KeyType key, ElementType e){
-  TreeNode* tmpNode = malloc(sizeof(TreeNode));
-  tmpNode->key = key;
-  tmpNode->element = e;
-  return insertNode(root, tmpNode);
-}
-
-
 
 /*!
  * Traveral the tree
  */
-
 
 
 
