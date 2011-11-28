@@ -10,21 +10,21 @@
 struct node{
   KeyType key;  // the comparing key of node
   ElementType element; 
-  struct node* left;
-  struct node* right;
+  struct node* smaller;
+  struct node* bigger;
 };
 
 
 /*!
- * Create tree node
+ * Create tree node or double-linked node
  */
-TreeNode* createNode(KeyType key, ElementType e){
-  TreeNode* tempNode;
-  tempNode = malloc(sizeof(TreeNode));
+Node* createNode(KeyType key, ElementType e){
+  Node* tempNode;
+  tempNode = malloc(sizeof(Node));
   tempNode->key = key;
   tempNode->element = e;
-  tempNode->left = NULL;
-  tempNode->right = NULL;
+  tempNode->smaller = NULL;
+  tempNode->bigger = NULL;
   return tempNode;
 }
 
@@ -34,15 +34,15 @@ TreeNode* createNode(KeyType key, ElementType e){
  * Insert the node in the tree by order
  * @return the root node
  */
-TreeNode* insertNode(TreeNode* root,TreeNode* node){
+Node* insertTree(Node* root,Node* node){
   
   if(root == NULL)
     return node;
   
   if (root->key >= node->key) 
-    node->left = insertNode(root->left, node); 
+    node->smaller = insertTree(root->smaller, node); 
   else 
-    node->right = insertNode(root->right, node);
+    node->bigger = insertTree(root->bigger, node);
 
   return root;
 }
@@ -57,18 +57,66 @@ TreeNode* insertNode(TreeNode* root,TreeNode* node){
 /*!
  * Delete entire tree
  */
-void deleteTree(TreeNode* root){
-  if(root->left != NULL){
-    deleteTree(root->left);
+void deleteTree(Node* root){
+  if(root->bigger != NULL){
+    deleteTree(root->bigger);
   }
 
-  if(root->right != NULL){
-    deleteTree(root->right);
+  if(root->smaller != NULL){
+    deleteTree(root->smaller);
   }
   
   free(root);
   root = NULL;
 }
+
+
+
+
+
+
+/*!
+ * join a and b, insert big before small if big is bigger than small
+ * @return the big
+ */ 
+static Node* insertBefore(Node* big, Node* small) {
+  big->bigger = small->bigger;
+  big->smaller =  small;
+  small->bigger = big;
+  return big;
+}
+
+
+/*!
+ * Insert node in the double-linked list
+ */
+Node* insertList(Node* root, Node* node){
+  if(root == NULL)
+    return node;
+
+  if(root->key >= node->key){
+    root->smaller = insertList(root->smaller,node);
+  }else{
+    return insertBefore(node, root);
+  }
+
+  return root;
+}
+
+/*!
+ * delete double-linked list
+ */
+void deleteList(Node* root){
+
+  if(root->smaller != NULL)
+    deleteList(root->smaller);
+
+  free(root);
+  root = NULL;
+}
+
+
+
 
 
 

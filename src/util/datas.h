@@ -9,10 +9,16 @@ typedef int* ElementType ;
 typedef int KeyType ;
 
 struct node ;
-typedef struct node TreeNode;
+typedef struct node Node;
 
-TreeNode* createNode(KeyType key, ElementType e) ;
-TreeNode* insertNode(TreeNode *root,TreeNode *node) ;
-void deleteTree(TreeNode* root) ;
+Node* createNode(KeyType key, ElementType e) ;
+
+// binary tree
+Node* insertTree(Node* root,Node* node) ;
+void deleteTree(Node* root) ;
+
+// double-linked list
+Node* insertList(Node* root, Node* node);
+void deleteList(Node* root) ;
 
 #endif
