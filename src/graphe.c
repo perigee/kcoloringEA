@@ -459,6 +459,14 @@ void buildChild(int* p1, int* p2){
  * false: if the solution is inconsistent
  * @parameter graph: adjacent list of graph
  */
+
+
+
+typedef struct assignment{
+  int sommet;
+  int color;
+} Move;
+
 int initGammaTable(int* a, int** graph, int** tGamma){
   	/// determine les conflits entre les noeuds
 	int nbConflict=0;
@@ -478,7 +486,7 @@ int initGammaTable(int* a, int** graph, int** tGamma){
 }
 
 
-int bestMove(int* sommet, int* color, int** tTabu,  int** tGamma, int* individual){
+int bestMove(Move* move, int** tTabu,  int** tGamma, int* individual){
   int delta = -1;// best delta found, be careful the value 
   bool isSet = false;
 
@@ -513,8 +521,8 @@ int bestMove(int* sommet, int* color, int** tTabu,  int** tGamma, int* individua
 	if (!isSet) isSet = true;
 
 	delta = minGamma - tGamma[i][individual[i]];
-	sommet = &tmpSommet;
-	color = &tmpColor;
+	move->sommet = tmpSommet;
+	move->color =  tmpColor;
       } 
     }
   }
@@ -571,34 +579,32 @@ bool tabuCol(int* a, int** graph){
   int obj = initGammaTable(a,graph,tGamma); // init gamma table
   int bestObj = obj;
   
-  
+  Move* move = malloc(sizeof(Move));
   // a always records best so far solution
   for (int i=0; i< maxIteration; ++i){
     
-    int* sommet;
-    int* color;
-    sommet = NULL;
-    color = NULL;
+    move->sommet = -1;
+    move->color = -1;
     if(bestObj < 1) break; // find consistent solution
 
     // find best move based on gamma table
-    int delta = bestMove(sommet, color, tGamma, tTabu, tTmpColor);
+    int delta = bestMove(move, tGamma, tTabu, tTmpColor);
     if( delta < 0 && obj+delta < bestObj){
       bestObj = obj+delta;
       for (int j=0; j<nbSommets; ++j){
 	a[j] = tTmpColor[j];
       }
 
-      a[*sommet] = *color;
+      a[move->sommet] = move->color;
     }
 
     // update move
 
-    if (sommet == NULL || color == NULL) continue;
+    if (move->sommet < 0 || move->color < 0) continue;
 
-    updateMove(*sommet, tTmpColor[*sommet], *color, tGamma, graph);
-    tTabu[*sommet][tTmpColor[*sommet]]; // put  = someValue
-    tTmpColor[*sommet] = *color;
+    updateMove(move->sommet, tTmpColor[move->sommet], move->color, tGamma, graph);
+    tTabu[move->sommet][tTmpColor[move->sommet]]; // put  = someValue
+    tTmpColor[move->sommet] = move->color;
     obj += delta;
   }
   
@@ -612,6 +618,7 @@ bool tabuCol(int* a, int** graph){
   free(tGamma);
   free(tTabu);
   free(tTmpColor);
+  free(move);
 
   if(bestObj < 1) return true;
   return false;

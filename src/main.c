@@ -4,8 +4,9 @@
 #include "util/gfile.h"
 #include "graphe.h"
 
+
+
 int main (int argc, char * const argv[]) {
-	
 	printf("Procedure de calcul\n");
 	
 	if(argc<2){

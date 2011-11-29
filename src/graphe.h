@@ -72,6 +72,7 @@ void buildChild(int* p1, int* p2);
 ///////////////////////////////
 /////////// EA with distance 
 ///////////////////////////////
+
 bool tabuCol(int* a, int** graph); /// tabuCol with gamma matrix
 int distance(int* a, int* b); /// distance between two individuals
 int** chooseParents(int** population); /// choose the parents from population
