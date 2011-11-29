@@ -589,6 +589,10 @@ bool tabuCol(int* a, int** graph){
 
     // find best move based on gamma table
     int delta = bestMove(move, tGamma, tTabu, tTmpColor);
+    
+    // all tabu case
+    if (move->sommet < 0 || move->color < 0) continue;
+
     if( delta < 0 && obj+delta < bestObj){
       bestObj = obj+delta;
       for (int j=0; j<nbSommets; ++j){
@@ -600,7 +604,7 @@ bool tabuCol(int* a, int** graph){
 
     // update move
 
-    if (move->sommet < 0 || move->color < 0) continue;
+
 
     updateMove(move->sommet, tTmpColor[move->sommet], move->color, tGamma, graph);
     tTabu[move->sommet][tTmpColor[move->sommet]]; // put  = someValue
