@@ -36,7 +36,7 @@ int main (int argc, char * const argv[]) {
 	initConflict();
 	//improvInitPop();
 
-	
+	// genetic algorithm: stops while no edge conflict found
 	while (nbEdgesConflict > 0 /*&& nbIterations<200000*/) {
 		//printf("%d : %d \t %d\n", nbIterations, nbEdgesConflict, nbNodesConflict);
 		//determineBestImprove();

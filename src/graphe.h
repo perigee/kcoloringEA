@@ -12,7 +12,7 @@
 //#include "node.h"
 
 #include<time.h>
-
+#include <stdbool.h>
 
 float lambda;
 int L;
@@ -68,6 +68,15 @@ int* tChild; /// contient le resultat du croisement de 2 parents
 void updatePopulation();
 void buildChild(int* p1, int* p2);
 
+
+///////////////////////////////
+/////////// EA with distance 
+///////////////////////////////
+bool tabuCol(int* a, int** graph); /// tabuCol with gamma matrix
+int distance(int* a, int* b); /// distance between two individuals
+int** chooseParents(int** population); /// choose the parents from population
+int* crossover(int** parents); /// crossover the parents to create offspring
+int ea(int** population); /// ea + distance 
 
 ///////////////////////////////
 /////////// FILE ////////////////

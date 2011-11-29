@@ -26,7 +26,9 @@ int nbMinutes2=0;
 int nbMinutes3=0;
 
 
-
+/*!
+ * read data file and create the individuals
+ */
 void loadGraphe(char* filename){	
 	openfile(filename);
 
@@ -362,6 +364,8 @@ void updatePopulation(){
 	time1+=clock();
 	
 	time3-=clock();
+
+	// TabuCol implementation
 	for (int i=0; i<nbLocalSearch && nbEdgesConflict > 0 ; i++) {
 		determineBestImprove();
 	}
@@ -375,6 +379,8 @@ void updatePopulation(){
 		tChild=tmp;
 	}
 }
+
+
 
 /// Effectue le croisement entre les 2 parents
 /// les parents sont les tColor (couleur de chaque sommet)
@@ -440,6 +446,209 @@ void buildChild(int* p1, int* p2){
 	
 }
 
+
+
+
+///////////////////////////////
+/////////// EA with distance 
+///////////////////////////////
+
+/*!
+ * TabuCol c implementation
+ * @return true: if the solution is consistent
+ * false: if the solution is inconsistent
+ * @parameter graph: adjacent list of graph
+ */
+int initGammaTable(int* a, int** graph, int** tGamma){
+  	/// determine les conflits entre les noeuds
+	int nbConflict=0;
+	
+	// check the link
+	for (int i=0; i<nbSommets; ++i){
+	  for (int j=i; j<nbSommets; ++j){
+	    if( graph[i][j] && a[i] == a[j] ){
+	      ++nbConflict;
+	      ++tGamma[i][a[i]]; 
+	      ++tGamma[j][a[i]];
+	    }
+	  }
+	}
+
+	return nbConflict;
+}
+
+
+int bestMove(int* sommet, int* color, int** tTabu,  int** tGamma, int* individual){
+  int delta = -1;// best delta found, be careful the value 
+  bool isSet = false;
+
+  for (int i=0; i<nbSommets; ++i){
+    if (tGamma[i][individual[i]]>0){
+      // traverse all the non-tabu colors of sommet i
+      int minGamma = -1;
+      int tmpSommet = -1;
+      int tmpColor = -1;
+
+      for (int j=0; j<nbColor; ++j){
+       
+	// decrease the tabu duration
+	if (tTabu[i][j]>0)
+	  --tTabu[i][j];
+
+	// skip tabu color and assigned color
+	if (tTabu[i][j] > 0 || j == individual[i])
+	  continue;
+	
+	if (minGamma < 0 || minGamma > tGamma[i][j]){
+	  minGamma = tGamma[i][j];
+	  tmpSommet = i; 
+	  tmpColor = j;
+	}
+      }
+
+      // update delta if necessary
+      if (minGamma < 0) continue;
+
+      if (!isSet || delta > minGamma - tGamma[i][individual[i]]){
+	if (!isSet) isSet = true;
+
+	delta = minGamma - tGamma[i][individual[i]];
+	sommet = &tmpSommet;
+	color = &tmpColor;
+      } 
+    }
+  }
+
+  if (isSet)  return delta;
+  
+  // in case all tabu, very rare
+  
+  return delta;
+}
+
+void updateMove(int sommet, int colorOrigin, int colorCandidate, 
+		int** tGamma, int** graph){
+  
+  for (int i=0; i< nbSommets; ++i){
+    if (graph[sommet][i] > 0){
+      if (tGamma[i][colorOrigin] > 0)
+	--tGamma[i][colorOrigin];
+      
+      ++tGamma[i][colorCandidate];
+    }
+  }
+  
+}
+
+bool tabuCol(int* a, int** graph){
+
+ 
+  int** tGamma = malloc(sizeof(int)*nbSommets);
+  int** tTabu = malloc(sizeof(int)*nbSommets);
+
+  for (int i=0; i<nbSommets; ++i){
+    tGamma[i] = malloc(sizeof(int)*nbColor);
+    tTabu[i] = malloc(sizeof(int)*nbColor);
+  }
+
+  int* tTmpColor = malloc(sizeof(int)*nbSommets);// store the temp color assignment
+  int maxIteration = nbIterations;
+
+  
+  //copy color assignment 
+  for (int i=0; i<nbSommets; ++i)
+    tTmpColor[i] = a[i];
+
+  // init Tabu and Gamma Tables
+  for (int i=0; i<nbSommets; ++i) {
+    for (int j=0; j<nbColor; ++j) {
+	tTabu[i][j]=-1;
+	tGamma[i][j] = 0;
+    }
+  }
+    
+  
+  int obj = initGammaTable(a,graph,tGamma); // init gamma table
+  int bestObj = obj;
+  
+  
+  // a always records best so far solution
+  for (int i=0; i< maxIteration; ++i){
+    
+    int* sommet;
+    int* color;
+    sommet = NULL;
+    color = NULL;
+    if(bestObj < 1) break; // find consistent solution
+
+    // find best move based on gamma table
+    int delta = bestMove(sommet, color, tGamma, tTabu, tTmpColor);
+    if( delta < 0 && obj+delta < bestObj){
+      bestObj = obj+delta;
+      for (int j=0; j<nbSommets; ++j){
+	a[j] = tTmpColor[j];
+      }
+
+      a[*sommet] = *color;
+    }
+
+    // update move
+
+    if (sommet == NULL || color == NULL) continue;
+
+    updateMove(*sommet, tTmpColor[*sommet], *color, tGamma, graph);
+    tTabu[*sommet][tTmpColor[*sommet]]; // put  = someValue
+    tTmpColor[*sommet] = *color;
+    obj += delta;
+  }
+  
+
+ 
+  // free all dynamic memory before return 
+  for (int i=0; i<nbSommets; ++i){
+    free(tGamma[i]);
+    free(tTabu[i]);
+  }
+  free(tGamma);
+  free(tTabu);
+  free(tTmpColor);
+
+  if(bestObj < 1) return true;
+  return false;
+}
+
+/*!
+ * calculate the distance between two individual
+ * How to measure:
+ * 
+ */
+int distance(int* a, int* b){
+  int dist = -1;
+  
+
+  return dist;
+}
+
+/*!
+ * choose the parents to create offspring
+ */
+int** chooseParents(int** population){
+  
+}
+
+/*!
+ * create the offspring based on parents
+ */
+int* crossover(int** parents){
+  
+}
+
+/*!
+ * ea + distance 
+ */
+int ea(int** population){
+  
+}
 
 //////////////////////////////
 /////////////  SAVE  //////////
