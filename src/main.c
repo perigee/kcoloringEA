@@ -7,6 +7,7 @@
 
 
 int main (int argc, char * const argv[]) {
+
 	printf("Procedure de calcul\n");
 	
 	if(argc<2){

@@ -604,10 +604,22 @@ bool tabuCol(int* a, int** graph){
 
     // update move
 
+    
 
 
     updateMove(move->sommet, tTmpColor[move->sommet], move->color, tGamma, graph);
-    tTabu[move->sommet][tTmpColor[move->sommet]]; // put  = someValue
+    int rd=(rand()/(float)RAND_MAX) * L;
+    
+    // calculate the nbVariable in conflict
+    int nbConflict = 0;
+    for (int j=0; j<nbSommets; ++j){
+      if (tGamma[j][tTmpColor[j]]>0)
+	++nbConflict;
+    }
+    
+    int rdx=(rand()/(float)RAND_MAX) * L;
+    tTabu[move->sommet][tTmpColor[move->sommet]] = rdx + lambda*nbConflict/2;; // put  = someValue
+
     tTmpColor[move->sommet] = move->color;
     obj += delta;
   }
