@@ -51,7 +51,12 @@ Node* insertTree(Node* root,Node* node){
 /*!
  * Traveral the tree
  */
-
+void printTree(Node* node) { 
+  if (node == NULL) return;
+  printTree(node->smaller); 
+  printf("%d ", node->element[0]); 
+  printTree(node->bigger); 
+} 
 
 
 /*!

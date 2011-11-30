@@ -603,10 +603,6 @@ bool tabuCol(int* a, int** graph){
     }
 
     // update move
-
-    
-
-
     updateMove(move->sommet, tTmpColor[move->sommet], move->color, tGamma, graph);
     int rd=(rand()/(float)RAND_MAX) * L;
     
