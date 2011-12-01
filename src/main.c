@@ -8,6 +8,15 @@
 
 int main (int argc, char * const argv[]) {
 
+
+	printf("TabuCol Testing================\n");
+	
+	nbColor = atoi(argv[2]);
+
+
+	testAlgo(argv[1]);
+
+	exit(0);
 	printf("Procedure de calcul\n");
 	
 	if(argc<2){
@@ -65,7 +74,7 @@ int main (int argc, char * const argv[]) {
 	
 	
 	initConflict();
-	printf("JUST FOR CHEKING : %d   %d\n\n", nbEdgesConflict, nbNodesConflict);
+	printf("JUST FOR CHECKING : %d   %d\n\n", nbEdgesConflict, nbNodesConflict);
 	
 	
 	//// >>  affichage de l'heure a la fin

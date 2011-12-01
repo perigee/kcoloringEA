@@ -467,26 +467,42 @@ typedef struct assignment{
   int color;
 } Move;
 
-int initGammaTable(int* a, int** graph, int** tGamma){
+
+void printTableNK(int** table){
+  for (int i=0; i<nbSommets; ++i){
+    for (int j=0; j< nbColor; ++j){
+      printf("%d ", table[i][j]); 
+    }
+    printf("\n"); 
+  }
+}
+
+
+int initGammaTable(int* a, char** graph, int** tGamma){
   	/// determine les conflits entre les noeuds
 	int nbConflict=0;
 	
 	// check the link
 	for (int i=0; i<nbSommets; ++i){
 	  for (int j=i; j<nbSommets; ++j){
-	    if( graph[i][j] && a[i] == a[j] ){
-	      ++nbConflict;
-	      ++tGamma[i][a[i]]; 
+	    if( graph[i][j] ){
+	      if (a[i] == a[j])
+		++nbConflict;
+
+	      ++tGamma[i][a[j]]; 
 	      ++tGamma[j][a[i]];
 	    }
 	  }
 	}
 
+
+	
+
 	return nbConflict;
 }
 
 
-int bestMove(Move* move, int** tTabu,  int** tGamma, int* individual){
+int bestMove(Move* move, int** tGamma,  int** tTabu, int* individual){
   int delta = -1;// best delta found, be careful the value 
   bool isSet = false;
 
@@ -523,6 +539,7 @@ int bestMove(Move* move, int** tTabu,  int** tGamma, int* individual){
 	delta = minGamma - tGamma[i][individual[i]];
 	move->sommet = tmpSommet;
 	move->color =  tmpColor;
+	//printf("bestMove: %d,%d", move->sommet, move->color);
       } 
     }
   }
@@ -535,11 +552,11 @@ int bestMove(Move* move, int** tTabu,  int** tGamma, int* individual){
 }
 
 void updateMove(int sommet, int colorOrigin, int colorCandidate, 
-		int** tGamma, int** graph){
+		int** tGamma, char** graph){
   
   for (int i=0; i< nbSommets; ++i){
-    if (graph[sommet][i] > 0){
-      if (tGamma[i][colorOrigin] > 0)
+    if (graph[sommet][i]){
+      if (tGamma[i][colorOrigin]>0)
 	--tGamma[i][colorOrigin];
       
       ++tGamma[i][colorCandidate];
@@ -548,7 +565,7 @@ void updateMove(int sommet, int colorOrigin, int colorCandidate,
   
 }
 
-bool tabuCol(int* a, int** graph){
+bool tabuCol(int* a, char** graph){
 
  
   int** tGamma = malloc(sizeof(int)*nbSommets);
@@ -560,7 +577,7 @@ bool tabuCol(int* a, int** graph){
   }
 
   int* tTmpColor = malloc(sizeof(int)*nbSommets);// store the temp color assignment
-  int maxIteration = nbIterations;
+  int maxIteration = nbLocalSearch;
 
   
   //copy color assignment 
@@ -577,6 +594,10 @@ bool tabuCol(int* a, int** graph){
     
   
   int obj = initGammaTable(a,graph,tGamma); // init gamma table
+
+  printf("========= T ========");
+  printTableNK(tGamma);
+
   int bestObj = obj;
   
   Move* move = malloc(sizeof(Move));
@@ -589,10 +610,14 @@ bool tabuCol(int* a, int** graph){
 
     // find best move based on gamma table
     int delta = bestMove(move, tGamma, tTabu, tTmpColor);
+
+    //printf("%d,%d",move->sommet,move->color);
     
     // all tabu case
     if (move->sommet < 0 || move->color < 0) continue;
 
+    printf("\t%d\t%d\n", obj,bestObj);
+    
     if( delta < 0 && obj+delta < bestObj){
       bestObj = obj+delta;
       for (int j=0; j<nbSommets; ++j){
@@ -604,7 +629,7 @@ bool tabuCol(int* a, int** graph){
 
     // update move
     updateMove(move->sommet, tTmpColor[move->sommet], move->color, tGamma, graph);
-    int rd=(rand()/(float)RAND_MAX) * L;
+ 
     
     // calculate the nbVariable in conflict
     int nbConflict = 0;
@@ -614,7 +639,7 @@ bool tabuCol(int* a, int** graph){
     }
     
     int rdx=(rand()/(float)RAND_MAX) * L;
-    tTabu[move->sommet][tTmpColor[move->sommet]] = rdx + lambda*nbConflict/2;; // put  = someValue
+    tTabu[move->sommet][tTmpColor[move->sommet]] = rdx + lambda*nbConflict/2;; // tabu duration
 
     tTmpColor[move->sommet] = move->color;
     obj += delta;
@@ -627,6 +652,7 @@ bool tabuCol(int* a, int** graph){
     free(tGamma[i]);
     free(tTabu[i]);
   }
+
   free(tGamma);
   free(tTabu);
   free(tTmpColor);
@@ -663,11 +689,47 @@ int* crossover(int** parents){
 }
 
 /*!
- * ea + distance 
+ * ea + distance
+ * @return the number of violated edges 
  */
 int ea(int** population){
   
+
+
+
+  
 }
+
+
+void randomSolution(int* a){
+  for (int i=0; i<nbSommets; ++i){
+    int col = (rand()/(float)RAND_MAX) * nbColor ;
+    a[i] = col;
+  }
+}
+
+// ============ TESTING ============
+void testAlgo(char* filename){
+  loadGraphe(filename);
+  // tConnect
+  // fill the tConnect table (adjacent matrix representation of graph)
+  
+  int* individual = malloc(sizeof(int)*nbSommets);
+  
+  randomSolution(individual);
+  
+  printf("color number: %d\n",nbColor);
+
+  bool feasible = tabuCol(individual, tConnect);
+  
+  if (feasible)
+    printf("feasible\n");
+  else
+    printf("found infeasible\n");
+  
+}
+
+
 
 //////////////////////////////
 /////////////  SAVE  //////////
