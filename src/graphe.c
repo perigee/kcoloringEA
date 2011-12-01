@@ -449,9 +449,9 @@ void buildChild(int* p1, int* p2){
 
 
 
-///////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
 /////////// EA with distance 
-///////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
  * TabuCol c implementation
@@ -478,6 +478,13 @@ void printTableNK(int** table){
 }
 
 
+/*!
+ * initialize the Gamma table
+ * @param a individual color table
+ * @param graph adjacent matrix of graph
+ * @param tGamma gamma table for total incremental objective function computing
+ * @return the number of violated edges
+ */
 int initGammaTable(int* a, char** graph, int** tGamma){
   	/// determine les conflits entre les noeuds
 	int nbConflict=0;
@@ -502,6 +509,14 @@ int initGammaTable(int* a, char** graph, int** tGamma){
 }
 
 
+/*!
+ * find the best move in tabu search
+ * @param move bring out the best move
+ * @param tGamma gamma table for total incremental objective function computing
+ * @param tTabu tabu value duration table
+ * @param individual individual color table
+ * @return the change of objective function
+ */
 int bestMove(Move* move, int** tGamma,  int** tTabu, int* individual){
   int delta = -1;// best delta found, be careful the value 
   bool isSet = false;
@@ -551,6 +566,14 @@ int bestMove(Move* move, int** tGamma,  int** tTabu, int* individual){
   return delta;
 }
 
+/*!
+ * update the Gamma table according to best move found
+ * @param sommet the best move node
+ * @param colorOrigin current assignment of the best move node
+ * @param colorCandidate the best move color
+ * @param tGamma gamma table for total incremental objective function computing
+ * @param graph adjacent matrix of graph
+ */
 void updateMove(int sommet, int colorOrigin, int colorCandidate, 
 		int** tGamma, char** graph){
   
@@ -565,6 +588,12 @@ void updateMove(int sommet, int colorOrigin, int colorCandidate,
   
 }
 
+/*!
+ * tabuCol implementation
+ * @param a individual color table
+ * @param graph adjacent matrix of graph
+ * @return true if consistent solution found, otherwise false
+ */
 bool tabuCol(int* a, char** graph){
 
  
@@ -665,7 +694,9 @@ bool tabuCol(int* a, char** graph){
 /*!
  * calculate the distance between two individual
  * How to measure:
- * 
+ * @param a a comparing individual 
+ * @param b another comparing individual
+ * @return the value of similarity
  */
 int distance(int* a, int* b){
   int dist = -1;
@@ -701,6 +732,10 @@ int ea(int** population){
 }
 
 
+/*!
+ * initialize random solution
+ * @param a individual color table
+ */
 void randomSolution(int* a){
   for (int i=0; i<nbSommets; ++i){
     int col = (rand()/(float)RAND_MAX) * nbColor ;
@@ -708,7 +743,7 @@ void randomSolution(int* a){
   }
 }
 
-// ============ TESTING ============
+// ============ UNIT TESTING ============
 void testAlgo(char* filename){
   loadGraphe(filename);
   // tConnect
