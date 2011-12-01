@@ -468,6 +468,7 @@ typedef struct assignment{
 } Move;
 
 
+/// only for testing
 void printTableNK(int** table){
   for (int i=0; i<nbSommets; ++i){
     for (int j=0; j< nbColor; ++j){
@@ -624,8 +625,8 @@ bool tabuCol(int* a, char** graph){
   
   int obj = initGammaTable(a,graph,tGamma); // init gamma table
 
-  printf("========= T ========");
-  printTableNK(tGamma);
+  //printf("========= T ========");
+  //printTableNK(tGamma);
 
   int bestObj = obj;
   
@@ -645,7 +646,7 @@ bool tabuCol(int* a, char** graph){
     // all tabu case
     if (move->sommet < 0 || move->color < 0) continue;
 
-    printf("\t%d\t%d\n", obj,bestObj);
+    //    printf("\t%d\t%d\n", obj,bestObj);
     
     if( delta < 0 && obj+delta < bestObj){
       bestObj = obj+delta;
@@ -668,7 +669,7 @@ bool tabuCol(int* a, char** graph){
     }
     
     int rdx=(rand()/(float)RAND_MAX) * L;
-    tTabu[move->sommet][tTmpColor[move->sommet]] = rdx + lambda*nbConflict/2;; // tabu duration
+    tTabu[move->sommet][tTmpColor[move->sommet]] = rdx + lambda*nbConflict/2; // tabu duration
 
     tTmpColor[move->sommet] = move->color;
     obj += delta;
@@ -753,7 +754,7 @@ void testAlgo(char* filename){
   
   randomSolution(individual);
   
-  printf("color number: %d\n",nbColor);
+  //  printf("color number: %d\n",nbColor);
 
   bool feasible = tabuCol(individual, tConnect);
   
