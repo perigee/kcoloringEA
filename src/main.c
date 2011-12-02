@@ -8,7 +8,7 @@
 
 int main (int argc, char * const argv[]) {
 
-
+	/////================================================= TESTING ============= BGN
 	printf("TabuCol Testing================\n");
 	
 	nbColor = atoi(argv[2]);
@@ -17,6 +17,9 @@ int main (int argc, char * const argv[]) {
 	testAlgo(argv[1]);
 
 	exit(0);
+
+	/////================================================= TESTING ============= END
+	
 	printf("Procedure de calcul\n");
 	
 	if(argc<2){

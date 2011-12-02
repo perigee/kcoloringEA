@@ -665,7 +665,7 @@ bool tabuCol(int* a, char** graph){
     int nbConflict = 0;
     for (int j=0; j<nbSommets; ++j){
       if (tGamma[j][tTmpColor[j]]>0)
-	++nbConflict;
+	nbConflict += tGamma[j][tTmpColor[j]];
     }
     
     int rdx=(rand()/(float)RAND_MAX) * L;
@@ -692,6 +692,26 @@ bool tabuCol(int* a, char** graph){
   return false;
 }
 
+
+/*!
+ * calculate the number of violated edges
+ * @param a individual color table
+ * @param graph adjacent matrix of graph
+ * @return the number of violated edges
+ */
+int cost(int* a, char** graph){
+  register int nbConflict = 0;
+
+  for (int i=0; i<nbSommets; ++i){
+    for (int j=i; j<nbSommets; ++j){
+      if( graph[i][j] && a[i] == a[j]){
+	++nbConflict;
+      }
+    }
+  }
+  return nbConflict;
+}
+
 /*!
  * calculate the distance between two individual
  * How to measure:
@@ -710,6 +730,7 @@ int distance(int* a, int* b){
  * choose the parents to create offspring
  */
 int** chooseParents(int** population){
+  
   
 }
 
