@@ -677,8 +677,9 @@ bool tabuCol(int* a, char** graph){
     
 
     // testing print
-    if (DISPLAY)
-      printf("%d\t%d\t%d\n", i, bestObj, obj);
+    if (DISPLAY){
+      printf("%d\t%d\t%d\t%d\n", i, bestObj, obj, rdx);
+    }
   }
   
 
@@ -782,17 +783,24 @@ int distance(int* a, int* b){
 }
 
 /*!
- * choose the parents to create offspring
+ * choose the parent based on the sample's nogoods 
  * @return true the qualified parent, false otherwise
  */
-bool chooseParents(int* parent, int* sample){
+bool chooseParentNogood(int* parent, char* ngd, char** graph){
+  char* pNgd = malloc(sizeof(char)*nbSommets);
+  nogood(parent, graph, pNgd);
   
+  // compute the distance
+  int dst = distance(pNgd, ngd);
   
+  for (int i=0; i<nbSommets; ++i){
+    
+  }
 }
 
 
-int crossover(int nbParents, int** parents, ){
-
+int crossover(int nbParents, int** parents, int* offspring){
+  
 }
 
 /*!
@@ -801,20 +809,31 @@ int crossover(int nbParents, int** parents, ){
  * @param offspring carry out the created offspring
  * @return the number of conflicted edges
  */
-int crossover(int** population, int* offspring){
-  // randomly choose a parents number
-  int nbParents = ; 
-  int** parentsBase = malloc(sizeof(int*)*nbParents);
+int selection(int** population, int* offspring){
+  // randomly choose a parents number between [2, populationSize];
+  int nbParents = (rand()/(float)RAND_MAX) * (populationSize -2) + 2 ; // randomly choose
   
+  int** parentsBase = malloc(sizeof(int*)*nbParents);
+  int* parentsClassValue = malloc(sizeof(int*)*nbParents);
+  for (int i = 0; i< nbParents; ++i){
+    int* tmp = malloc(sizeof(int*)*(nbColor+1));
+    parentsClassValue[i] = tmp;
+  }
 
   // traverse the individual in the population
   // find the purpose individual as parents
   for (int i=0; i < populationSize; ++i){
+    // choose the parents
     
   }
   
   // free the dynamic memory
   free(parentsBase);
+  for (int i = 0; i< nbParents; ++i){
+    free(parentsClassValue[i]);
+    parentsClassValue[i] = NULL;
+  }
+  free(parentsClassValue);
 
 }
 
