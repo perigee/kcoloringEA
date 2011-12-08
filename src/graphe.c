@@ -25,6 +25,7 @@ int nbMinutes1=0;
 int nbMinutes2=0;
 int nbMinutes3=0;
 
+char DISPLAY = 0; // output the results
 
 /*!
  * read data file and create the individuals
@@ -632,7 +633,7 @@ bool tabuCol(int* a, char** graph){
   
   Move* move = malloc(sizeof(Move));
   // a always records best so far solution
-  for (int i=0; i< maxIteration; ++i){
+  for (int i=0;  i< maxIteration; ++i){
     
     move->sommet = -1;
     move->color = -1;
@@ -673,6 +674,11 @@ bool tabuCol(int* a, char** graph){
 
     tTmpColor[move->sommet] = move->color;
     obj += delta;
+    
+
+    // testing print
+    if (DISPLAY)
+      printf("%d\t%d\t%d\n", i, bestObj, obj);
   }
   
 
@@ -712,6 +718,55 @@ int cost(int* a, char** graph){
   return nbConflict;
 }
 
+
+
+/*!
+ * extract the subset of nodes composed by nogoods
+ * dynamic create the 
+ * @param a an individual
+ * @param graph adjacent matrix of graph 
+ * @param ngd subset nodes of individual
+ */
+void nogood(int* a, char** graph, char* ngd){
+
+  // initialize the values
+  for (int i= 0; i<nbSommets; ++i)
+    ngd[i]=0;
+
+
+  // not optimized code
+  for (int i= 0; i<nbSommets; ++i){
+    for (int j= i; j<nbSommets; ++j){
+      if ( graph[i][j] && a[i] == a[j]){
+        if (!ngd[i]) ngd[i] = 1;
+	// add its neigbors
+	for (int k = 0; k< nbSommets; ++k){
+	  if (!ngd[k] && graph[i][k])
+	    ngd[k] = 1;
+	}
+      }
+    }
+  }
+
+}
+
+/*!
+ * calculate the similarity of two subsets of nodes
+ * @param a subset nodes of individual
+ * @param b subset nodes of individual 
+ * @return the number of nodes in common
+ */
+int similarity(char* a, char* b){
+  int s = 0;
+
+  for (int i=0; i<nbSommets; ++i){
+    if(a[i] && b[i]) ++s;
+  }
+
+  return s;
+}
+
+
 /*!
  * calculate the distance between two individual
  * How to measure:
@@ -728,18 +783,41 @@ int distance(int* a, int* b){
 
 /*!
  * choose the parents to create offspring
+ * @return true the qualified parent, false otherwise
  */
-int** chooseParents(int** population){
+bool chooseParents(int* parent, int* sample){
   
   
 }
 
+
+int crossover(int nbParents, int** parents, ){
+
+}
+
 /*!
  * create the offspring based on parents
+ * @param population the whole population
+ * @param offspring carry out the created offspring
+ * @return the number of conflicted edges
  */
-int* crossover(int** parents){
+int crossover(int** population, int* offspring){
+  // randomly choose a parents number
+  int nbParents = ; 
+  int** parentsBase = malloc(sizeof(int*)*nbParents);
   
+
+  // traverse the individual in the population
+  // find the purpose individual as parents
+  for (int i=0; i < populationSize; ++i){
+    
+  }
+  
+  // free the dynamic memory
+  free(parentsBase);
+
 }
+
 
 /*!
  * ea + distance
@@ -748,7 +826,7 @@ int* crossover(int** parents){
 int ea(int** population){
   
 
-
+  
 
   
 }
