@@ -931,6 +931,7 @@ bool ea(char** graph, int** population){
   
   // initialize all nogoods 
   char** nogoods = malloc(sizeof(int*)*populationSize);
+  char* tmpNogood = malloc(sizeof(char)*nbSommets);
   for (int i=0; i< populationSize; ++i){
     nogoods[i] = malloc(sizeof(char)*nbSommets);
     nogood(tPopulationColor[i], graph, nogoods[i]);
@@ -964,6 +965,11 @@ bool ea(char** graph, int** population){
     
     
     //// selection operator: update population
+    for (int i=0; i<populationSize; ++i){
+      nogood(tmpSolution, graph, tmpNogood);
+      
+    }
+    
     //int accept = acceptOffspring(tmpSolution, nogoods);
     //if (accept()){
       
