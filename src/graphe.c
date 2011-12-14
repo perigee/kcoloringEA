@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include "graphe.h"
 #include "util/gfile.h"
+#include "util/datas.h"
 
 float lambda=0.6;
 int L=10;
@@ -727,8 +728,11 @@ int cost(int* a, char** graph){
  * @param a an individual
  * @param graph adjacent matrix of graph 
  * @param ngd subset nodes of individual
+ * @return the number of subset nodes forming nogoods
  */
-void nogood(int* a, char** graph, char* ngd){
+int nogood(int* a, char** graph, char* ngd){
+  
+  int nbVars = 0;
 
   // initialize the values
   for (int i= 0; i<nbSommets; ++i)
@@ -739,25 +743,33 @@ void nogood(int* a, char** graph, char* ngd){
   for (int i= 0; i<nbSommets; ++i){
     for (int j= i; j<nbSommets; ++j){
       if ( graph[i][j] && a[i] == a[j]){
-        if (!ngd[i]) ngd[i] = 1;
+        if (!ngd[i]){
+	  ++nbVars;
+	  ngd[i] = 1;
+	}
 	// add its neigbors
 	for (int k = 0; k< nbSommets; ++k){
-	  if (!ngd[k] && graph[i][k])
+	  if (!ngd[k] && graph[i][k]){
+	    ++nbVars;
 	    ngd[k] = 1;
+	  }
 	}
       }
     }
   }
 
+  return nbVars;
+
 }
 
 /*!
  * calculate the similarity of two subsets of nodes
+ * converted nogoods+deadends subsets nodes
  * @param a subset nodes of individual
  * @param b subset nodes of individual 
  * @return the number of nodes in common
  */
-int similarity(char* a, char* b){
+int similarityNogood(char* a, char* b){
   int s = 0;
 
   for (int i=0; i<nbSommets; ++i){
@@ -767,6 +779,18 @@ int similarity(char* a, char* b){
   return s;
 }
 
+/*!
+ * calculate the similarity of two subsets of nodes
+ * @param a subset nodes of individual
+ * @param b subset nodes of individual 
+ * @return the number of nodes in common
+ */
+int similarityNodeClass(int* assignTable, int* nodeClass){
+  int s = 0;
+  
+ 
+  return s;
+}
 
 /*!
  * calculate the distance between two individual
@@ -799,8 +823,49 @@ bool chooseParentNogood(int* parent, char* ngd, char** graph){
 }
 
 
-int crossover(int nbParents, int** parents, int* offspring){
+
+/*!
+ * Convert the color assignment to color partition 
+ * @param a individual color assigment 
+ * @param node the color partition counterpart of a
+ * @return 
+ */
+int assign2partition(int* a, Node* node){
   
+}
+
+/*!
+ * TOTAL RANDOM CROSSOVER
+ * crossover operator
+ * randomly choose the number of parents 
+ * @param population the whole population
+ * @param offspring carry out the created offspring
+ * @return the number of conflicted edges
+ */
+int crossover_random(int nbParents, int** parents, int* offspring){
+  // initialize the offspring  
+  for (int i=0; i<nbSommets; ++i){
+    offspring[i] = -1;
+  }
+
+  // 1. randomy choose a parent
+  // 2. choose best color class in such parent
+  for (int i=0; i< nbColor; ++i){
+    // randomly choose a parent
+    int jth = (rand()/(float)RAND_MAX) * nbParents ;
+    int cth = (rand()/(float)RAND_MAX) * nbColor ;
+    for (int k=0; k < nbSommets; ++k){
+      if (offspring[k] < 0 && parents[jth][k] == cth ){
+	offspring[k] = i;
+      }
+    }
+  }
+  
+  // randomly assign non-asigned nodes
+  for (int k=0; k < nbSommets; ++k){
+    if (offspring[k] < 0)
+      offspring[k] = (rand()/(float)RAND_MAX) * nbColor;
+  }
 }
 
 /*!
@@ -815,6 +880,7 @@ int selection(int** population, int* offspring){
   
   int** parentsBase = malloc(sizeof(int*)*nbParents);
   int* parentsClassValue = malloc(sizeof(int*)*nbParents);
+  
   for (int i = 0; i< nbParents; ++i){
     int* tmp = malloc(sizeof(int*)*(nbColor+1));
     parentsClassValue[i] = tmp;
@@ -845,7 +911,15 @@ int selection(int** population, int* offspring){
 int ea(int** population){
   
 
-  
+  // initialize the population
+  int nbGeneration = 100000;
+
+  // iterate the generation
+
+
+  for (int g = 0; g < nbGeneration; ++g){
+    
+  }
 
   
 }
