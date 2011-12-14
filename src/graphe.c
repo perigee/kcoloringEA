@@ -868,6 +868,13 @@ int crossover_random(int nbParents, int** parents, int* offspring){
   }
 }
 
+
+int distanceNogood(char* ngd, char** nogoods){
+  int accept = -1;
+
+  
+}
+
 /*!
  * create the offspring based on parents
  * @param population the whole population
@@ -906,21 +913,71 @@ int selection(int** population, int* offspring){
 
 /*!
  * ea + distance
- * @return the number of violated edges 
+ * @param graph adjacent matrix of given graph
+ * @param population the table of individuals
+ * @return true if the solution found is consistent, otherwise false 
  */
-int ea(int** population){
+bool ea(char** graph, int** population){
   
 
   // initialize the population
   int nbGeneration = 100000;
 
-  // iterate the generation
-
-
-  for (int g = 0; g < nbGeneration; ++g){
-    
+  bool setBest = false;
+  int* bestSolution = malloc(sizeof(int)*nbSommets);
+  int bCost = -1;
+  int* tmpSolution;
+  int tCost = -1;
+  
+  // initialize all nogoods 
+  char** nogoods = malloc(sizeof(int*)*populationSize);
+  for (int i=0; i< populationSize; ++i){
+    nogoods[i] = malloc(sizeof(char)*nbSommets);
+    nogood(tPopulationColor[i], graph, nogoods[i]);
   }
 
+  // iterate the generation
+  for (int g = 0; g < nbGeneration; ++g){
+    tmpSolution = malloc(sizeof(int)*nbSommets); 
+    //// crossover operator
+    crossover_random(populationSize, tPopulationColor, tmpSolution);
+    
+    
+
+
+    //// mutation (tabuCol) operator  
+    if (tabuCol(tmpSolution,graph)){
+      bestSolution = tmpSolution;
+      break;
+    }else{
+
+      int tCost = cost(tmpSolution,graph);
+
+      if (!setBest || bCost > tCost){
+	if (!setBest) setBest = true;
+	for (int i = 0; i<nbSommets; ++i){
+	  bestSolution[i] = tmpSolution[i];
+	  bCost = tCost;
+	}
+      } 
+    }
+    
+    
+    //// selection operator: update population
+    //int accept = acceptOffspring(tmpSolution, nogoods);
+    //if (accept()){
+      
+      
+    //}else{
+    //free(tmpSolution);
+    //tmpSolution = NULL;
+    //}
+  }
+
+  if (bCost != 0)
+    return false;
+
+  return true;
   
 }
 
