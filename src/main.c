@@ -9,12 +9,6 @@
 int main (int argc, char * const argv[]) {
 
 
-  //  for (int i=0; i<100; ++i)
-  //  printf("%d\n",(rand()/(float)RAND_MAX) * 10);//(rand()/(float)RAND_MAX) * (7-2) + 2);
-
-
-  //exit(0);
-
   printf("Procedure de calcul\n");
 	
   if(argc<2){
@@ -26,8 +20,9 @@ int main (int argc, char * const argv[]) {
   printf("TabuCol Testing================\n");
 	
   nbColor = atoi(argv[2]);
-
-
+  
+  
+  
   testAlgo(argv[1]);
 
   exit(0);

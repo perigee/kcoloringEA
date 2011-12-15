@@ -16,8 +16,9 @@ float lambda=0.6;
 int L=10;
 
 int nbColor=49;
-int populationSize=10;
-int nbLocalSearch=2000;
+int populationSize=20;
+int nbLocalSearch=10000;
+int Nb_Generation=10000;
 
 clock_t  time1=0;
 clock_t  time2=0;
@@ -748,12 +749,12 @@ int nogood(int* a, char** graph, char* ngd){
 	  ngd[i] = 1;
 	}
 	// add its neigbors
-	for (int k = 0; k< nbSommets; ++k){
+	/*for (int k = 0; k< nbSommets; ++k){
 	  if (!ngd[k] && graph[i][k]){
 	    ++nbVars;
 	    ngd[k] = 1;
 	  }
-	}
+	  }*/
       }
     }
   }
@@ -842,7 +843,7 @@ int assign2partition(int* a, Node* node){
  * @param offspring carry out the created offspring
  * @return the number of conflicted edges
  */
-int crossover_random(int nbParents, int** parents, int* offspring){
+void crossover_random(int nbParents, int** parents, int* offspring){
   // initialize the offspring  
   for (int i=0; i<nbSommets; ++i){
     offspring[i] = -1;
@@ -866,6 +867,7 @@ int crossover_random(int nbParents, int** parents, int* offspring){
     if (offspring[k] < 0)
       offspring[k] = (rand()/(float)RAND_MAX) * nbColor;
   }
+  
 }
 
 
@@ -917,11 +919,18 @@ int selection(int** population, int* offspring){
  * @param population the table of individuals
  * @return true if the solution found is consistent, otherwise false 
  */
-bool ea(char** graph, int** population){
+bool ea(char** graph){
+  
+  int** population = malloc(sizeof(int*)*populationSize);
+  
+  for (int i =0; i<populationSize;++i){
+    population[i] = malloc(sizeof(int)*nbSommets);
+    randomSolution(population[i]);
+  }
   
 
+
   // initialize the population
-  int nbGeneration = 100000;
 
   bool setBest = false;
   int* bestSolution = malloc(sizeof(int)*nbSommets);
@@ -931,28 +940,31 @@ bool ea(char** graph, int** population){
   
   // initialize all nogoods 
   char** nogoods = malloc(sizeof(int*)*populationSize);
-  char* tmpNogood = malloc(sizeof(char)*nbSommets);
+  char* tmpNogood;
   for (int i=0; i< populationSize; ++i){
     nogoods[i] = malloc(sizeof(char)*nbSommets);
-    nogood(tPopulationColor[i], graph, nogoods[i]);
+    nogood(population[i], graph, nogoods[i]);
   }
 
   // iterate the generation
-  for (int g = 0; g < nbGeneration; ++g){
+  for (int g = 0; g < Nb_Generation; ++g){
+
     tmpSolution = malloc(sizeof(int)*nbSommets); 
+    tmpNogood = malloc(sizeof(char)*nbSommets);
     //// crossover operator
-    crossover_random(populationSize, tPopulationColor, tmpSolution);
+    crossover_random(populationSize, population, tmpSolution);
     
-    
+    int crossCost = cost(tmpSolution, graph);
 
 
     //// mutation (tabuCol) operator  
     if (tabuCol(tmpSolution,graph)){
       bestSolution = tmpSolution;
+      bCost = 0;
       break;
     }else{
 
-      int tCost = cost(tmpSolution,graph);
+      tCost = cost(tmpSolution,graph);
 
       if (!setBest || bCost > tCost){
 	if (!setBest) setBest = true;
@@ -965,20 +977,49 @@ bool ea(char** graph, int** population){
     
     
     //// selection operator: update population
+    //printf("childNogood:%d\n",nogood(tmpSolution, graph, tmpNogood)); //convert the nogood
+    // traverse all the nogoods
+    int min = -1;
+    int index = -1;
+    nogood(tmpSolution,graph,tmpNogood);
+    printf("distp:");
     for (int i=0; i<populationSize; ++i){
-      nogood(tmpSolution, graph, tmpNogood);
-      
+      int distance = similarityNogood(tmpNogood, nogoods[i]);
+      printf("\t%d",distance);
+      if (min<0 || min < distance){
+	min = distance;
+	index = i;
+      }      
     }
+
+    printf("\n");
+
+    // update the population
+    free(population[index]);
+    free(nogoods[index]);
+    population[index] = tmpSolution;
+    nogoods[index] = tmpNogood;
     
-    //int accept = acceptOffspring(tmpSolution, nogoods);
-    //if (accept()){
-      
-      
-    //}else{
-    //free(tmpSolution);
-    //tmpSolution = NULL;
-    //}
+    printf("costg:\t%d\t%d\t%d\t%d\n",g,crossCost,tCost,bCost);
+    printf("costp:");
+    for (int i=0; i<populationSize;++i){
+      printf("\t%d",cost(population[i],graph));
+    }
+    printf("\n");
   }
+
+
+  // free the dynamic memory
+  for (int i=0; i<populationSize; ++i){
+    free(population[i]);
+    free(nogoods[i]);
+    population[i] = NULL;
+    nogoods[i] = NULL;
+  }
+
+  free(population);
+  free(nogoods);
+  
 
   if (bCost != 0)
     return false;
@@ -1005,13 +1046,14 @@ void testAlgo(char* filename){
   // tConnect
   // fill the tConnect table (adjacent matrix representation of graph)
   
-  int* individual = malloc(sizeof(int)*nbSommets);
+  //int* individual = malloc(sizeof(int)*nbSommets);
   
-  randomSolution(individual);
+  //randomSolution(individual);
   
   //  printf("color number: %d\n",nbColor);
 
-  bool feasible = tabuCol(individual, tConnect);
+  //bool feasible = tabuCol(individual, tConnect);
+  bool feasible = ea(tConnect);
   
   if (feasible)
     printf("feasible\n");
