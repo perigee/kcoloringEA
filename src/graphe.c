@@ -10,13 +10,15 @@
 #include <stdlib.h>
 #include "graphe.h"
 #include "util/gfile.h"
+#include "util/datas.h"
 
 float lambda=0.6;
 int L=10;
 
 int nbColor=49;
-int populationSize=10;
-int nbLocalSearch=2000;
+int populationSize=20;
+int nbLocalSearch=10000;
+int Nb_Generation=10000;
 
 clock_t  time1=0;
 clock_t  time2=0;
@@ -25,8 +27,11 @@ int nbMinutes1=0;
 int nbMinutes2=0;
 int nbMinutes3=0;
 
+char DISPLAY = 0; // output the results
 
-
+/*!
+ * read data file and create the individuals
+ */
 void loadGraphe(char* filename){	
 	openfile(filename);
 
@@ -267,7 +272,9 @@ void determineBestImprove(){
 	}
 }
 
-
+/*!
+ * update the gamma table 
+ */
 void updateTables(int node, int color){
 	
 	int prevColor=tColor[node];
@@ -360,6 +367,8 @@ void updatePopulation(){
 	time1+=clock();
 	
 	time3-=clock();
+
+	// TabuCol implementation
 	for (int i=0; i<nbLocalSearch && nbEdgesConflict > 0 ; i++) {
 		determineBestImprove();
 	}
@@ -373,6 +382,8 @@ void updatePopulation(){
 		tChild=tmp;
 	}
 }
+
+
 
 /// Effectue le croisement entre les 2 parents
 /// les parents sont les tColor (couleur de chaque sommet)
@@ -437,6 +448,620 @@ void buildChild(int* p1, int* p2){
 	}
 	
 }
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/////////// EA with distance 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+/*!
+ * TabuCol c implementation
+ * @return true: if the solution is consistent
+ * false: if the solution is inconsistent
+ * @parameter graph: adjacent list of graph
+ */
+
+
+
+typedef struct assignment{
+  int sommet;
+  int color;
+} Move;
+
+
+/// only for testing
+void printTableNK(int** table){
+  for (int i=0; i<nbSommets; ++i){
+    for (int j=0; j< nbColor; ++j){
+      printf("%d ", table[i][j]); 
+    }
+    printf("\n"); 
+  }
+}
+
+
+/*!
+ * initialize the Gamma table
+ * @param a individual color table
+ * @param graph adjacent matrix of graph
+ * @param tGamma gamma table for total incremental objective function computing
+ * @return the number of violated edges
+ */
+int initGammaTable(int* a, char** graph, int** tGamma){
+  	/// determine les conflits entre les noeuds
+	int nbConflict=0;
+	
+	// check the link
+	for (int i=0; i<nbSommets; ++i){
+	  for (int j=i; j<nbSommets; ++j){
+	    if( graph[i][j] ){
+	      if (a[i] == a[j])
+		++nbConflict;
+
+	      ++tGamma[i][a[j]]; 
+	      ++tGamma[j][a[i]];
+	    }
+	  }
+	}
+
+
+	
+
+	return nbConflict;
+}
+
+
+/*!
+ * find the best move in tabu search
+ * @param move bring out the best move
+ * @param tGamma gamma table for total incremental objective function computing
+ * @param tTabu tabu value duration table
+ * @param individual individual color table
+ * @return the change of objective function
+ */
+int bestMove(Move* move, int** tGamma,  int** tTabu, int* individual){
+  int delta = -1;// best delta found, be careful the value 
+  bool isSet = false;
+
+  for (int i=0; i<nbSommets; ++i){
+    if (tGamma[i][individual[i]]>0){
+      // traverse all the non-tabu colors of sommet i
+      int minGamma = -1;
+      int tmpSommet = -1;
+      int tmpColor = -1;
+
+      for (int j=0; j<nbColor; ++j){
+       
+	// decrease the tabu duration
+	if (tTabu[i][j]>0)
+	  --tTabu[i][j];
+
+	// skip tabu color and assigned color
+	if (tTabu[i][j] > 0 || j == individual[i])
+	  continue;
+	
+	if (minGamma < 0 || minGamma > tGamma[i][j]){
+	  minGamma = tGamma[i][j];
+	  tmpSommet = i; 
+	  tmpColor = j;
+	}
+      }
+
+      // update delta if necessary
+      if (minGamma < 0) continue;
+
+      if (!isSet || delta > minGamma - tGamma[i][individual[i]]){
+	if (!isSet) isSet = true;
+
+	delta = minGamma - tGamma[i][individual[i]];
+	move->sommet = tmpSommet;
+	move->color =  tmpColor;
+	//printf("bestMove: %d,%d", move->sommet, move->color);
+      } 
+    }
+  }
+
+  if (isSet)  return delta;
+  
+  // in case all tabu, very rare
+  
+  return delta;
+}
+
+/*!
+ * update the Gamma table according to best move found
+ * @param sommet the best move node
+ * @param colorOrigin current assignment of the best move node
+ * @param colorCandidate the best move color
+ * @param tGamma gamma table for total incremental objective function computing
+ * @param graph adjacent matrix of graph
+ */
+void updateMove(int sommet, int colorOrigin, int colorCandidate, 
+		int** tGamma, char** graph){
+  
+  for (int i=0; i< nbSommets; ++i){
+    if (graph[sommet][i]){
+      if (tGamma[i][colorOrigin]>0)
+	--tGamma[i][colorOrigin];
+      
+      ++tGamma[i][colorCandidate];
+    }
+  }
+  
+}
+
+/*!
+ * tabuCol implementation
+ * @param a individual color table
+ * @param graph adjacent matrix of graph
+ * @return true if consistent solution found, otherwise false
+ */
+bool tabuCol(int* a, char** graph){
+
+ 
+  int** tGamma = malloc(sizeof(int)*nbSommets);
+  int** tTabu = malloc(sizeof(int)*nbSommets);
+
+  for (int i=0; i<nbSommets; ++i){
+    tGamma[i] = malloc(sizeof(int)*nbColor);
+    tTabu[i] = malloc(sizeof(int)*nbColor);
+  }
+
+  int* tTmpColor = malloc(sizeof(int)*nbSommets);// store the temp color assignment
+  int maxIteration = nbLocalSearch;
+
+  
+  //copy color assignment 
+  for (int i=0; i<nbSommets; ++i)
+    tTmpColor[i] = a[i];
+
+  // init Tabu and Gamma Tables
+  for (int i=0; i<nbSommets; ++i) {
+    for (int j=0; j<nbColor; ++j) {
+	tTabu[i][j]=-1;
+	tGamma[i][j] = 0;
+    }
+  }
+    
+  
+  int obj = initGammaTable(a,graph,tGamma); // init gamma table
+
+  //printf("========= T ========");
+  //printTableNK(tGamma);
+
+  int bestObj = obj;
+  
+  Move* move = malloc(sizeof(Move));
+  // a always records best so far solution
+  for (int i=0;  i< maxIteration; ++i){
+    
+    move->sommet = -1;
+    move->color = -1;
+    if(bestObj < 1) break; // find consistent solution
+
+    // find best move based on gamma table
+    int delta = bestMove(move, tGamma, tTabu, tTmpColor);
+
+    //printf("%d,%d",move->sommet,move->color);
+    
+    // all tabu case
+    if (move->sommet < 0 || move->color < 0) continue;
+
+    //    printf("\t%d\t%d\n", obj,bestObj);
+    
+    if( delta < 0 && obj+delta < bestObj){
+      bestObj = obj+delta;
+      for (int j=0; j<nbSommets; ++j){
+	a[j] = tTmpColor[j];
+      }
+
+      a[move->sommet] = move->color;
+    }
+
+    // update move
+    updateMove(move->sommet, tTmpColor[move->sommet], move->color, tGamma, graph);
+ 
+    
+    // calculate the nbVariable in conflict
+    int nbConflict = 0;
+    for (int j=0; j<nbSommets; ++j){
+      if (tGamma[j][tTmpColor[j]]>0)
+	nbConflict += tGamma[j][tTmpColor[j]];
+    }
+    
+    int rdx=(rand()/(float)RAND_MAX) * L;
+    tTabu[move->sommet][tTmpColor[move->sommet]] = rdx + lambda*nbConflict/2; // tabu duration
+
+    tTmpColor[move->sommet] = move->color;
+    obj += delta;
+    
+
+    // testing print
+    if (DISPLAY){
+      printf("%d\t%d\t%d\t%d\n", i, bestObj, obj, rdx);
+    }
+  }
+  
+
+ 
+  // free all dynamic memory before return 
+  for (int i=0; i<nbSommets; ++i){
+    free(tGamma[i]);
+    free(tTabu[i]);
+  }
+
+  free(tGamma);
+  free(tTabu);
+  free(tTmpColor);
+  free(move);
+
+  if(bestObj < 1) return true;
+  return false;
+}
+
+
+/*!
+ * calculate the number of violated edges
+ * @param a individual color table
+ * @param graph adjacent matrix of graph
+ * @return the number of violated edges
+ */
+int cost(int* a, char** graph){
+  register int nbConflict = 0;
+
+  for (int i=0; i<nbSommets; ++i){
+    for (int j=i; j<nbSommets; ++j){
+      if( graph[i][j] && a[i] == a[j]){
+	++nbConflict;
+      }
+    }
+  }
+  return nbConflict;
+}
+
+
+
+/*!
+ * extract the subset of nodes composed by nogoods
+ * dynamic create the 
+ * @param a an individual
+ * @param graph adjacent matrix of graph 
+ * @param ngd subset nodes of individual
+ * @return the number of subset nodes forming nogoods
+ */
+int nogood(int* a, char** graph, char* ngd){
+  
+  int nbVars = 0;
+
+  // initialize the values
+  for (int i= 0; i<nbSommets; ++i)
+    ngd[i]=0;
+
+
+  // not optimized code
+  for (int i= 0; i<nbSommets; ++i){
+    for (int j= i; j<nbSommets; ++j){
+      if ( graph[i][j] && a[i] == a[j]){
+        if (!ngd[i]){
+	  ++nbVars;
+	  ngd[i] = 1;
+	}
+	// add its neigbors
+	/*for (int k = 0; k< nbSommets; ++k){
+	  if (!ngd[k] && graph[i][k]){
+	    ++nbVars;
+	    ngd[k] = 1;
+	  }
+	  }*/
+      }
+    }
+  }
+
+  return nbVars;
+
+}
+
+/*!
+ * calculate the similarity of two subsets of nodes
+ * converted nogoods+deadends subsets nodes
+ * @param a subset nodes of individual
+ * @param b subset nodes of individual 
+ * @return the number of nodes in common
+ */
+int similarityNogood(char* a, char* b){
+  int s = 0;
+
+  for (int i=0; i<nbSommets; ++i){
+    if(a[i] && b[i]) ++s;
+  }
+
+  return s;
+}
+
+/*!
+ * calculate the similarity of two subsets of nodes
+ * @param a subset nodes of individual
+ * @param b subset nodes of individual 
+ * @return the number of nodes in common
+ */
+int similarityNodeClass(int* assignTable, int* nodeClass){
+  int s = 0;
+  
+ 
+  return s;
+}
+
+/*!
+ * calculate the distance between two individual
+ * How to measure:
+ * @param a a comparing individual 
+ * @param b another comparing individual
+ * @return the value of similarity
+ */
+int distance(int* a, int* b){
+  int dist = -1;
+  
+
+  return dist;
+}
+
+/*!
+ * choose the parent based on the sample's nogoods 
+ * @return true the qualified parent, false otherwise
+ */
+bool chooseParentNogood(int* parent, char* ngd, char** graph){
+  char* pNgd = malloc(sizeof(char)*nbSommets);
+  nogood(parent, graph, pNgd);
+  
+  // compute the distance
+  int dst = distance(pNgd, ngd);
+  
+  for (int i=0; i<nbSommets; ++i){
+    
+  }
+}
+
+
+
+/*!
+ * Convert the color assignment to color partition 
+ * @param a individual color assigment 
+ * @param node the color partition counterpart of a
+ * @return 
+ */
+int assign2partition(int* a, Node* node){
+  
+}
+
+/*!
+ * TOTAL RANDOM CROSSOVER
+ * crossover operator
+ * randomly choose the number of parents 
+ * @param population the whole population
+ * @param offspring carry out the created offspring
+ * @return the number of conflicted edges
+ */
+void crossover_random(int nbParents, int** parents, int* offspring){
+  // initialize the offspring  
+  for (int i=0; i<nbSommets; ++i){
+    offspring[i] = -1;
+  }
+
+  // 1. randomy choose a parent
+  // 2. choose best color class in such parent
+  for (int i=0; i< nbColor; ++i){
+    // randomly choose a parent
+    int jth = (rand()/(float)RAND_MAX) * nbParents ;
+    int cth = (rand()/(float)RAND_MAX) * nbColor ;
+    for (int k=0; k < nbSommets; ++k){
+      if (offspring[k] < 0 && parents[jth][k] == cth ){
+	offspring[k] = i;
+      }
+    }
+  }
+  
+  // randomly assign non-asigned nodes
+  for (int k=0; k < nbSommets; ++k){
+    if (offspring[k] < 0)
+      offspring[k] = (rand()/(float)RAND_MAX) * nbColor;
+  }
+  
+}
+
+
+int distanceNogood(char* ngd, char** nogoods){
+  int accept = -1;
+
+  
+}
+
+/*!
+ * create the offspring based on parents
+ * @param population the whole population
+ * @param offspring carry out the created offspring
+ * @return the number of conflicted edges
+ */
+int selection(int** population, int* offspring){
+  // randomly choose a parents number between [2, populationSize];
+  int nbParents = (rand()/(float)RAND_MAX) * (populationSize -2) + 2 ; // randomly choose
+  
+  int** parentsBase = malloc(sizeof(int*)*nbParents);
+  int* parentsClassValue = malloc(sizeof(int*)*nbParents);
+  
+  for (int i = 0; i< nbParents; ++i){
+    int* tmp = malloc(sizeof(int*)*(nbColor+1));
+    parentsClassValue[i] = tmp;
+  }
+
+  // traverse the individual in the population
+  // find the purpose individual as parents
+  for (int i=0; i < populationSize; ++i){
+    // choose the parents
+    
+  }
+  
+  // free the dynamic memory
+  free(parentsBase);
+  for (int i = 0; i< nbParents; ++i){
+    free(parentsClassValue[i]);
+    parentsClassValue[i] = NULL;
+  }
+  free(parentsClassValue);
+
+}
+
+
+/*!
+ * ea + distance
+ * @param graph adjacent matrix of given graph
+ * @param population the table of individuals
+ * @return true if the solution found is consistent, otherwise false 
+ */
+bool ea(char** graph){
+  
+  int** population = malloc(sizeof(int*)*populationSize);
+  
+  for (int i =0; i<populationSize;++i){
+    population[i] = malloc(sizeof(int)*nbSommets);
+    randomSolution(population[i]);
+  }
+  
+
+
+  // initialize the population
+
+  bool setBest = false;
+  int* bestSolution = malloc(sizeof(int)*nbSommets);
+  int bCost = -1;
+  int* tmpSolution;
+  int tCost = -1;
+  
+  // initialize all nogoods 
+  char** nogoods = malloc(sizeof(int*)*populationSize);
+  char* tmpNogood;
+  for (int i=0; i< populationSize; ++i){
+    nogoods[i] = malloc(sizeof(char)*nbSommets);
+    nogood(population[i], graph, nogoods[i]);
+  }
+
+  // iterate the generation
+  for (int g = 0; g < Nb_Generation; ++g){
+
+    tmpSolution = malloc(sizeof(int)*nbSommets); 
+    tmpNogood = malloc(sizeof(char)*nbSommets);
+    //// crossover operator
+    crossover_random(populationSize, population, tmpSolution);
+    
+    int crossCost = cost(tmpSolution, graph);
+
+
+    //// mutation (tabuCol) operator  
+    if (tabuCol(tmpSolution,graph)){
+      bestSolution = tmpSolution;
+      bCost = 0;
+      break;
+    }else{
+
+      tCost = cost(tmpSolution,graph);
+
+      if (!setBest || bCost > tCost){
+	if (!setBest) setBest = true;
+	for (int i = 0; i<nbSommets; ++i){
+	  bestSolution[i] = tmpSolution[i];
+	  bCost = tCost;
+	}
+      } 
+    }
+    
+    
+    //// selection operator: update population
+    //printf("childNogood:%d\n",nogood(tmpSolution, graph, tmpNogood)); //convert the nogood
+    // traverse all the nogoods
+    int min = -1;
+    int index = -1;
+    nogood(tmpSolution,graph,tmpNogood);
+    printf("distp:");
+    for (int i=0; i<populationSize; ++i){
+      int distance = similarityNogood(tmpNogood, nogoods[i]);
+      printf("\t%d",distance);
+      if (min<0 || min < distance){
+	min = distance;
+	index = i;
+      }      
+    }
+
+    printf("\n");
+
+    // update the population
+    free(population[index]);
+    free(nogoods[index]);
+    population[index] = tmpSolution;
+    nogoods[index] = tmpNogood;
+    
+    printf("costg:\t%d\t%d\t%d\t%d\n",g,crossCost,tCost,bCost);
+    printf("costp:");
+    for (int i=0; i<populationSize;++i){
+      printf("\t%d",cost(population[i],graph));
+    }
+    printf("\n");
+  }
+
+
+  // free the dynamic memory
+  for (int i=0; i<populationSize; ++i){
+    free(population[i]);
+    free(nogoods[i]);
+    population[i] = NULL;
+    nogoods[i] = NULL;
+  }
+
+  free(population);
+  free(nogoods);
+  
+
+  if (bCost != 0)
+    return false;
+
+  return true;
+  
+}
+
+
+/*!
+ * initialize random solution
+ * @param a individual color table
+ */
+void randomSolution(int* a){
+  for (int i=0; i<nbSommets; ++i){
+    int col = (rand()/(float)RAND_MAX) * nbColor ;
+    a[i] = col;
+  }
+}
+
+// ============ UNIT TESTING ============
+void testAlgo(char* filename){
+  loadGraphe(filename);
+  // tConnect
+  // fill the tConnect table (adjacent matrix representation of graph)
+  
+  //int* individual = malloc(sizeof(int)*nbSommets);
+  
+  //randomSolution(individual);
+  
+  //  printf("color number: %d\n",nbColor);
+
+  //bool feasible = tabuCol(individual, tConnect);
+  bool feasible = ea(tConnect);
+  
+  if (feasible)
+    printf("feasible\n");
+  else
+    printf("found infeasible\n");
+  
+}
+
 
 
 //////////////////////////////
