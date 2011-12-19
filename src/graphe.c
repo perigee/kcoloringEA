@@ -17,7 +17,7 @@ int L=10;
 
 int nbColor=49;
 int populationSize=20;
-int nbLocalSearch=10000;
+int nbLocalSearch=5000;
 int Nb_Generation=10000;
 
 clock_t  time1=0;
@@ -835,47 +835,115 @@ int assign2partition(int* a, Node* node){
   
 }
 
+
+
+
+
+
+
+
+/*!
+ * conflict number of neighbor
+ * @param color the candidate color for the node
+ * @param indu the partial assigned solution
+ * @param one column of graph adjacent matrix 
+ * @return the number of conflict neighbors
+ */
+int conflictNeighbor(int color, int* indu, char* neighbors){
+  int nb = 0;
+  
+  for (int i=0; i<nbSommets;++i){
+    if (neighbors[i] && indu[i] == color) ++nb;
+  }
+
+  return nb;
+}
+
+
+/*!
+ * NEH algorithm for graph coloring
+ * @param node the index of node
+ * @param color the candidate color for the node
+ * @param indu the partial assigned solution
+ * @param graph adjacent matrix 
+ * @return the number of conflict edges
+ */
+int neh(int* a, char** graph, int* counterpart){
+
+  
+}
+
+
+void initialArray(int* a,int size,int value){
+  for (int i=0; i<size;++i){
+    a[i] = value;
+  }
+}
+
 /*!
  * TOTAL RANDOM CROSSOVER
- * crossover operator
+ * crossover operator - improve the solution and decrease 
+ * the computational time of local search
  * randomly choose the number of parents 
  * @param population the whole population
  * @param offspring carry out the created offspring
  * @return the number of conflicted edges
  */
-void crossover_random(int nbParents, int** parents, int* offspring){
-  // initialize the offspring  
-  for (int i=0; i<nbSommets; ++i){
-    offspring[i] = -1;
-  }
+void crossover_maximal(int nbParents, int** parents, int* offspring){
 
-  // 1. randomy choose a parent
-  // 2. choose best color class in such parent
-  for (int i=0; i< nbColor; ++i){
-    // randomly choose a parent
+  // initialize the offspring  
+  initialArray(offspring,nbSommets,-1);
+  
+  // waiting-assigned node list
+  int* tmpParent = malloc(sizeof(int)*nbSommets);
+  initialArray(tmpParent,nbSommets,0);
+
+  int* classSize = malloc(sizeof(int)*nbColor);
+
+  
+  // initial the 
+  for (int i=0; i<nbColor;++i){
+    // get the random id of parent
     int jth = (rand()/(float)RAND_MAX) * nbParents ;
-    int cth = (rand()/(float)RAND_MAX) * nbColor ;
-    for (int k=0; k < nbSommets; ++k){
-      if (offspring[k] < 0 && parents[jth][k] == cth ){
-	offspring[k] = i;
+    int maxColorIdx = -1;
+    int maxClassSize = 0;
+    initialArray(classSize,nbColor,0);
+    for (int j=0; j<nbSommets;++j){
+      if (tmpParent[j]> -1 ){
+	++classSize[parents[jth][j]];
+	if (maxClassSize < classSize[parents[jth][j]]){
+	  maxClassSize = classSize[parents[jth][j]];
+	  maxColorIdx = parents[jth][j];
+	}
       }
     }
+
+    for (int j=0; j<nbSommets;++j){
+      if (tmpParent[j] > -1 && parents[jth][j] == maxColorIdx){
+	offspring[j] = i;
+	tmpParent[j] = -1; // remove the node from waiting-assigned node list
+      }
+    }
+
+    //    printf("find maxColorIdx: %d\n",maxColorIdx);
+    
   }
   
   // randomly assign non-asigned nodes
+  int nbno = 0;
   for (int k=0; k < nbSommets; ++k){
-    if (offspring[k] < 0)
+    if (offspring[k] < 0){
       offspring[k] = (rand()/(float)RAND_MAX) * nbColor;
+      ++nbno;
+    }
   }
+
+  printf("assign randomly: %d\n",nbno);
+  free(tmpParent);
+  free(classSize);
   
 }
 
-
-int distanceNogood(char* ngd, char** nogoods){
-  int accept = -1;
-
-  
-}
 
 /*!
  * create the offspring based on parents
@@ -952,7 +1020,7 @@ bool ea(char** graph){
     tmpSolution = malloc(sizeof(int)*nbSommets); 
     tmpNogood = malloc(sizeof(char)*nbSommets);
     //// crossover operator
-    crossover_random(populationSize, population, tmpSolution);
+    crossover_maximal(populationSize, population, tmpSolution);
     
     int crossCost = cost(tmpSolution, graph);
 
@@ -1059,6 +1127,18 @@ void testAlgo(char* filename){
     printf("feasible\n");
   else
     printf("found infeasible\n");
+
+  for (int i=0; i<populationSize;++i){
+    free(tPopulationColor[i]);
+  }
+
+  free(tPopulationColor);
+
+  for (int i=0; i<nbSommets;++i){
+    free(tConnect[i]);
+  }
+  
+  free(tConnect);
   
 }
 

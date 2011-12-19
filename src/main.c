@@ -16,6 +16,9 @@ int main (int argc, char * const argv[]) {
     exit(-1);
   }
 
+
+
+
   /////================================================= TESTING ============= BGN
   printf("TabuCol Testing================\n");
 	
