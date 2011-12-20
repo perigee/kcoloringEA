@@ -1229,7 +1229,7 @@ bool ea(char** graph){
     printf("parents in conflict:%d\n",nb);
 
     // create counterpart    
-    if (cent > (populationSize*2)){
+    if (cent > 70){
       cent = 0;
       tmpCounterpart = malloc(sizeof(int)*nbSommets); // create a counterpart of tmpSolution
       tmpNogoodCounterpart = malloc(sizeof(char)*nbSommets);
