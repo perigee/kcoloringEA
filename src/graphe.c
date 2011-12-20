@@ -17,7 +17,7 @@ int L=10;
 
 int nbColor=49;
 int populationSize=20;
-int nbLocalSearch=2000;
+int nbLocalSearch=1000;
 int Nb_Generation=10000;
 
 clock_t  time1=0;
@@ -1117,7 +1117,7 @@ void crossover_maximal(int nbParents, int** parents, int* offspring, char** grap
  * @param population the whole population
  * @param offspring carry out the created offspring
  */
-void selection(int** population, int** nogoods, char** graph, int* offspring, char* ngd){
+void selection(int** population, char** nogoods, char** graph, int* offspring, char* ngd){
     int min = -1;
     int index = -1;
     nogood(offspring,graph,ngd);
@@ -1258,7 +1258,6 @@ bool ea(char** graph){
 	} 
       }
       
-      int sim = sim
       
       selection(population, nogoods, graph, tmpCounterpart, tmpNogoodCounterpart);
     }
