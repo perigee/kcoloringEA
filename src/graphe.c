@@ -1257,7 +1257,9 @@ bool ea(char** graph){
 	  }
 	} 
       }
-
+      
+      int sim = sim
+      
       selection(population, nogoods, graph, tmpCounterpart, tmpNogoodCounterpart);
     }
 
