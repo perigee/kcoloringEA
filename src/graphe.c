@@ -17,7 +17,7 @@ int L=10;
 
 int nbColor=49;
 int populationSize=20;
-int nbLocalSearch=5000;
+int nbLocalSearch=2000;
 int Nb_Generation=10000;
 
 clock_t  time1=0;
@@ -601,24 +601,22 @@ void updateMove(int sommet, int colorOrigin, int colorCandidate,
 bool tabuCol(int* a, char** graph){
 
  
-  int** tGamma = malloc(sizeof(int)*nbSommets);
-  int** tTabu = malloc(sizeof(int)*nbSommets);
+  int** tGamma = malloc(sizeof(int*)*nbSommets);
+  int** tTabu = malloc(sizeof(int*)*nbSommets);
 
-  for (int i=0; i<nbSommets; ++i){
-    tGamma[i] = malloc(sizeof(int)*nbColor);
-    tTabu[i] = malloc(sizeof(int)*nbColor);
-  }
 
   int* tTmpColor = malloc(sizeof(int)*nbSommets);// store the temp color assignment
   int maxIteration = nbLocalSearch;
-
-  
-  //copy color assignment 
-  for (int i=0; i<nbSommets; ++i)
-    tTmpColor[i] = a[i];
+  int maxNoImpIteration = nbLocalSearch;
+ 
 
   // init Tabu and Gamma Tables
   for (int i=0; i<nbSommets; ++i) {
+   //copy color assignment     
+    tTmpColor[i] = a[i];
+
+    tGamma[i] = malloc(sizeof(int)*nbColor);
+    tTabu[i] = malloc(sizeof(int)*nbColor);
     for (int j=0; j<nbColor; ++j) {
 	tTabu[i][j]=-1;
 	tGamma[i][j] = 0;
@@ -635,7 +633,7 @@ bool tabuCol(int* a, char** graph){
   
   Move* move = malloc(sizeof(Move));
   // a always records best so far solution
-  for (int i=0;  i< maxIteration; ++i){
+  for (int i=0;  i< maxNoImpIteration ; ++i){
     
     move->sommet = -1;
     move->color = -1;
@@ -651,12 +649,14 @@ bool tabuCol(int* a, char** graph){
 
     //    printf("\t%d\t%d\n", obj,bestObj);
     
+    // in case find best delta 
     if( delta < 0 && obj+delta < bestObj){
       bestObj = obj+delta;
       for (int j=0; j<nbSommets; ++j){
 	a[j] = tTmpColor[j];
       }
-
+      
+      i = 0; // reset i if found best so far
       a[move->sommet] = move->color;
     }
 
@@ -838,27 +838,134 @@ int assign2partition(int* a, Node* node){
 
 
 
+bool hasUnsigned(int* a){
+  for (int i=0; i<nbSommets;++i)
+    if (a[i]<0) return true;
 
+  return false;
+}
 
+bool hasAssignedNeighbor(int node,int* a, char** graph){
+  for (int i=0; i<nbSommets;++i)
+    if (i!=node && graph[node][i] && a[i]>-1) return true;
+
+  return false;
+}
 
 
 /*!
- * conflict number of neighbor
- * @param color the candidate color for the node
- * @param indu the partial assigned solution
- * @param one column of graph adjacent matrix 
+ * inConflict
+ * @param node index of specific node
+ * @param a the individual
+ * @param graph adjacent matrix of the graph
  * @return the number of conflict neighbors
  */
-int conflictNeighbor(int color, int* indu, char* neighbors){
+int inConflict(int node, int* a, char** graph){
   int nb = 0;
-  
   for (int i=0; i<nbSommets;++i){
-    if (neighbors[i] && indu[i] == color) ++nb;
+    if (graph[node][i] && a[node] <0 && i!=node && a[i] == a[node])
+      ++nb;
   }
 
   return nb;
 }
 
+
+/*!
+ * hasConflict
+ * @param node index of specific node
+ * @param a the individual
+ * @param graph adjacent matrix of the graph
+ * @return true if there is conflict, otherwise false
+ */
+bool hasConflict(int node, int* a, char** graph){
+  int nb = 0;
+  for (int i=0; i<nbSommets;++i){
+    if (graph[node][i] && a[node] > -1 && a[i] == a[node])
+      return true;
+  }
+
+  return false;
+}
+
+
+
+void neh(int node, char** graph, int* offspring, int* a){
+  
+  if(a[node]<0){
+    // in case the node in conflict
+    if(hasConflict(node, offspring,graph)){
+      int minConflictIdx = -1;
+      int nbConflict = -1;
+      for (int i=0; i<nbColor;++i){
+	int nb = inConflict(i, a, graph);
+	if (nb < 1){ 
+	  minConflictIdx = i;
+	  break;
+	}
+      
+	if (nbConflict <0 || nbConflict > nb){
+	  minConflictIdx = i;
+	  nbConflict = nb;
+	}
+      
+      }
+
+      // assign current node
+      a[node] = minConflictIdx;
+
+      // color its neighbors
+      /*for (int n=0; n<nbSommets;++n){
+	if (a[n]<0 &&  graph[node][n]){
+
+	  minConflictIdx = -1;
+	  nbConflict = -1;
+	  for (int i=0; i<nbColor;++i){
+	    int nb = inConflict(i, a, graph);
+	    if (nb < 1){ 
+	      minConflictIdx = i;
+	      break;
+	    }
+      
+	    if (nbConflict <0 || nbConflict > nb){
+	      minConflictIdx = i;
+	      nbConflict = nb;
+	    }
+      
+	  }
+	  a[n] = minConflictIdx;
+	}
+      }*/
+    
+    }
+
+    // ============================================================= BGN
+    // in case the node has assigned neighbor
+    /*if (hasAssignedNeighbor(node,a,graph)){
+      int minConflictIdx = -1;
+      int nbConflict = -1;
+      for (int i=0; i<nbColor;++i){
+	int nb = inConflict(i, a, graph);
+	if (nb < 1){ 
+	  minConflictIdx = i;
+	  break;
+	}
+      
+	if (nbConflict <0 || nbConflict > nb){
+	  minConflictIdx = i;
+	  nbConflict = nb;
+	}
+      
+      }
+
+      // assign current node
+      a[node] = minConflictIdx;
+    }*/
+
+    // ============================================================= END
+  }
+
+}
 
 /*!
  * NEH algorithm for graph coloring
@@ -868,9 +975,52 @@ int conflictNeighbor(int color, int* indu, char* neighbors){
  * @param graph adjacent matrix 
  * @return the number of conflict edges
  */
-int neh(int* a, char** graph, int* counterpart){
+void counterpart(int* offspring, char** graph, int* counterpart){
 
+  // init counterpart
+  for (int i=0; i<nbSommets;++i){
+    counterpart[i] = -1;
+  }
   
+ 
+  for (int i=0; i<nbSommets;++i){
+    neh(i,graph,offspring,counterpart);
+  }
+
+  for (int i=0; i<nbSommets;++i){
+    if (counterpart[i]<0 && hasAssignedNeighbor(i,counterpart,graph)){
+      int minConflictIdx = -1;
+      int nbConflict = -1;
+      for (int i=0; i<nbColor;++i){
+	int nb = inConflict(i, counterpart, graph);
+	if (nb < 1){ 
+	  minConflictIdx = i;
+	  break;
+	}
+      
+	if (nbConflict <0 || nbConflict > nb){
+	  minConflictIdx = i;
+	  nbConflict = nb;
+	}
+      
+      }
+
+      // assign current node
+      counterpart[i] = minConflictIdx;
+    }
+  }
+
+  while(hasUnsigned(counterpart)){
+    int nb =0;
+    for (int i=0; i<nbSommets;++i){
+      if (counterpart[i] <0){
+	counterpart[i] = (rand()/(float)RAND_MAX) * nbColor;
+	++nb;
+      }
+    }    
+
+    printf("counter randomly: %d\n",nb);
+  }
 }
 
 
@@ -889,7 +1039,7 @@ void initialArray(int* a,int size,int value){
  * @param offspring carry out the created offspring
  * @return the number of conflicted edges
  */
-void crossover_maximal(int nbParents, int** parents, int* offspring){
+void crossover_maximal(int nbParents, int** parents, int* offspring, char** graph){
 
   // initialize the offspring  
   initialArray(offspring,nbSommets,-1);
@@ -900,7 +1050,8 @@ void crossover_maximal(int nbParents, int** parents, int* offspring){
 
   int* classSize = malloc(sizeof(int)*nbColor);
 
-  
+
+
   // initial the 
   for (int i=0; i<nbColor;++i){
     // get the random id of parent
@@ -908,6 +1059,9 @@ void crossover_maximal(int nbParents, int** parents, int* offspring){
     int maxColorIdx = -1;
     int maxClassSize = 0;
     initialArray(classSize,nbColor,0);
+
+
+    
     for (int j=0; j<nbSommets;++j){
       if (tmpParent[j]> -1 ){
 	++classSize[parents[jth][j]];
@@ -918,10 +1072,23 @@ void crossover_maximal(int nbParents, int** parents, int* offspring){
       }
     }
 
+
     for (int j=0; j<nbSommets;++j){
       if (tmpParent[j] > -1 && parents[jth][j] == maxColorIdx){
-	offspring[j] = i;
-	tmpParent[j] = -1; // remove the node from waiting-assigned node list
+	bool inConflict = false;
+	for (int k=0; k<nbSommets;++k){
+	  // only assigned non-conflict node
+	  if (graph[j][k] && parents[jth][j] == parents[jth][k]){
+	    inConflict = true;
+	    break;
+	  }
+	}
+
+	if (!inConflict){
+	  offspring[j] = i;
+	  tmpParent[j] = -1; // remove the node from waiting-assigned node list
+	}
+	
       }
     }
 
@@ -930,15 +1097,15 @@ void crossover_maximal(int nbParents, int** parents, int* offspring){
   }
   
   // randomly assign non-asigned nodes
-  int nbno = 0;
+  //int nbno = 0;
   for (int k=0; k < nbSommets; ++k){
     if (offspring[k] < 0){
       offspring[k] = (rand()/(float)RAND_MAX) * nbColor;
-      ++nbno;
+      //    ++nbno;
     }
   }
 
-  printf("assign randomly: %d\n",nbno);
+  //  printf("assign randomly: %d\n",nbno);
   free(tmpParent);
   free(classSize);
   
@@ -949,35 +1116,28 @@ void crossover_maximal(int nbParents, int** parents, int* offspring){
  * create the offspring based on parents
  * @param population the whole population
  * @param offspring carry out the created offspring
- * @return the number of conflicted edges
  */
-int selection(int** population, int* offspring){
-  // randomly choose a parents number between [2, populationSize];
-  int nbParents = (rand()/(float)RAND_MAX) * (populationSize -2) + 2 ; // randomly choose
-  
-  int** parentsBase = malloc(sizeof(int*)*nbParents);
-  int* parentsClassValue = malloc(sizeof(int*)*nbParents);
-  
-  for (int i = 0; i< nbParents; ++i){
-    int* tmp = malloc(sizeof(int*)*(nbColor+1));
-    parentsClassValue[i] = tmp;
-  }
+void selection(int** population, int** nogoods, char** graph, int* offspring, char* ngd){
+    int min = -1;
+    int index = -1;
+    nogood(offspring,graph,ngd);
+    printf("distp:");
+    for (int i=0; i<populationSize; ++i){
+      int distance = similarityNogood(ngd, nogoods[i]);
+      printf("\t%d",distance);
+      if (min<0 || min < distance){
+	min = distance;
+	index = i;
+      }      
+    }
 
-  // traverse the individual in the population
-  // find the purpose individual as parents
-  for (int i=0; i < populationSize; ++i){
-    // choose the parents
-    
-  }
-  
-  // free the dynamic memory
-  free(parentsBase);
-  for (int i = 0; i< nbParents; ++i){
-    free(parentsClassValue[i]);
-    parentsClassValue[i] = NULL;
-  }
-  free(parentsClassValue);
+    printf("\n");
 
+    // update the population
+    free(population[index]);
+    free(nogoods[index]);
+    population[index] = offspring;
+    nogoods[index] = ngd;   
 }
 
 
@@ -1004,23 +1164,27 @@ bool ea(char** graph){
   int* bestSolution = malloc(sizeof(int)*nbSommets);
   int bCost = -1;
   int* tmpSolution;
+  int* tmpCounterpart;
   int tCost = -1;
   
   // initialize all nogoods 
   char** nogoods = malloc(sizeof(int*)*populationSize);
   char* tmpNogood;
+  char* tmpNogoodCounterpart;
   for (int i=0; i< populationSize; ++i){
     nogoods[i] = malloc(sizeof(char)*nbSommets);
     nogood(population[i], graph, nogoods[i]);
   }
 
   // iterate the generation
+  int cent = 0;
   for (int g = 0; g < Nb_Generation; ++g){
-
+    ++cent;
     tmpSolution = malloc(sizeof(int)*nbSommets); 
+
     tmpNogood = malloc(sizeof(char)*nbSommets);
     //// crossover operator
-    crossover_maximal(populationSize, population, tmpSolution);
+    crossover_maximal(populationSize, population, tmpSolution, graph);
     
     int crossCost = cost(tmpSolution, graph);
 
@@ -1047,27 +1211,56 @@ bool ea(char** graph){
     //// selection operator: update population
     //printf("childNogood:%d\n",nogood(tmpSolution, graph, tmpNogood)); //convert the nogood
     // traverse all the nogoods
-    int min = -1;
-    int index = -1;
-    nogood(tmpSolution,graph,tmpNogood);
-    printf("distp:");
-    for (int i=0; i<populationSize; ++i){
-      int distance = similarityNogood(tmpNogood, nogoods[i]);
-      printf("\t%d",distance);
-      if (min<0 || min < distance){
-	min = distance;
-	index = i;
-      }      
+    selection(population, nogoods, graph, tmpSolution, tmpNogood);
+
+    int nb = 0;
+    for (int n=0; n<nbSommets;++n){
+      bool isViolated = false;
+      for (int m=0; m<populationSize; ++m){
+	if (hasConflict(n,population[m],graph)){
+	      isViolated = true;
+	      ++nb;
+	      break;
+	}
+	
+      }
     }
 
-    printf("\n");
+    printf("parents in conflict:%d\n",nb);
 
-    // update the population
-    free(population[index]);
-    free(nogoods[index]);
-    population[index] = tmpSolution;
-    nogoods[index] = tmpNogood;
-    
+    // create counterpart    
+    if (cent > (populationSize*2)){
+      cent = 0;
+      tmpCounterpart = malloc(sizeof(int)*nbSommets); // create a counterpart of tmpSolution
+      tmpNogoodCounterpart = malloc(sizeof(char)*nbSommets);
+      counterpart(bestSolution, graph, tmpCounterpart);
+
+      int ccost = cost(tmpCounterpart,graph);
+
+      printf("counterpart: %d\t",ccost);
+
+
+      if (tabuCol(tmpCounterpart,graph)){
+	bestSolution = tmpCounterpart;
+	bCost = 0;
+	break;
+      }else{
+
+	tCost = cost(tmpCounterpart,graph);
+	printf("%d\n",tCost);
+
+	if (!setBest || bCost > tCost){
+	  if (!setBest) setBest = true;
+	  for (int i = 0; i<nbSommets; ++i){
+	    bestSolution[i] = tmpCounterpart[i];
+	    bCost = tCost;
+	  }
+	} 
+      }
+
+      selection(population, nogoods, graph, tmpCounterpart, tmpNogoodCounterpart);
+    }
+
     printf("costg:\t%d\t%d\t%d\t%d\n",g,crossCost,tCost,bCost);
     printf("costp:");
     for (int i=0; i<populationSize;++i){
@@ -1079,15 +1272,14 @@ bool ea(char** graph){
 
   // free the dynamic memory
   for (int i=0; i<populationSize; ++i){
-    free(population[i]);
     free(nogoods[i]);
-    population[i] = NULL;
     nogoods[i] = NULL;
   }
 
-  free(population);
+
   free(nogoods);
-  
+  //free(tColor);
+  free(bestSolution);
 
   if (bCost != 0)
     return false;
@@ -1130,12 +1322,14 @@ void testAlgo(char* filename){
 
   for (int i=0; i<populationSize;++i){
     free(tPopulationColor[i]);
+    tPopulationColor[i] = NULL;
   }
 
   free(tPopulationColor);
-
+  
   for (int i=0; i<nbSommets;++i){
     free(tConnect[i]);
+    tConnect[i] = NULL;
   }
   
   free(tConnect);
