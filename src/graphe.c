@@ -141,6 +141,56 @@ void loadGraphe(char* filename){
 }
 
 
+void loadGrapheSimple(char* filename){	
+	openfile(filename);
+
+	
+	char* buf;
+	char* tok;
+	
+	int nbArretesAjoutee=0;
+	
+	while (buf=readUncommentedLine()) {
+		tok=getNextToken();
+		
+		if(*tok=='p'){ // lecture de la taille du graphe
+			tok=getNextToken(); //pas interessant
+			tok=getNextToken();
+			nbSommets=atoi(tok);
+			tok=getNextToken();
+			nbArretes=atoi(tok);
+			
+			// creation du graphe
+			tConnect=malloc(sizeof(char*) * nbSommets);
+			for(int i=0; i<nbSommets; i++){
+				tConnect[i]=malloc(sizeof(char) * nbSommets);
+				for (int j=0; j<nbSommets; j++)
+					tConnect[i][j]=0;
+			}
+			
+			
+			printf("d: Sommets ajoutes: %d\n", nbSommets);
+		}
+		
+		if(*tok=='e'){ // lecture d'une arrete
+			tok=getNextToken();
+			int v1=atoi(tok);
+			tok=getNextToken();
+			int v2=atoi(tok);
+			tConnect[v1-1][v2-1]=1;
+			tConnect[v2-1][v1-1]=1;
+			nbArretesAjoutee++;
+		}
+	}
+	
+	printf("d: Arretes ajoutees: %d / %d\n",nbArretesAjoutee ,nbArretes);
+	closefile();
+
+
+}
+
+
+
 void cleanMatrix(){
 	for(int i=0; i<nbSommets; i++){
 		free(tConnect[i]);

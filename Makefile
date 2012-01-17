@@ -1,12 +1,12 @@
 TARGET = eagraph #executive file name
 CC = gcc
-CFLAGS = -Wall -std=c99 #need the iso99 standard 
+CFLAGS = -O2 -Wall -std=c99 #need the iso99 standard 
 VPATH = src/util:src #space seperate the different dirs
 #BIN_DIR = bin
 OBJECTS = $(wildcard *.o)
 
-all : main.o gfile.o graphe.o analyseGraphe.o
-	$(CC) -o $(TARGET) $^
+all : main.o algo.o gfile.o graphe.o analyseGraphe.o
+	$(CC) -o $(TARGET) $^ -pg -O2 -march=pentium4
 
 #create obj files
 main.o: main.c gfile.h graphe.h
@@ -17,9 +17,15 @@ gfile.o : gfile.c gfile.h
 	$(CC) -c $(CFLAGS) $< -o $@
 graphe.o: graphe.c graphe.h
 	$(CC) -c $(CFLAGS) $< -o $@
+algo.o : algo.c algo.h
+	$(CC) -c $(CFLAGS) $< -o $@
 analyseGraphe.o: analyseGraphe.c analyseGraphe.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 .PHONY: clean
 clean: 
 	rm  $(TARGET) $(OBJECTS)
+
+
+
+

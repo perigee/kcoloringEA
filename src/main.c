@@ -2,9 +2,30 @@
 #include <stdlib.h>
 #include <time.h>
 #include "util/gfile.h"
-#include "graphe.h"
+//#include "graphe.h"
+#include "algo.h"
+
+
+
 
 int main (int argc, char * const argv[]) {
+
+
+  //================================== IIS inspired algorithm ================ BGN
+  
+
+  srand(time(NULL));
+  printf("d: Procedure de calcul \n");
+  if(argc<5){
+    printf("Erreur d'utilisation !!\n");
+    exit(-1);
+  }
+  testAlgo(argv[1], argv[2],argv[3],argv[4],argv[5],argv[6]);
+  exit(0);
+  //================================== IIS inspired algorithm ================ END
+
+
+  
 
 	printf("Procedure de calcul\n");
 	
