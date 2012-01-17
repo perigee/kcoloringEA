@@ -24,6 +24,7 @@ int populationSize;
 int nbLocalSearch;
 double alpha;
 
+
 int withBoucle;
 /////////////////////////////////
 
@@ -60,6 +61,7 @@ int* tVisitesColor; // pour chaque couleur contient le nb de fois qu'elle a ete 
 
 
 void loadGraphe();
+void loadGrapheSimple();
 void cleanMatrix();
 void buildVoisins();
 void initRandomColor();

@@ -3,7 +3,7 @@
 #include <time.h>
 #include "util/gfile.h"
 //#include "graphe.h"
-#include "algo.h"
+#include "ealgo.h"
 
 
 
@@ -13,7 +13,7 @@ int main (int argc, char * const argv[]) {
 
   //================================== IIS inspired algorithm ================ BGN
   
-
+  /*
   srand(time(NULL));
   printf("d: Procedure de calcul \n");
   if(argc<5){
@@ -21,7 +21,7 @@ int main (int argc, char * const argv[]) {
     exit(-1);
   }
   testAlgo(argv[1], argv[2],argv[3],argv[4],argv[5],argv[6]);
-  exit(0);
+  exit(0);*/
   //================================== IIS inspired algorithm ================ END
 
 

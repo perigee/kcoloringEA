@@ -8,8 +8,9 @@
  */
 
 #include <stdlib.h>
-#include "graphe.h"
 #include "util/gfile.h"
+#include "graphe.h"
+
 
 
 
@@ -18,8 +19,8 @@ clock_t  time2=0;
 clock_t  time3=0;
 
 
-float lambda=0.6;
-int L=10;
+float lambda = 0.6;
+int L = 10;
 
 
 void loadGraphe(char* filename){	
