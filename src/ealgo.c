@@ -1272,7 +1272,6 @@ void generate_sub_simple(int *a, char **graph){
   // randomly remove the conflict nodes one by one, 
   // until a consistent partial solution 
   
-  int nbConflict = 1;
 
   while(hasConflictSolution(a,graph)){
     int index = randomConflict(a, graph);
@@ -1447,8 +1446,6 @@ void crossover_sub_simple(int nbParents, int** parents, int* offspring, char** g
 }
 
 
-
-
 /*!
  * mutation operator dedicated to create a subproblem based solution
  * @param a an individual
@@ -1474,6 +1471,120 @@ bool mutation_sub(int *a, char **graph, int removeColorNb){
 
   return feasible;
 }
+
+
+/*!
+ * crossover inspired by the IIS detection
+ * the computational time of local search, at sametime, it
+ * reduces the diversity
+ * @param nbParents the number of whole population
+ * @param parents the whole population
+ * @param offspring carry out the created offspring
+ * @param graph adjacent matrix
+ * @param freqParents counter the participation number of each parent
+ */
+
+void crossover_iis(int nbParents, int** parents, int* offspring, char** graph, int* freqParents){
+  
+  // initialize 
+  initialArray(offspring, nbSommets, -1);
+  
+  
+  int nbCross = (rand()/(float)RAND_MAX) * 3;
+  nbCross += 2;
+  int* idxParents = malloc(sizeof(int)*nbCross);
+  randomParents(nbCross, idxParents, nbParents);
+
+  int **pcopies = malloc(sizeof(int*)*nbCross);
+  
+  for (int i=0; i<nbCross; ++i){
+    pcopies[i] = malloc(sizeof(int)*nbSommets);
+    for (int j=0; j<nbSommets; ++j){
+      pcopies[i][j] = parents[idxParents[i]][j];
+    }
+    
+    if (i>0) 
+      generate_sub_simple(pcopies[i], graph);
+
+  }
+
+  // force first parent
+  int removeColorNb = (rand()/(float)RAND_MAX) * 3;
+  ++removeColorNb;
+  mutation_sub(pcopies[0],graph,removeColorNb);
+
+
+  int colorIdxIIS = maxColorClass(pcopies[0], offspring, graph);
+
+  for (int i=0; i<nbSommets; ++i){
+    if(pcopies[0][i] !=colorIdxIIS) continue;
+
+    offspring[i] = nbColor-1;
+  }
+  
+  
+
+  Move* move = malloc(sizeof(Move));
+  
+  for (int i=1; i<nbColor-1; ++i){
+
+
+    // need more random choose?
+
+    maxColorClasses(nbCross, pcopies, offspring, graph, move);
+
+    int ith = move->sommet;
+    int colorIdx = move->color;
+
+    if (ith < 0 || colorIdx < 0){
+      printf("=================================================================== problme:%d\t%d\n",ith, colorIdx);
+      //break;
+    }
+
+    ++freqParents[idxParents[ith]];
+
+    //printf("after: ");
+    for (int j=0; j<nbSommets;++j){
+      if (offspring[j] < 0 && pcopies[ith][j] == colorIdx ){
+	//printf("%d:%d\t",j,pcopies[ith][j]);
+	offspring[j] = i;
+      }
+    }
+    //printf("\n");
+  }
+  
+  // find the maximal cardinality color class
+  
+
+  // complete the partial solution ===============
+  if (true){
+  for (int i=0; i<nbSommets;++i){
+    if (offspring[i] < 0){
+      int col = (rand()/(float)RAND_MAX) * (nbColor) ;
+      offspring[i] = col;
+    }
+  }
+  }
+
+  //printf("number of partial nodes: %d\t%d\t%d\n", totalPartial, randomAssigned, conflictNb);
+
+  for (int i=0; i<nbCross; ++i){
+    free(pcopies[i]);
+    pcopies[i] = NULL;
+  }
+
+  free(move);
+  free(pcopies);
+  free(idxParents);
+  move = NULL;
+  pcopies = NULL;
+  idxParents = NULL;
+  //printf("out ngood crossover\n");
+}
+
+
+
+
 
 
 
@@ -1553,7 +1664,7 @@ bool ea(char** graph){
   int bCost = -1;
   int tCost = -1;
   int crossCost = -1;
- 
+  
 
   // iterate the generation
   int cent = 0;
@@ -1572,13 +1683,14 @@ bool ea(char** graph){
       
 
     //// crossover operator ==================================== BGN
-
-    if (cent < switchIteration){
+    if (true){
+      //if (cent < switchIteration){
       ++cent;
       //crossover_maximal(populationSize, population, tmpSolution, graph, freqParents);    
       //crossover_nogood(populationSize, population, tmpSolution, graph, freqParents);
       //crossover_sub(populationSize, population, tmpSolution, graph, freqParents);
-      crossover_sub_simple(populationSize, population, tmpSolution, graph, freqParents);
+      //crossover_sub_simple(populationSize, population, tmpSolution, graph, freqParents);
+      crossover_iis(populationSize, population, tmpSolution, graph, freqParents);
 
       crossCost = cost(tmpSolution, graph);
 
@@ -1592,7 +1704,7 @@ bool ea(char** graph){
       
  	for (int c=0; c<nbSommets;++c){
 	  bestSolution[c] = tmpSolution[c];
-	  printf("s: %d\t%d\n",c,bestSolution[c]);
+	  //printf("s: %d\t%d\n",c,bestSolution[c]);
 	  if (bestSolution[c]< 0){
 	    printf("unsigned found\n");
 	    exit(0);
@@ -1634,8 +1746,8 @@ bool ea(char** graph){
     
     // mutation operator (subproblem )============================
     
-    //if (true){
-    if (cent > switchIteration -1){
+    if (false){
+      //if (cent > switchIteration -1){
 
       if (removeColor > MaxRemoveColor){
 	removeColor = 0;
@@ -1767,9 +1879,14 @@ bool ea(char** graph){
 
 
   // free the dynamic memory
+
+
   free(tmpSolution);
+
   free(bestSolution);
+
   free(freqParents);
+
 
   if (bCost != 0)
     return false;

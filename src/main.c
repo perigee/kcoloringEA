@@ -21,7 +21,7 @@ int main (int argc, char * const argv[]) {
     exit(-1);
   }
   testAlgo(argv[1], argv[2],argv[3],argv[4],argv[5],argv[6]);
-  exit(0);
+  return 0;
   //================================== IIS inspired algorithm ================ END
 
 

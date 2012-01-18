@@ -186,8 +186,6 @@ void loadGrapheSimple(char* filename){
 	
 	printf("d: Arretes ajoutees: %d / %d\n",nbArretesAjoutee ,nbArretes);
 	closefile();
-
-
 }
 
 
