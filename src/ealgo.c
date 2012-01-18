@@ -567,7 +567,40 @@ void randomParents(int chooseNb, int *parentsChosen, int nbParents){
     }
     
     parentsChosen[i] = iidxx;
+    //printf("random choose: %d\n",iidxx);
   }
+}
+
+
+void lessFreqParents(int chooseNb, int *parentsChosen, int nbParents, 
+		     int **parents, int *freqParents){
+  
+  int sum = 0;
+  for (int i=0; i<nbParents; ++i){
+    sum += freqParents[i];
+  }
+  
+  sum = sum/nbParents;
+
+
+  //printf("need parents:%d\n",chooseNb);
+  
+  int j=0;
+  for (int i=0; i<nbParents; ++i){
+    if (freqParents[i] <= sum){
+      parentsChosen[j] = i;
+      //printf("less  choose: %d\n",i);
+      ++j;
+    }
+
+    if (j<chooseNb) continue;
+    else break;
+  }
+
+  if (j<chooseNb){
+    return randomParents(chooseNb, parentsChosen, nbParents);
+  }
+
 }
 
 /*!
@@ -1344,90 +1377,6 @@ void crossover_sub(int nbParents, int** parents, int* offspring, char** graph, i
 
 
 /*!
- * crossover inspired by the IIS detection
- * the computational time of local search, at sametime, it
- * reduces the diversity
- * @param nbParents the number of whole population
- * @param parents the whole population
- * @param offspring carry out the created offspring
- * @param graph adjacent matrix
- * @param freqParents counter the participation number of each parent
- */
-
-void crossover_sub_simple(int nbParents, int** parents, int* offspring, char** graph, int* freqParents){
-  
-  // initialize 
-  initialArray(offspring, nbSommets, -1);
-  
-  
-  int nbCross = (rand()/(float)RAND_MAX) * 3;
-  nbCross += 2;
-  int* idxParents = malloc(sizeof(int)*nbCross);
-  randomParents(nbCross, idxParents, nbParents);
-
-  int **pcopies = malloc(sizeof(int*)*nbCross);
-  
-  for (int i=0; i<nbCross; ++i){
-    pcopies[i] = malloc(sizeof(int)*nbSommets);
-    for (int j=0; j<nbSommets; ++j){
-      pcopies[i][j] = parents[idxParents[i]][j];
-    }
-    
-    generate_sub_simple(pcopies[i], graph);
-  }
-
-  
-  
-
-  Move* move = malloc(sizeof(Move));
-  
-  for (int i=1; i<nbColor; ++i){
-
-
-    // need more random choose?
-
-    maxColorClasses(nbCross, pcopies, offspring, graph, move);
-
-    int ith = move->sommet;
-    int colorIdx = move->color;
-    ++freqParents[idxParents[ith]];
-
-    for (int j=0; j<nbSommets;++j){
-      if (offspring[j] < 0 && pcopies[ith][j] == colorIdx ){
-	  offspring[j] = i;
-      }
-    }
-  }
-  
-  // find the maximal cardinality color class
-  
-
-  // complete the partial solution =============== 
-  for (int i=0; i<nbSommets;++i){
-    if (offspring[i] < 0){
-      int col = (rand()/(float)RAND_MAX) * (nbColor) ;
-      offspring[i] = col;
-    }
-  }
-
-  //printf("number of partial nodes: %d\t%d\t%d\n", totalPartial, randomAssigned, conflictNb);
-
-  for (int i=0; i<nbCross; ++i){
-    free(pcopies[i]);
-    pcopies[i] = NULL;
-  }
-
-  free(move);
-  free(pcopies);
-  free(idxParents);
-  move = NULL;
-  pcopies = NULL;
-  idxParents = NULL;
-  //printf("out ngood crossover\n");
-}
-
-
-/*!
  * mutation operator dedicated to create a subproblem based solution
  * @param a an individual
  * @param graph adjacent martrix graph
@@ -1469,12 +1418,51 @@ void crossover_iis(int nbParents, int** parents, int* offspring, char** graph, i
   
   // initialize 
   initialArray(offspring, nbSommets, -1);
+
+  /*
+  int *iisParent = malloc(sizeof(int)*nbSommets);
+  int pIdx = (rand()/(float)RAND_MAX) * nbParents;
+
+  for (int i=0; i<nbSommets; ++i){
+    iisParent[i] = parents[pIdx][i];
+  }
+
+  generate_sub_simple(iisParent, graph);
+
   
   
-  int nbCross = (rand()/(float)RAND_MAX) * 2;
+  // force first parent
+  int removeColorNb = (rand()/(float)RAND_MAX) * 2;
+  ++removeColorNb;
+
+
+  if (removeColorNb > nbColor-1)
+    removeColorNb = 1;
+
+
+
+  printf("remove color nb: %d\n",removeColorNb);
+  //removeColorNb = 1;
+  mutation_sub(iisParent,graph,removeColorNb);
+  generate_sub_simple(iisParent, graph);
+
+  int colorIdxIIS = maxColorClass(iisParent, offspring, graph);
+
+  for (int i=0; i<nbSommets; ++i){
+    if(iisParent[i] !=colorIdxIIS) continue;
+
+    offspring[i] = nbColor-1;
+  }
+
+  free(iisParent);
+  */
+  
+  int nbCross = (rand()/(float)RAND_MAX) * 3;
   nbCross += 2;
   int* idxParents = malloc(sizeof(int)*nbCross);
-  randomParents(nbCross, idxParents, nbParents);
+
+  //randomParents(nbCross, idxParents, nbParents);
+  lessFreqParents(nbCross, idxParents, nbParents, parents, freqParents);
 
   int **pcopies = malloc(sizeof(int*)*nbCross);
   
@@ -1485,33 +1473,10 @@ void crossover_iis(int nbParents, int** parents, int* offspring, char** graph, i
     }
     
     //if (i>0) 
-    //generate_sub_simple(pcopies[i], graph);
+    generate_sub_simple(pcopies[i], graph);
 
   }
 
-  // force first parent
-  int removeColorNb = (rand()/(float)RAND_MAX) * 3;
-  removeColorNb += 2;
-
-
-  //if (removeColorNb > nbColor-1)
-    removeColorNb = 1;
-
-
-
-  printf("remove color nb: %d\n",removeColorNb);
-  //removeColorNb = 1;
-  mutation_sub(pcopies[0],graph,removeColorNb);
-
-  //generate_sub_simple(pcopies[0], graph);
-
-  int colorIdxIIS = maxColorClass(pcopies[0], offspring, graph);
-
-  for (int i=0; i<nbSommets; ++i){
-    if(pcopies[0][i] !=colorIdxIIS) continue;
-
-    offspring[i] = nbColor-1;
-  }
   
   
 
@@ -1532,7 +1497,9 @@ void crossover_iis(int nbParents, int** parents, int* offspring, char** graph, i
       break;
     }
 
-    if (ith != 0)
+    //printf("parent id:%d\t%d\n",idxParents[ith], freqParents[idxParents[ith]]);
+
+    //if (ith != 0)
       ++freqParents[idxParents[ith]];
 
     //printf("after: ");
@@ -1662,7 +1629,7 @@ bool ea(char** graph){
   int cent = 0;
   bool switchX = true; // should be true
   int gen = 0; // crossover number
-  int switchIteration = 100;
+  int switchIteration = populationSize/2;
 
   int MaxRemoveColor = 5;
   int MinRemoveColor = 0;
@@ -1675,8 +1642,8 @@ bool ea(char** graph){
       
 
     //// crossover operator ==================================== BGN
-    if (true){
-      //if (cent < switchIteration){
+    //if (true){
+    if (cent < switchIteration){
       ++cent;
       //crossover_maximal(populationSize, population, tmpSolution, graph, freqParents);    
       //crossover_nogood(populationSize, population, tmpSolution, graph, freqParents);
@@ -1738,31 +1705,22 @@ bool ea(char** graph){
     
     // mutation operator (subproblem )============================
     
-    if (false){
-      //if (cent > switchIteration -1){
-
-      if (removeColor > MaxRemoveColor){
-	removeColor = 0;
-	++MaxRemoveColor;
-	//++MinRemoveColor;
-	removeColor = MinRemoveColor;
-      }
+    //if (false){
+    if (cent > switchIteration -1){
 
 
-      int tval = (rand()/(float)RAND_MAX) * 10 ;
-      if (tval > 4)
-	removeColor = 1;
-      else 
-	removeColor = 2;
-
-      removeColor = (rand()/(float)RAND_MAX) * 3 ;
+      int removeColor = (rand()/(float)RAND_MAX) * 3 ;
       ++removeColor;
+
+      
+      if (removeColor > nbColor-1)
+	removeColor = 1;
 
       cent = 0;
       //if (mutation_iteration != MAX_LocalSearch_Iteration && tval > 4){
       //printf("in mutation sub\n");
 
-      for (int mi=0; mi<populationSize/2;++mi){
+      for (int mi=0; mi<1;++mi){
       
 	int jth;// = (rand()/(float)RAND_MAX) * populationSize;
       
@@ -1782,7 +1740,7 @@ bool ea(char** graph){
 	bool mutFeasible =false;
 
 	
-	tval = 10;
+	int tval = 10;
 	if (tval > 6){
 	  // re-introduce best solution found
 	  for (int c=0; c<nbSommets;++c){
@@ -1861,7 +1819,7 @@ bool ea(char** graph){
     printf("costp:");
     for (int i=0; i<populationSize;++i){
       int cx = cost(population[i],graph);
-      printf("\t%d",cx);
+      printf("\t%d[%d]",cx,freqParents[i]);
     }
     printf("\n");
   }
@@ -1982,18 +1940,19 @@ void testShortest(char** graph){
 void testAlgo(char *filename, char *inNbColor, char *inPopuSize, 
 	      char *inLSIter, char *inMaxLSIter, char *inGenItr){
 
-  /*  
+    
   nbColor = atoi(inNbColor);
-  populationSize = atoi(inPopuSize);
-  nbLocalSearch = atoi(inLSIter);
-  MAX_LocalSearch_Iteration = atoi(inMaxLSIter);
-  Nb_Generation = atoi(inGenItr);*/
+  
+  //populationSize = atoi(inPopuSize);
+  //nbLocalSearch = atoi(inLSIter);
+  //MAX_LocalSearch_Iteration = atoi(inMaxLSIter);
+  //Nb_Generation = atoi(inGenItr);
 
-  nbColor = 48;
-  populationSize = 20;
+  //nbColor = 48;
+  populationSize = 10;
   nbLocalSearch = 5000;
   MAX_LocalSearch_Iteration = 10000;
-  Nb_Generation = 1000;
+  Nb_Generation = 10000;
 
   printf("d: nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tNbGeneration:%d\n",
 	 nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,Nb_Generation);
