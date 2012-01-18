@@ -15,6 +15,12 @@ int LValue = 10;
 
 
 
+void initialArray(int* a,int size,int value){
+  for (int i=0; i<size;++i){
+    a[i] = value;
+  }
+}
+
 
 /*!
  * All pairs shortest path
@@ -151,17 +157,26 @@ int bestMove(Move* move, int** tGamma,  int** tTabu, int* individual, int colorN
 	  bestCnt = 1;
 	}else if (minGamma == tGamma[i][j]){
 	  ++bestCnt;
-	  int tval=(rand()/(float)RAND_MAX) * 100 ;
+	  double tval=(rand()/(double)RAND_MAX);
+
 	  //if (tval > 100/bestCnt){
-	  if (tval > 100/bestCnt){
+	  if (tval < 1/(double)bestCnt){
 	    tmpSommet = i; 
 	    tmpColor = j;
 	  }
 	}
       }
 
-      // update delta if necessary
-      if (minGamma < 0) continue;
+      // update delta if necessary, in case of all tabu
+      if (minGamma < 0){
+	int color = individual[i];
+	while (color == individual[i])
+	  color = (rand()/(float)RAND_MAX)*colorNB;
+
+	minGamma = tGamma[i][color];
+        tmpSommet = i;
+	tmpColor = color;
+      } 
 
       if (!isSet || delta > minGamma - tGamma[i][individual[i]]){
 	if (!isSet) isSet = true;
@@ -174,8 +189,9 @@ int bestMove(Move* move, int** tGamma,  int** tTabu, int* individual, int colorN
       }else if (delta == minGamma - tGamma[i][individual[i]]){
 	// 
 	++bestVarCnt;
-	int tval=(rand()/(float)RAND_MAX) * 100 ;
-	if (tval > 100/bestVarCnt){
+	double tval=(rand()/(double)RAND_MAX);
+
+	if (tval < 1/(double)bestVarCnt){
 	  move->sommet = tmpSommet;
 	  move->color =  tmpColor;
 	}
@@ -341,38 +357,6 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration){
 
 
 
-/*!
- * calculate the distance between two individual
- * How to measure:
- * @param a a comparing individual 
- * @param b another comparing individual
- * @return the value of similarity
- */
-int distance(int* a, int* b){
-  int dist = -1;
-  
-
-  return dist;
-}
-
-/*!
- * choose the parent based on the sample's nogoods 
- * @return true the qualified parent, false otherwise
- */
-bool chooseParentNogood(int* parent, char* ngd, char** graph){
-  char* pNgd = malloc(sizeof(char)*nbSommets);
-  nogood(parent, graph, pNgd);
-  
-  // compute the distance
-  int dst = distance(pNgd, ngd);
-  
-  for (int i=0; i<nbSommets; ++i){
-    
-  }
-}
-
-
-
 
 bool hasUnsigned(int* a){
   for (int i=0; i<nbSommets;++i)
@@ -491,7 +475,8 @@ int maxColorClass( int *a, int *b, char **graph){
 }
 
 
-void maxColorsClasses( int nbParent, int *chosenParent,  int **parents, int *b, char **graph, Move *move){
+void maxColorsClasses( int nbParent, int *chosenParent,  int **parents, 
+		       int *b, char **graph, Move *move){
   
   register int *classSize = malloc(sizeof(int)*nbColor);
   
@@ -525,7 +510,8 @@ void maxColorsClasses( int nbParent, int *chosenParent,  int **parents, int *b, 
 }
 
 
-void maxColorClasses( int nbParent, int **parents, int *b, char **graph, Move *move){
+void maxColorClasses( int nbParent, int **parents, int *b, 
+		      char **graph, Move *move){
   
   register int *classSize = malloc(sizeof(int)*nbColor);
   
@@ -795,11 +781,6 @@ void counterpart(int* offspring, char** graph, int* counterpart){
 }
 
 
-void initialArray(int* a,int size,int value){
-  for (int i=0; i<size;++i){
-    a[i] = value;
-  }
-}
 
 
 /*!
@@ -1490,7 +1471,7 @@ void crossover_iis(int nbParents, int** parents, int* offspring, char** graph, i
   initialArray(offspring, nbSommets, -1);
   
   
-  int nbCross = (rand()/(float)RAND_MAX) * 3;
+  int nbCross = (rand()/(float)RAND_MAX) * 2;
   nbCross += 2;
   int* idxParents = malloc(sizeof(int)*nbCross);
   randomParents(nbCross, idxParents, nbParents);
@@ -1503,16 +1484,26 @@ void crossover_iis(int nbParents, int** parents, int* offspring, char** graph, i
       pcopies[i][j] = parents[idxParents[i]][j];
     }
     
-    if (i>0) 
-      generate_sub_simple(pcopies[i], graph);
+    //if (i>0) 
+    //generate_sub_simple(pcopies[i], graph);
 
   }
 
   // force first parent
   int removeColorNb = (rand()/(float)RAND_MAX) * 3;
-  ++removeColorNb;
+  removeColorNb += 2;
+
+
+  //if (removeColorNb > nbColor-1)
+    removeColorNb = 1;
+
+
+
+  printf("remove color nb: %d\n",removeColorNb);
+  //removeColorNb = 1;
   mutation_sub(pcopies[0],graph,removeColorNb);
 
+  //generate_sub_simple(pcopies[0], graph);
 
   int colorIdxIIS = maxColorClass(pcopies[0], offspring, graph);
 
@@ -1538,10 +1529,11 @@ void crossover_iis(int nbParents, int** parents, int* offspring, char** graph, i
 
     if (ith < 0 || colorIdx < 0){
       printf("=================================================================== problme:%d\t%d\n",ith, colorIdx);
-      //break;
+      break;
     }
 
-    ++freqParents[idxParents[ith]];
+    if (ith != 0)
+      ++freqParents[idxParents[ith]];
 
     //printf("after: ");
     for (int j=0; j<nbSommets;++j){
@@ -1626,7 +1618,7 @@ void selection_freq(int** population, char** graph, int* offspring, int* freqPar
 
 void printSolution(int cost, int *a){
   
-  //return; // ignore
+  return; // ignore
   
   printf("s: %d",cost);
   for (int i=0; i<nbSommets; ++i){
@@ -1697,7 +1689,7 @@ bool ea(char** graph){
       // mutation after crossover
       int tval = (rand()/(float)RAND_MAX) * 10 ;
       int mutation_iteration = nbLocalSearch;
-      if (tval < 2)
+      //if (tval < 2)
 	mutation_iteration = MAX_LocalSearch_Iteration;
     
       if (tabuCol(tmpSolution,graph,nbColor,mutation_iteration)){
@@ -1874,6 +1866,9 @@ bool ea(char** graph){
     printf("\n");
   }
 
+
+  
+
   // print best solution so far 
   printSolution(bCost, bestSolution);
 
@@ -1891,7 +1886,32 @@ bool ea(char** graph){
   if (bCost != 0)
     return false;
 
-  return true;
+
+  
+  // verify the solution
+  bool consistent = true;
+  for (int i=0; i<nbSommets; ++i){
+    if (bestSolution[i] < 0 || bestSolution[i] > nbColor-1){
+      printf("solution is partial");
+      consistent = false;
+      break;
+    }
+
+    for (int j=0; j<nbSommets; ++j){
+      if (graph[i][j]){
+	//printf("%d\t%d\n",i,j);
+	if (bestSolution[i] == bestSolution[j]){
+	  printf("solution isn't consistent");
+	  consistent = false;
+	  break;
+	}
+      }
+    }
+  }
+
+  return consistent;
+
+  //return true;
   
 }
 
@@ -1962,12 +1982,19 @@ void testShortest(char** graph){
 void testAlgo(char *filename, char *inNbColor, char *inPopuSize, 
 	      char *inLSIter, char *inMaxLSIter, char *inGenItr){
 
-    
+  /*  
   nbColor = atoi(inNbColor);
   populationSize = atoi(inPopuSize);
   nbLocalSearch = atoi(inLSIter);
   MAX_LocalSearch_Iteration = atoi(inMaxLSIter);
-  Nb_Generation = atoi(inGenItr);
+  Nb_Generation = atoi(inGenItr);*/
+
+  nbColor = 48;
+  populationSize = 20;
+  nbLocalSearch = 5000;
+  MAX_LocalSearch_Iteration = 10000;
+  Nb_Generation = 1000;
+
   printf("d: nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tNbGeneration:%d\n",
 	 nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,Nb_Generation);
 
