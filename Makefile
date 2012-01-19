@@ -6,7 +6,7 @@ VPATH = src/util:src #space seperate the different dirs
 OBJECTS = $(wildcard *.o)
 
 all : main.o gfile.o graphe.o ealgo.o analyseGraphe.o
-	$(CC) -o $(TARGET) $^ -pg -O2 -march=pentium4
+	$(CC) -o $(TARGET) $^ -pg -O2 -march=core2
 
 #create obj files
 main.o: main.c gfile.h graphe.h

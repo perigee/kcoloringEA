@@ -417,7 +417,7 @@ int nodeInConflict(int node, int color, int* a, char** graph){
  * @return true if there is conflict, otherwise false
  */
 bool hasConflict(int node, int* a, char** graph){
-  int nb = 0;
+
   for (int i=0; i<nbSommets;++i){
     if (graph[node][i] && a[node] > -1 && a[i] == a[node])
       return true;
@@ -1238,8 +1238,6 @@ void generate_sub(int *a, char **graph){
   // randomly remove the conflict nodes one by one, 
   // until a consistent partial solution 
   
-  int nbConflict = 1;
-  
   char *conflict = malloc(sizeof(char)*nbSommets);
   
   for (int i = 0; i<nbSommets; ++i){
@@ -1384,8 +1382,13 @@ void crossover_sub(int nbParents, int** parents, int* offspring, char** graph, i
  */
 bool mutation_sub(int *a, char **graph, int removeColorNb){
 
-  //generate_sub(a, graph);
 
+  int tval = (rand()/(float)RAND_MAX) * 10 ;
+  //if (tval > 4)
+    generate_sub_simple(a, graph);
+
+  
+  
 
   int subColor = nbColor - removeColorNb;
 
@@ -1396,8 +1399,14 @@ bool mutation_sub(int *a, char **graph, int removeColorNb){
   }
   
 
-  bool feasible = tabuCol(a, graph, subColor, MAX_LocalSearch_Iteration);
+  //bool feasible = tabuCol(a, graph, subColor, MAX_LocalSearch_Iteration);
 
+  tval = (rand()/(float)RAND_MAX) * 10 ;
+  bool feasible = false;
+  //if (tval > 4)
+    feasible = tabuCol(a, graph, subColor, nbLocalSearch);
+  //else
+    //feasible = tabuCol(a, graph, nbColor, nbLocalSearch);
 
   return feasible;
 }
@@ -1473,7 +1482,7 @@ void crossover_iis(int nbParents, int** parents, int* offspring, char** graph, i
     }
     
     int tavl = (rand()/(float)RAND_MAX) * 10 ;
-    if (tavl<4) 
+    //if (tavl<4) 
       generate_sub_simple(pcopies[i], graph);
 
   }
@@ -1626,7 +1635,15 @@ bool ea(char** graph){
 
   bool setBest = false;
   int* bestSolution = malloc(sizeof(int)*nbSommets);
-  int* tmpSolution = malloc(sizeof(int)*nbSommets);
+  //int* tmpSolution = malloc(sizeof(int)*nbSommets);
+  
+  int nbChildren = 3;
+  int **tmpSolutions = malloc(sizeof(int*)*nbChildren);
+
+  for (int i=0; i<nbChildren; ++i){
+    tmpSolutions[i] = malloc(sizeof(int)*nbSommets);
+  }
+  
   int bCost = -1;
   int tCost = -1;
   int crossCost = -1;
@@ -1634,18 +1651,20 @@ bool ea(char** graph){
 
   // iterate the generation
   int cent = 0;
-  bool switchX = true; // should be true
+  //bool switchX = true; // should be true
   int gen = 0; // crossover number
   int switchIteration = populationSize/2;
 
-  int MaxRemoveColor = 5;
+  //int MaxRemoveColor = 5;
   int MinRemoveColor = 0;
-  int removeColor = MinRemoveColor;
+  //int removeColor = MinRemoveColor;
+  int totalMutationNb = 0;
 
   for (int g = 0; g < Nb_Generation; ++g){
     
-    initialArray(tmpSolution,nbSommets,-1);
-
+    for (int cross=0; cross<nbChildren; ++cross){
+      initialArray(tmpSolutions[cross],nbSommets,-1);
+    }
       
 
     //// crossover operator ==================================== BGN
@@ -1656,57 +1675,73 @@ bool ea(char** graph){
       //crossover_nogood(populationSize, population, tmpSolution, graph, freqParents);
       //crossover_sub(populationSize, population, tmpSolution, graph, freqParents);
       //crossover_sub_simple(populationSize, population, tmpSolution, graph, freqParents);
-      crossover_iis(populationSize, population, tmpSolution, graph, freqParents);
+      
+      crossCost = 0;
+      for (int cross=0; cross<nbChildren; ++cross){
+	crossover_iis(populationSize, population, tmpSolutions[cross], graph, freqParents);
+	
+	//crossCost += cost(tmpSolutions[cross], graph);
+	
+	int tval = (rand()/(float)RAND_MAX) * 10 ;
+	int mutation_iteration = nbLocalSearch;
+	if (tval < 2)
+	  mutation_iteration = MAX_LocalSearch_Iteration;
+    
 
-      crossCost = cost(tmpSolution, graph);
+	if (tabuCol(tmpSolutions[cross],graph,nbColor,mutation_iteration)){
+      
+	  for (int c=0; c<nbSommets;++c){
+	    bestSolution[c] = tmpSolutions[cross][c];
+	    //printf("s: %d\t%d\n",c,bestSolution[c]);
+	    if (bestSolution[c]< 0){
+	      printf("unsigned found\n");
+	      exit(0);
+	    }
+	  }
+	  printf ("consistent solution found by mut1\n");
+      
+	  bCost = 0;
+	  break;
+	}else{
+
+	  tCost = cost(tmpSolutions[cross],graph);
+      
+	  if (!setBest || bCost > tCost){
+
+	    if (!setBest) setBest = true;
+	    for (int i = 0; i<nbSommets; ++i){
+	      bestSolution[i] = tmpSolutions[cross][i];
+	      bCost = tCost;
+	    }
+	    // print best solution so far 
+	    printSolution(bCost, bestSolution);
+	    cent = 0;
+	  } 
+	}
+	
+	/*
+	printf("costb:");
+	for (int i=0; i<populationSize;++i){
+	  int cx = cost(population[i],graph);
+	  printf("\t%d[%d]",cx,freqParents[i]);
+	}
+	printf("\n");*/
+      }
+
+      if (bCost < 1){
+	break;
+      }
+
+      crossCost = crossCost/nbChildren;
 
       // mutation after crossover
-      int tval = (rand()/(float)RAND_MAX) * 10 ;
-      int mutation_iteration = nbLocalSearch;
-      //if (tval < 2)
-	mutation_iteration = MAX_LocalSearch_Iteration;
-    
-      if (tabuCol(tmpSolution,graph,nbColor,mutation_iteration)){
-      
- 	for (int c=0; c<nbSommets;++c){
-	  bestSolution[c] = tmpSolution[c];
-	  //printf("s: %d\t%d\n",c,bestSolution[c]);
-	  if (bestSolution[c]< 0){
-	    printf("unsigned found\n");
-	    exit(0);
-	  }
-	}
-	printf ("consistent solution found by mut1\n");
-      
-	bCost = 0;
-	break;
-      }else{
 
-	tCost = cost(tmpSolution,graph);
       
-	if (!setBest || bCost > tCost){
-
-	  if (!setBest) setBest = true;
-	  for (int i = 0; i<nbSommets; ++i){
-	    bestSolution[i] = tmpSolution[i];
-	    bCost = tCost;
-	  }
-	  // print best solution so far 
-	  printSolution(bCost, bestSolution);
-	  //cent = 0;
-	} 
-      }
-      
-      printf("costb:");
-    for (int i=0; i<populationSize;++i){
-      int cx = cost(population[i],graph);
-      printf("\t%d[%d]",cx,freqParents[i]);
-    }
-    printf("\n");
       
       // replace the highest frequenced parent
-      selection_freq(population, graph, tmpSolution, freqParents);
-      
+      for (int cross=0; cross<nbChildren; ++cross){
+	selection_freq(population, graph, tmpSolutions[cross], freqParents);
+      }
       //printf("i: Crossover operator\n");
     }
 
@@ -1722,21 +1757,24 @@ bool ea(char** graph){
     //if (false){
     if (cent > switchIteration -1){
 
-      // remove 1-3 colors
-      int removeColor = (rand()/(float)RAND_MAX) * 3 ;
-      ++removeColor;
-
+      ++totalMutationNb;
       
-      if (removeColor > nbColor-1)
-	removeColor = 1;
 
       cent = 0;
       //if (mutation_iteration != MAX_LocalSearch_Iteration && tval > 4){
       //printf("in mutation sub\n");
 
-      for (int mi=0; mi<populationSize/2;++mi){
+      for (int mi=0; mi<populationSize/3;++mi){
+
+	// remove 1-4 colors
+	int removeColor = (rand()/(float)RAND_MAX) * 4 ;
+	++removeColor;
+
+	if (removeColor > nbColor)
+	  removeColor = 1;
+
       
-	int jth;// = (rand()/(float)RAND_MAX) * populationSize;
+	int jth = -1;// = (rand()/(float)RAND_MAX) * populationSize;
       
 	int freq = -1;
 	for (int i = 0; i<populationSize; ++i){
@@ -1745,6 +1783,9 @@ bool ea(char** graph){
 	    jth = i;
 	  }
 	}
+
+	if (jth<0)
+	  continue;
 
 	freqParents[jth] = 0;
 	//int costx = cost(population[jth], graph);
@@ -1767,34 +1808,6 @@ bool ea(char** graph){
 	}
       
 	tCost = cost(population[jth], graph);
-
-	if (!setBest || bCost > tCost){
-
-	  if (!setBest) setBest = true;
-	  for (int i = 0; i<nbSommets; ++i){
-	    bestSolution[i] = population[jth][i];
-	    bCost = tCost;
-	  }
-	  // print best solution so far 
-	  printSolution(bCost, bestSolution);
-	  //cent = 0;
-	}
-
-	if (mutFeasible){
-	
-	  for (int c=0; c<nbSommets;++c){
-	    bestSolution[c] = population[jth][c];
-	    if (bestSolution[0]<0){
-	      printf("found partial problem\n");
-	      exit(0);
-	    }
-	  }
-	
-	  int bestC = cost(bestSolution, graph);
-	  printf("consistent solution found by mut2: %d\n",bestC);
-	  bCost = 0;
-	  break;
-	}
 
       }
 
@@ -1829,14 +1842,14 @@ bool ea(char** graph){
 
 
     // print info
-    
+    /*
     printf("costp:");
     for (int i=0; i<populationSize;++i){
       int cx = cost(population[i],graph);
       printf("\t%d[%d]",cx,freqParents[i]);
     }
-    printf("\n");
-    printf("costg:\t%d\t%d\t%d\t%d\t%d\n",g+1,++gen,crossCost,tCost,bCost);
+    printf("\n");*/
+    printf("costg:\t%d\t%d\t%d\t%d\t%d\t%d\n",g+1,++gen,crossCost,tCost,bCost,totalMutationNb);
   }
 
 
@@ -1847,44 +1860,45 @@ bool ea(char** graph){
 
 
   // free the dynamic memory
+  for (int cross=0; cross<nbChildren; ++cross){
+    free(tmpSolutions[cross]);
+    tmpSolutions[cross] = NULL;
+  }
 
-
-  free(tmpSolution);
-
-  free(bestSolution);
-
-  free(freqParents);
-
-
-  if (bCost != 0)
-    return false;
-
-
-  
   // verify the solution
   bool consistent = true;
-  for (int i=0; i<nbSommets; ++i){
-    if (bestSolution[i] < 0 || bestSolution[i] > nbColor-1){
-      printf("solution is partial");
-      consistent = false;
-      break;
-    }
+  if (bCost < 1){
+    
+    for (int i=0; i<nbSommets; ++i){
+      if (bestSolution[i] < 0 || bestSolution[i] > nbColor-1){
+	printf("solution is partial");
+	consistent = false;
+	break;
+      }
 
-    for (int j=0; j<nbSommets; ++j){
-      if (graph[i][j]){
-	//printf("%d\t%d\n",i,j);
-	if (bestSolution[i] == bestSolution[j]){
-	  printf("solution isn't consistent");
-	  consistent = false;
-	  break;
+      for (int j=0; j<nbSommets; ++j){
+	if (graph[i][j]){
+	  //printf("%d\t%d\n",i,j);
+	  if (bestSolution[i] == bestSolution[j]){
+	    printf("solution isn't consistent");
+	    consistent = false;
+	    break;
+	  }
 	}
       }
     }
+  }else{
+    consistent = false;
   }
+  
+  free(tmpSolutions);
+  tmpSolutions = NULL;
+  free(bestSolution);
+  bestSolution = NULL;
+  free(freqParents);
+  freqParents = NULL;
 
   return consistent;
-
-  //return true;
   
 }
 
@@ -1959,15 +1973,15 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   nbColor = atoi(inNbColor);
   
   populationSize = atoi(inPopuSize);
-  //nbLocalSearch = atoi(inLSIter);
-  //MAX_LocalSearch_Iteration = atoi(inMaxLSIter);
-  //Nb_Generation = atoi(inGenItr);
+  nbLocalSearch = atoi(inLSIter);
+  MAX_LocalSearch_Iteration = atoi(inMaxLSIter);
+  Nb_Generation = atoi(inGenItr);
 
   //nbColor = 48;
   //populationSize = 10;
-  nbLocalSearch = 7000;
-  MAX_LocalSearch_Iteration = 15000;
-  Nb_Generation = 10000;
+  //nbLocalSearch = 7000;
+  //MAX_LocalSearch_Iteration = 15000;
+  //Nb_Generation = 10000;
 
   printf("d: nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tNbGeneration:%d\n",
 	 nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,Nb_Generation);

@@ -19,7 +19,7 @@ int main (int argc, char * const argv[]) {
   }*/
 
   
-  srand(time(NULL));
+  srand((unsigned)time(NULL));
   printf("d: Procedure de calcul \n");
   /*
   if(argc<5){
