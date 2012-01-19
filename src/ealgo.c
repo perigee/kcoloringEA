@@ -1472,29 +1472,36 @@ void crossover_iis(int nbParents, int** parents, int* offspring, char** graph, i
       pcopies[i][j] = parents[idxParents[i]][j];
     }
     
-    //if (i>0) 
-    generate_sub_simple(pcopies[i], graph);
+    int tavl = (rand()/(float)RAND_MAX) * 10 ;
+    if (tavl<4) 
+      generate_sub_simple(pcopies[i], graph);
 
   }
 
   
   
 
-  Move* move = malloc(sizeof(Move));
+  //Move* move = malloc(sizeof(Move));
   
+  int crossIdx = -1;
   for (int i=1; i<nbColor-1; ++i){
 
+    if (crossIdx < nbCross-1) ++crossIdx;
+    else crossIdx = 0;
 
+    int colorIdx = maxColorClass(pcopies[crossIdx], offspring, graph);
+    int ith = crossIdx;
     // need more random choose?
-
+    /*
     maxColorClasses(nbCross, pcopies, offspring, graph, move);
 
     int ith = move->sommet;
     int colorIdx = move->color;
-
-    if (ith < 0 || colorIdx < 0){
+    */
+    
+    if (colorIdx < 0){
       printf("=================================================================== problme:%d\t%d\n",ith, colorIdx);
-      break;
+      continue;
     }
 
     //printf("parent id:%d\t%d\n",idxParents[ith], freqParents[idxParents[ith]]);
@@ -1532,10 +1539,10 @@ void crossover_iis(int nbParents, int** parents, int* offspring, char** graph, i
     pcopies[i] = NULL;
   }
 
-  free(move);
+  //free(move);
   free(pcopies);
   free(idxParents);
-  move = NULL;
+  //move = NULL;
   pcopies = NULL;
   idxParents = NULL;
   //printf("out ngood crossover\n");
@@ -1686,10 +1693,17 @@ bool ea(char** graph){
 	  }
 	  // print best solution so far 
 	  printSolution(bCost, bestSolution);
-	  cent = 0;
+	  //cent = 0;
 	} 
       }
-
+      
+      printf("costb:");
+    for (int i=0; i<populationSize;++i){
+      int cx = cost(population[i],graph);
+      printf("\t%d[%d]",cx,freqParents[i]);
+    }
+    printf("\n");
+      
       // replace the highest frequenced parent
       selection_freq(population, graph, tmpSolution, freqParents);
       
@@ -1708,7 +1722,7 @@ bool ea(char** graph){
     //if (false){
     if (cent > switchIteration -1){
 
-
+      // remove 1-3 colors
       int removeColor = (rand()/(float)RAND_MAX) * 3 ;
       ++removeColor;
 
@@ -1720,7 +1734,7 @@ bool ea(char** graph){
       //if (mutation_iteration != MAX_LocalSearch_Iteration && tval > 4){
       //printf("in mutation sub\n");
 
-      for (int mi=0; mi<1;++mi){
+      for (int mi=0; mi<populationSize/2;++mi){
       
 	int jth;// = (rand()/(float)RAND_MAX) * populationSize;
       
@@ -1763,7 +1777,7 @@ bool ea(char** graph){
 	  }
 	  // print best solution so far 
 	  printSolution(bCost, bestSolution);
-	  cent = 0;
+	  //cent = 0;
 	}
 
 	if (mutFeasible){
@@ -1815,13 +1829,14 @@ bool ea(char** graph){
 
 
     // print info
-    printf("costg:\t%d\t%d\t%d\t%d\t%d\n",g+1,++gen,crossCost,tCost,bCost);
+    
     printf("costp:");
     for (int i=0; i<populationSize;++i){
       int cx = cost(population[i],graph);
       printf("\t%d[%d]",cx,freqParents[i]);
     }
     printf("\n");
+    printf("costg:\t%d\t%d\t%d\t%d\t%d\n",g+1,++gen,crossCost,tCost,bCost);
   }
 
 
@@ -1943,15 +1958,15 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
     
   nbColor = atoi(inNbColor);
   
-  //populationSize = atoi(inPopuSize);
+  populationSize = atoi(inPopuSize);
   //nbLocalSearch = atoi(inLSIter);
   //MAX_LocalSearch_Iteration = atoi(inMaxLSIter);
   //Nb_Generation = atoi(inGenItr);
 
   //nbColor = 48;
-  populationSize = 10;
-  nbLocalSearch = 5000;
-  MAX_LocalSearch_Iteration = 10000;
+  //populationSize = 10;
+  nbLocalSearch = 7000;
+  MAX_LocalSearch_Iteration = 15000;
   Nb_Generation = 10000;
 
   printf("d: nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tNbGeneration:%d\n",
@@ -1980,8 +1995,7 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
     printf("found infeasible\n");
 
 
-  // free all dynamic memory
-  
+  // free dynamic memory
   for (int i=0; i<nbSommets;++i){
     free(tConnect[i]);
     tConnect[i] = NULL;
