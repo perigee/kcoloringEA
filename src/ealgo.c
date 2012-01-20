@@ -1659,8 +1659,9 @@ bool ea(char** graph){
   int MinRemoveColor = 0;
   //int removeColor = MinRemoveColor;
   int totalMutationNb = 0;
-  int Max_MutationNoImprove = 50;
+  int Max_MutationNoImprove = populationSize; // maximal number of mutaions accepted without improvement
   int removeColor = 1;
+  int mutationCnt = 0;
 
   for (int g = 0; g < Nb_Generation; ++g){
     
@@ -1769,7 +1770,7 @@ bool ea(char** graph){
       }
 
       ++totalMutationNb;
-      
+      ++mutationCnt;
       
       
 
@@ -1861,11 +1862,11 @@ bool ea(char** graph){
       printf("\t%d[%d]",cx,freqParents[i]);
     }
     printf("\n");*/
-    printf("costg:\t%d\t%d\t%d\t%d\t%d\t%d\n",g+1,++gen,crossCost,tCost,bCost,totalMutationNb);
+    printf("costg:\t%d\t%d\t%d\t%d\t%d\t%d/%d\n",g+1,++gen,crossCost,tCost,bCost,mutationCnt,removeColor);
   }
-
-
   
+  
+  printf("r: %d\t%d\t%d\n", gen, gen-mutationCnt, mutationCnt); 
 
   // print best solution so far 
   printSolution(bCost, bestSolution);
@@ -1997,8 +1998,9 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   //MAX_LocalSearch_Iteration = 15000;
   //Nb_Generation = 10000;
 
-  printf("d: nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tNbGeneration:%d\n",
-	 nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,Nb_Generation);
+  printf("d: nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tNbGeneration:%d\tMaximalColorRemove:%d\n",
+	 nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,
+	 Nb_Generation, MAX_RemoveColors);
 
   
 

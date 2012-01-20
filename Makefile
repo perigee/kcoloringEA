@@ -1,6 +1,6 @@
 TARGET = eagraph #executive file name
 CC = gcc
-CFLAGS = -O2 -Wall -std=c99 #need the iso99 standard 
+CFLAGS = -O2 -Wall -std=c99 -march=core2 #need the iso99 standard 
 VPATH = src/util:src #space seperate the different dirs
 #BIN_DIR = bin
 OBJECTS = $(wildcard *.o)
