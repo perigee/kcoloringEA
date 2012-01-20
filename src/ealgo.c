@@ -1423,7 +1423,7 @@ bool mutation_sub(int *a, char **graph, int removeColorNb){
  * @param freqParents counter the participation number of each parent
  */
 
-void crossover_iis(int nbParents, int** parents, int* offspring, char** graph, int* freqParents){
+void crossover_cardinality(int nbParents, int** parents, int* offspring, char** graph, int* freqParents){
   
   // initialize 
   initialArray(offspring, nbSommets, -1);
@@ -1681,7 +1681,7 @@ bool ea(char** graph){
       
       crossCost = 0;
       for (int cross=0; cross<nbChildren; ++cross){
-	crossover_iis(populationSize, population, tmpSolutions[cross], graph, freqParents);
+	crossover_cardinality(populationSize, population, tmpSolutions[cross], graph, freqParents);
 	
 	//crossCost += cost(tmpSolutions[cross], graph);
 	
