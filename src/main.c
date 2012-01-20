@@ -26,7 +26,8 @@ int main (int argc, char * const argv[]) {
     printf("Erreur d'utilisation !!\n");
     exit(-1);
     }*/
-  testAlgo(argv[1], argv[2],argv[3],argv[4],argv[5],argv[6]);
+  testAlgo(argv[1], argv[2],argv[3],argv[4],argv[5],
+	   argv[6], argv[7]);
   return 0;
   //================================== IIS inspired algorithm ================ END
 

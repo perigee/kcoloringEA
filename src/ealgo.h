@@ -14,6 +14,7 @@
 //========================= Algorithm parameters ============= BGN
 int MAX_LocalSearch_Iteration;
 int Nb_Generation;
+int MAX_RemoveColors;
 //========================= Algorithm parameters ============= END
 
 
@@ -24,6 +25,8 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration); /// tabuCol w
 //int crossover(int** parents, int* offspring); /// crossover the parents to create offspring
 bool ea(char** graph); /// ea + distance 
 
-void testAlgo(char *filename, char *inNbColor, char *inPopuSize, char *inLSIter, char *inMaxLSIter, char *inGenItr);
+void testAlgo(char *filename, char *inNbColor, char *inPopuSize, 
+	      char *inLSIter, char *inMaxLSIter, char *inGenItr,
+	      char *inMaxRemoveColor);
 
 #endif

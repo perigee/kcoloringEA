@@ -1383,7 +1383,7 @@ void crossover_sub(int nbParents, int** parents, int* offspring, char** graph, i
 bool mutation_sub(int *a, char **graph, int removeColorNb){
 
 
-  int tval = (rand()/(float)RAND_MAX) * 10 ;
+  //int tval = (rand()/(float)RAND_MAX) * 10 ;
   //if (tval > 4)
     generate_sub_simple(a, graph);
 
@@ -1401,7 +1401,7 @@ bool mutation_sub(int *a, char **graph, int removeColorNb){
 
   //bool feasible = tabuCol(a, graph, subColor, MAX_LocalSearch_Iteration);
 
-  tval = (rand()/(float)RAND_MAX) * 10 ;
+  //tval = (rand()/(float)RAND_MAX) * 10 ;
   bool feasible = false;
   //if (tval > 4)
     feasible = tabuCol(a, graph, subColor, nbLocalSearch);
@@ -1481,7 +1481,7 @@ void crossover_iis(int nbParents, int** parents, int* offspring, char** graph, i
       pcopies[i][j] = parents[idxParents[i]][j];
     }
     
-    int tavl = (rand()/(float)RAND_MAX) * 10 ;
+    //int tavl = (rand()/(float)RAND_MAX) * 10 ;
     //if (tavl<4) 
       generate_sub_simple(pcopies[i], graph);
 
@@ -1493,7 +1493,7 @@ void crossover_iis(int nbParents, int** parents, int* offspring, char** graph, i
   //Move* move = malloc(sizeof(Move));
   
   int crossIdx = -1;
-  for (int i=1; i<nbColor-1; ++i){
+  for (int i=1; i<nbColor; ++i){
 
     if (crossIdx < nbCross-1) ++crossIdx;
     else crossIdx = 0;
@@ -1659,6 +1659,8 @@ bool ea(char** graph){
   int MinRemoveColor = 0;
   //int removeColor = MinRemoveColor;
   int totalMutationNb = 0;
+  int Max_MutationNoImprove = 50;
+  int removeColor = 1;
 
   for (int g = 0; g < Nb_Generation; ++g){
     
@@ -1716,6 +1718,7 @@ bool ea(char** graph){
 	    // print best solution so far 
 	    printSolution(bCost, bestSolution);
 	    cent = 0;
+	    totalMutationNb = 0;
 	  } 
 	}
 	
@@ -1757,7 +1760,17 @@ bool ea(char** graph){
     //if (false){
     if (cent > switchIteration -1){
 
+      
+
+
+      if (totalMutationNb > Max_MutationNoImprove){
+	totalMutationNb = 0;
+	++removeColor;
+      }
+
       ++totalMutationNb;
+      
+      
       
 
       cent = 0;
@@ -1767,13 +1780,12 @@ bool ea(char** graph){
       for (int mi=0; mi<populationSize/3;++mi){
 
 	// remove 1-4 colors
-	int removeColor = (rand()/(float)RAND_MAX) * 4 ;
-	++removeColor;
+	
+	
 
-	if (removeColor > nbColor)
+	if (removeColor > MAX_RemoveColors)
 	  removeColor = 1;
 
-      
 	int jth = -1;// = (rand()/(float)RAND_MAX) * populationSize;
       
 	int freq = -1;
@@ -1967,7 +1979,8 @@ void testShortest(char** graph){
 
 // ============ UNIT TESTING ============
 void testAlgo(char *filename, char *inNbColor, char *inPopuSize, 
-	      char *inLSIter, char *inMaxLSIter, char *inGenItr){
+	      char *inLSIter, char *inMaxLSIter, char *inGenItr,
+	      char *inMaxRemoveColor){
 
     
   nbColor = atoi(inNbColor);
@@ -1976,6 +1989,7 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   nbLocalSearch = atoi(inLSIter);
   MAX_LocalSearch_Iteration = atoi(inMaxLSIter);
   Nb_Generation = atoi(inGenItr);
+  MAX_RemoveColors = atoi(inMaxRemoveColor);
 
   //nbColor = 48;
   //populationSize = 10;
