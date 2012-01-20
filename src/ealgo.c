@@ -1559,6 +1559,130 @@ void crossover_cardinality(int nbParents, int** parents, int* offspring, char** 
 
 
 
+/*!
+ * crossover inspired by the IIS detection
+ * the computational time of local search, at sametime, it
+ * reduces the diversity
+ * @param nbParents the number of whole population
+ * @param parents the whole population
+ * @param offspring carry out the created offspring
+ * @param graph adjacent matrix
+ * @param freqParents counter the participation number of each parent
+ */
+
+void crossover_enforced(int nbParents, int** parents, int* offspring, 
+			char** graph, int* freqParents, int removeColor){
+  
+  // initialize 
+  initialArray(offspring, nbSommets, -1);
+
+  int givenColor = nbColor;
+  int tval = (rand()/(float)RAND_MAX) * 5 ;
+
+  if (tval < 2){
+
+    int *subproblem = malloc(sizeof(int)*nbSommets);
+  
+    int jth = (rand()/(float)RAND_MAX) * nbParents;
+
+    for (int i=0; i<nbSommets;++i){
+      subproblem[i] = parents[jth][i];
+    }
+
+    generate_sub_simple(subproblem, graph);
+    mutation_sub(subproblem, graph, removeColor);
+    generate_sub_simple(subproblem, graph);
+
+    int jthColor = maxColorClass(subproblem, offspring, graph);
+
+    for (int i=0; i<nbSommets;++i){
+      if (subproblem[i] == jthColor)
+	offspring[i] = nbColor -1;
+    }
+
+    free(subproblem);
+    givenColor -= 1;
+  }
+
+  int nbCross = (rand()/(float)RAND_MAX) * 3;
+  nbCross += 2;
+  int* idxParents = malloc(sizeof(int)*nbCross);
+
+  //randomParents(nbCross, idxParents, nbParents);
+  lessFreqParents(nbCross, idxParents, nbParents, parents, freqParents);
+
+  int **pcopies = malloc(sizeof(int*)*nbCross);
+  
+  for (int i=0; i<nbCross; ++i){
+    pcopies[i] = malloc(sizeof(int)*nbSommets);
+    for (int j=0; j<nbSommets; ++j){
+      pcopies[i][j] = parents[idxParents[i]][j];
+    }
+    
+  
+    generate_sub_simple(pcopies[i], graph);
+
+  }
+
+  
+  //Move* move = malloc(sizeof(Move));
+  
+  int crossIdx = -1;
+  for (int i=1; i< givenColor; ++i){
+
+    if (crossIdx < nbCross-1) ++crossIdx;
+    else crossIdx = 0;
+
+    int colorIdx = maxColorClass(pcopies[crossIdx], offspring, graph);
+    int ith = crossIdx;
+    
+    if (colorIdx < 0) continue;
+    
+
+    //printf("parent id:%d\t%d\n",idxParents[ith], freqParents[idxParents[ith]]);
+
+    //if (ith != 0)
+      ++freqParents[idxParents[ith]];
+
+    //printf("after: ");
+    for (int j=0; j<nbSommets;++j){
+      if (offspring[j] < 0 && pcopies[ith][j] == colorIdx ){
+	//printf("%d:%d\t",j,pcopies[ith][j]);
+	offspring[j] = i;
+      }
+    }
+    //printf("\n");
+  }
+  
+  // find the maximal cardinality color class
+  
+
+  // complete the partial solution ===============
+  if (true){
+  for (int i=0; i<nbSommets;++i){
+    if (offspring[i] < 0){
+      int col = (rand()/(float)RAND_MAX) * (nbColor) ;
+      offspring[i] = col;
+    }
+  }
+  }
+
+  //printf("number of partial nodes: %d\t%d\t%d\n", totalPartial, randomAssigned, conflictNb);
+
+  for (int i=0; i<nbCross; ++i){
+    free(pcopies[i]);
+    pcopies[i] = NULL;
+  }
+
+  //free(move);
+  free(pcopies);
+  free(idxParents);
+  //move = NULL;
+  pcopies = NULL;
+  idxParents = NULL;
+  //printf("out ngood crossover\n");
+}
+
 
 
 
@@ -1681,7 +1805,10 @@ bool ea(char** graph){
       
       crossCost = 0;
       for (int cross=0; cross<nbChildren; ++cross){
-	crossover_cardinality(populationSize, population, tmpSolutions[cross], graph, freqParents);
+	//crossover_cardinality(populationSize, population, tmpSolutions[cross], graph, freqParents);
+
+	crossover_enforced(populationSize, population, tmpSolutions[cross], 
+			   graph, freqParents, removeColor);
 	
 	//crossCost += cost(tmpSolutions[cross], graph);
 	

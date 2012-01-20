@@ -13,7 +13,7 @@ int main (int argc, char * const argv[]) {
 
   //================================== IIS inspired algorithm ================ BGN
 
-  /*
+
   srand((unsigned)time(NULL));
   printf("d: Procedure de calcul \n");
   
@@ -23,7 +23,7 @@ int main (int argc, char * const argv[]) {
     }
   testAlgo(argv[1], argv[2],argv[3],argv[4],argv[5],
 	   argv[6], argv[7]);
-	   return 0;*/
+	   return 0;
   //================================== IIS inspired algorithm ================ END
 
 
