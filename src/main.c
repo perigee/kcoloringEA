@@ -12,23 +12,18 @@ int main (int argc, char * const argv[]) {
 
 
   //================================== IIS inspired algorithm ================ BGN
-  /*
-  for (int i=0; i<100; ++i){
-    double tval=(rand()/(double)RAND_MAX);
-    printf("%f\n",tval);
-  }*/
 
-  
+  /*
   srand((unsigned)time(NULL));
   printf("d: Procedure de calcul \n");
-  /*
+  
   if(argc<5){
     printf("Erreur d'utilisation !!\n");
     exit(-1);
-    }*/
+    }
   testAlgo(argv[1], argv[2],argv[3],argv[4],argv[5],
 	   argv[6], argv[7]);
-  return 0;
+  return 0;*/
   //================================== IIS inspired algorithm ================ END
 
 
