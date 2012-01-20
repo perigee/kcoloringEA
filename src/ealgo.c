@@ -1659,7 +1659,7 @@ bool ea(char** graph){
   int MinRemoveColor = 0;
   //int removeColor = MinRemoveColor;
   int totalMutationNb = 0;
-  int Max_MutationNoImprove = populationSize; // maximal number of mutaions accepted without improvement
+  int Max_MutationNoImprove = populationSize/2; // maximal number of mutaions accepted without improvement
   int removeColor = 1;
   int mutationCnt = 0;
 
@@ -1736,7 +1736,7 @@ bool ea(char** graph){
 	break;
       }
 
-      crossCost = crossCost/nbChildren;
+      //crossCost = crossCost/nbChildren;
 
       // mutation after crossover
 
@@ -1803,7 +1803,7 @@ bool ea(char** graph){
 	freqParents[jth] = 0;
 	//int costx = cost(population[jth], graph);
 	//printf("i: mutation operator\n");
-	crossCost = cost(population[jth], graph);
+	//crossCost = cost(population[jth], graph);
       
 	bool mutFeasible =false;
 
@@ -1862,7 +1862,7 @@ bool ea(char** graph){
       printf("\t%d[%d]",cx,freqParents[i]);
     }
     printf("\n");*/
-    printf("costg:\t%d\t%d\t%d\t%d\t%d\t%d/%d\n",g+1,++gen,crossCost,tCost,bCost,mutationCnt,removeColor);
+    printf("costg:\t%d\t%d\t%d\t%d/%d\n",++gen,tCost,bCost,mutationCnt,removeColor);
   }
   
   
