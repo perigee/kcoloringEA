@@ -62,6 +62,7 @@ void floyd_warshall(char** graph, int** dist){
 typedef struct assignment{
   int sommet;
   int color;
+  int nbVars;
 } Move;
 
 
@@ -166,13 +167,11 @@ int initGammaTable(int* a, char** graph, int** tGamma){
  * @param individual individual color table
  * @return the change of objective function
  */
-int bestMove(Move* move, int** tGamma,  int** tTabu, int* individual, int colorNB, int* conflictNb){
+int bestMove(Move* move, int** tGamma,  int** tTabu, int* individual, int colorNB){
   int delta = -1;// best delta found, be careful the value 
   bool isSet = false;
   int bestCnt = 0;
   int bestVarCnt = 0;
-
-  conflictNb[0] = 0;
 
   // traverse all the nodes
   for (int i=0; i<nbSommets; ++i){
@@ -182,7 +181,7 @@ int bestMove(Move* move, int** tGamma,  int** tTabu, int* individual, int colorN
       int tmpSommet = -1;
       int tmpColor = -1;
 
-      ++conflictNb[0];
+      ++(move->nbVars);
 
       for (int j=0; j<colorNB; ++j){
        
@@ -320,16 +319,17 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration){
   int bestObj = obj;
   
   Move* move = malloc(sizeof(Move));
-  int *conflictNb = malloc(sizeof(int));
+
   // a always records best so far solution
   for (int i=0;  i< maxNoImpIteration ; ++i){
     
     move->sommet = -1;
     move->color = -1;
+    move->nbVars = 0;
     if(bestObj < 1) break; // find consistent solution
 
     // find best move based on gamma table
-    int delta = bestMove(move, tGamma, tTabu, tTmpColor, colorNB, conflictNb);
+    int delta = bestMove(move, tGamma, tTabu, tTmpColor, colorNB);
 
     //printf("%d,%d",move->sommet,move->color);
     
@@ -370,7 +370,7 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration){
     
     int rdx=(rand()/(float)RAND_MAX) * LValue;
     //rdx += weightPercent*nbConflict;
-    rdx += lambdaValue*conflictNb[0];
+    rdx += lambdaValue*(move->nbVars);
      
     
     tTabu[move->sommet][tTmpColor[move->sommet]] = rdx; // tabu duration
@@ -395,14 +395,14 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration){
   free(tTabu);
   free(tTmpColor);
   free(move);
-  free(conflictNb);
+
   //free(moveFreq);
 
   tGamma = NULL;
   tTabu = NULL;
   tTmpColor = NULL;
   move = NULL;
-  conflictNb = NULL;
+
   //moveFreq = NULL;
 
   if(bestObj < 1) return true;
@@ -1534,8 +1534,12 @@ void crossover_enforced2(int nbParents, int** parents, int* offspring,
   nbCross += 2;
   int* idxParents = malloc(sizeof(int)*nbCross);
 
-  // the partial over-constrained one can be out of nbCross size 
-  int subOne = (rand()/(float)RAND_MAX) * (nbCross+1);
+  // the partial over-constrained one can be out of nbCross size
+  float decision = (rand()/(float)RAND_MAX);
+
+  int subOne = nbCross;
+  if (decision < 0.25)
+    subOne = (rand()/(float)RAND_MAX) * (nbCross);
 
   //randomParents(nbCross, idxParents, nbParents);
   lessFreqParents(nbCross, idxParents, nbParents, parents, freqParents);
@@ -1654,15 +1658,17 @@ void selection_freq(int** population, char** graph, int* offspring, int* freqPar
   freqParents[index] = 0;
 }
 
-void printSolution(int cost, int *a){
+void printSolution(int iteration, int costx, int *a, FILE *f ){
   
-  return; // ignore
+  //return; // ignore
   
-  printf("s: %d",cost);
+  
+  
+  fprintf(f,"s: %d\t%d",iteration, costx);
   for (int i=0; i<nbSommets; ++i){
-    printf("\t%d", a[i]); 
+    fprintf(f, "\t%d", a[i]); 
   }
-  printf("\n");
+  fprintf(f,"\n");
 }
 
 /*!
@@ -1671,8 +1677,22 @@ void printSolution(int cost, int *a){
  * @param population the table of individuals
  * @return true if the solution found is consistent, otherwise false 
  */
-bool ea(char** graph){
+bool ea(char** graph, char *savefile){
   
+  FILE *f;
+  f = fopen(savefile, "a");
+
+  //give the basic information
+  fprintf(f, "d: =========================================== START\n");
+  fprintf(f, "d: nbColor = %d\n", nbColor);
+  fprintf(f, "d: populationSize = %d\n", populationSize);
+  fprintf(f, "d: LS iterations = %d - %d\n", nbLocalSearch, MAX_LocalSearch_Iteration);
+  fprintf(f, "d: nbGeneration = %d\n", Nb_Generation);
+  fprintf(f, "d: Max remove colors = %d\n", MAX_RemoveColors);
+  
+  
+
+
   int** population = malloc(sizeof(int*)*populationSize);
   
   bool feasibleInit = false;
@@ -1730,7 +1750,28 @@ bool ea(char** graph){
   int removeColor = 1;
   int mutationCnt = 0;
 
-  for (int g = 0; g < Nb_Generation; ++g){
+  time_t now;
+  struct tm *tm;
+  time(&now);
+
+  if ((tm = localtime (&now)) == NULL) {
+    printf ("Error extracting time stuff\n");
+    return 1;
+  }
+
+  char buffer [50];
+
+  
+  
+  sprintf(buffer, "%04d-%02d-%02d %02d:%02d:%02d",
+	  tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+	  tm->tm_hour, tm->tm_min, tm->tm_sec);
+  
+  
+
+
+  int g;
+  for (g = 0; g < Nb_Generation; ++g){
     
     for (int cross=0; cross<nbChildren; ++cross){
       initialArray(tmpSolutions[cross],nbSommets,-1);
@@ -1790,7 +1831,7 @@ bool ea(char** graph){
 	      bCost = tCost;
 	    }
 	    // print best solution so far 
-	    printSolution(bCost, bestSolution);
+	    printSolution(g, bCost, bestSolution, f);
 	    cent = 0;
 	    totalMutationNb = 0;
 	  } 
@@ -1918,14 +1959,16 @@ bool ea(char** graph){
       printf("\t%d[%d]",cx,freqParents[i]);
       }
       printf("\n");*/
-    printf("costg:\t%d\t%d\t%d/%d\n",++gen,bCost,mutationCnt,removeColor);
+    printf("costg:\t%d\t%d\t%d/%d\n",g,bCost,mutationCnt,removeColor);
+    fprintf(f,"costg:\t%d\t%d\t%d/%d\n",g,bCost,mutationCnt,removeColor);
   }
   
-  
-  printf("r: %d\t%d\t%d\n", gen, gen-mutationCnt, mutationCnt); 
+  //printf("r: %d\t%d\t%d\n", gen, gen-mutationCnt, mutationCnt); 
+    // print best solution so far 
+  printSolution(g, bCost, bestSolution, f);
 
-  // print best solution so far 
-  printSolution(bCost, bestSolution);
+
+  fprintf(f,"r: %d\t%d\t%d\t", g, g-mutationCnt, mutationCnt); 
 
 
   // free the dynamic memory
@@ -1940,7 +1983,7 @@ bool ea(char** graph){
     
     for (int i=0; i<nbSommets; ++i){
       if (bestSolution[i] < 0 || bestSolution[i] > nbColor-1){
-	printf("solution is partial");
+	fprintf(f,"solution is partial\n");
 	consistent = false;
 	break;
       }
@@ -1949,7 +1992,7 @@ bool ea(char** graph){
 	if (graph[i][j]){
 	  //printf("%d\t%d\n",i,j);
 	  if (bestSolution[i] == bestSolution[j]){
-	    printf("solution isn't consistent");
+	    fprintf(f,"solution isn't consistent\n");
 	    consistent = false;
 	    break;
 	  }
@@ -1974,6 +2017,33 @@ bool ea(char** graph){
   bestSolution = NULL;
   free(freqParents);
   freqParents = NULL;
+
+  if (consistent)
+    fprintf(f,"feasible\n");
+  else
+    fprintf(f,"infeasible\n");
+  
+
+  
+  time_t endtime;
+  struct tm *tmx;
+  time(&endtime);
+
+  
+  if ((tmx = localtime (&endtime)) == NULL) {
+    printf ("Error extracting time stuff\n");
+    return 1;
+  }
+
+
+      
+  fprintf(f, "t: %s",buffer);
+    
+  fprintf(f, "\t%04d-%02d-%02d %02d:%02d:%02d\n",
+	  tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
+	  tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
+
+  fclose(f);
 
   return consistent;
   
@@ -2004,8 +2074,8 @@ bool testTabu(char** graph){
 }
 
 
-bool testEA(char** graph){
-  return ea(graph);
+bool testEA(char** graph, char *savefilename){
+  return ea(graph, savefilename);
 }
 
 
@@ -2046,7 +2116,7 @@ void testShortest(char** graph){
 // ============ UNIT TESTING ============
 void testAlgo(char *filename, char *inNbColor, char *inPopuSize, 
 	      char *inLSIter, char *inMaxLSIter, char *inGenItr,
-	      char *inMaxRemoveColor){
+	      char *inMaxRemoveColor, char *savefilename){
 
     
   nbColor = atoi(inNbColor);
@@ -2067,8 +2137,6 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
 	 nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,
 	 Nb_Generation, MAX_RemoveColors);
 
-  
-
   loadGrapheSimple(filename);
 
 
@@ -2081,7 +2149,7 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   //bool feasible = testTabu(tConnect);
 
   // Test 2: ea algorithm
-  bool feasible = testEA(tConnect);
+  bool feasible = testEA(tConnect, savefilename);
   
 
   if (feasible)

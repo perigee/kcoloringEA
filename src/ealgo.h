@@ -23,10 +23,10 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration); /// tabuCol w
 //int distance(int* a, int* b); /// distance between two individuals
 //int** chooseParents(int** population); /// choose the parents from population
 //int crossover(int** parents, int* offspring); /// crossover the parents to create offspring
-bool ea(char** graph); /// ea + distance 
+bool ea(char** graph, char *filename); /// ea + distance 
 
 void testAlgo(char *filename, char *inNbColor, char *inPopuSize, 
 	      char *inLSIter, char *inMaxLSIter, char *inGenItr,
-	      char *inMaxRemoveColor);
+	      char *inMaxRemoveColor, char* savefilename);
 
 #endif
