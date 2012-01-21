@@ -345,7 +345,7 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration){
 	a[j] = tTmpColor[j];
       }
       
-      i = 0; // reset i if found best so far
+      //i = 0; // reset i if found best so far
       a[move->sommet] = move->color;
     }else if (bestObj == obj+delta){
       
@@ -1534,7 +1534,8 @@ void crossover_enforced2(int nbParents, int** parents, int* offspring,
   nbCross += 2;
   int* idxParents = malloc(sizeof(int)*nbCross);
 
-  int subOne = (rand()/(float)RAND_MAX) * nbCross;
+  // the partial over-constrained one can be out of nbCross size 
+  int subOne = (rand()/(float)RAND_MAX) * (nbCross+1);
 
   //randomParents(nbCross, idxParents, nbParents);
   lessFreqParents(nbCross, idxParents, nbParents, parents, freqParents);
@@ -1548,10 +1549,11 @@ void crossover_enforced2(int nbParents, int** parents, int* offspring,
     }
     
     
-    if (i==subOne)
-      mutation_sub(pcopies[i], graph, removeColor);
+    if (i!=subOne)
+      generate_sub_simple(pcopies[i], graph);      
     else
-      generate_sub_simple(pcopies[i], graph);
+      mutation_sub(pcopies[i], graph, removeColor);
+
 
   }
 
