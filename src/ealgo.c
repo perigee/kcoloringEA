@@ -336,7 +336,7 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration){
     // all tabu case
     if (move->sommet < 0 || move->color < 0) continue;
 
-    //    printf("\t%d\t%d\n", obj,bestObj);
+    //printf("%d:\t%d\t%d\n",i, obj,bestObj);
     
     // in case find best delta 
     if( delta < 0 && obj+delta < bestObj){
@@ -512,13 +512,21 @@ int maxColorClass( int *a, int *b, char **graph){
   
   int maxIdx = -1;
   int maxSize = 0;
+  int eqCnt = 0;
+  float tval;
   for (int j=0; j<nbSommets;++j){
       if (b[j] > -1 || a[j] <0) continue;
       
       ++classSize[a[j]];
       if (maxIdx < 0 || maxSize < classSize[a[j]]){
 	maxIdx = a[j];
-	maxSize = classSize[a[j]]; 
+	maxSize = classSize[a[j]];
+	eqCnt = 1;
+      }else if (maxSize == classSize[a[j]]){
+	++eqCnt;
+	tval = (rand()/(float)RAND_MAX) ;
+	if (tval < 1/(float)eqCnt)
+	  maxIdx = a[j];
       }
   }
 
@@ -1117,7 +1125,7 @@ void generate_sub(int *a, char **graph){
   // randomly remove the conflict nodes one by one, 
   // until a consistent partial solution 
   
-  char *conflict = malloc(sizeof(char)*nbSommets);
+  register char *conflict = malloc(sizeof(char)*nbSommets);
   
   for (int i = 0; i<nbSommets; ++i){
     if (hasConflict(i, a, graph))
@@ -1131,35 +1139,16 @@ void generate_sub(int *a, char **graph){
       a[i] = -1;
       continue;
     }
-
-    if(a[i] < (nbColor -2)) continue;
-    
-    a[i] = nbColor-3; 
   }
 
-  /*
-  while(hasConflictSolution(a,graph)){
-    int index = randomConflict(a, graph);
-    a[index] = -1; // remove the chosen node
-  }
-
-  // redo the highest index color nodes
-  for (int i=0; i<nbSommets; ++i){
-    if (a[i] < (nbColor -1)) continue;
-    
-    a[i] = nbColor-2; 
-  }*/
-
-  // try to find a partial consistent solution 
-  // with k-1 colors
-  //tabuCol(a, graph, nbColor-1, MAX_LocalSearch_Iteration);
-  tabuCol(a, graph, nbColor-2, nbLocalSearch);
   free(conflict);
   conflict = NULL;
 }
 
 void generate_sub_simple(int *a, char **graph){
     
+  //return generate_sub(a, graph); // remove all conflict nodes
+
   // randomly remove the conflict nodes one by one, 
   // until a consistent partial solution 
   
@@ -1541,6 +1530,8 @@ void crossover_enforced2(int nbParents, int** parents, int* offspring,
   if (decision < 0.25)
     subOne = (rand()/(float)RAND_MAX) * (nbCross);
 
+  subOne = nbCross;
+
   //randomParents(nbCross, idxParents, nbParents);
   lessFreqParents(nbCross, idxParents, nbParents, parents, freqParents);
 
@@ -1740,7 +1731,7 @@ bool ea(char** graph, char *savefile){
   int cent = 0;
   //bool switchX = true; // should be true
   int gen = 0; // crossover number
-  int switchIteration = populationSize;
+  int switchIteration = populationSize/2;
 
   //int MaxRemoveColor = 5;
   int MinRemoveColor = 0;
@@ -2038,8 +2029,12 @@ bool ea(char** graph, char *savefile){
 
       
   fprintf(f, "t: %s",buffer);
+  printf("t: %s",buffer);
     
   fprintf(f, "\t%04d-%02d-%02d %02d:%02d:%02d\n",
+	  tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
+	  tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
+  printf("\t%04d-%02d-%02d %02d:%02d:%02d\n",
 	  tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
 	  tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
 
