@@ -396,7 +396,7 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration, int *weightVar
 	a[j] = tTmpColor[j];
       }
       
-      i = 0; // reset i if found best so far
+      //i = 0; // reset i if found best so far
       a[move->sommet] = move->color;
     }else if (bestObj == obj+delta){
       
@@ -423,6 +423,11 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration, int *weightVar
     
     int rdx=(rand()/(float)RAND_MAX) * LValue;
     //rdx += weightPercent*nbConflict;
+
+    int weightedTabu = lambdaValue;
+    if(hasSuperWeight(move->sommet, weightVars)){
+      weightedTabu += weightVars[move->sommet]/100;
+    }
     rdx += lambdaValue*(move->nbVars);
      
     
@@ -673,7 +678,9 @@ void randomParents(int chooseNb, int *parentsChosen, int nbParents){
   }
 }
 
-
+/*!
+ * less frequencied parent
+ */
 void lessFreqParents(int chooseNb, int *parentsChosen, int nbParents, 
 		     int **parents, int *freqParents){
   
@@ -1508,8 +1515,10 @@ void crossover_enforced2(int nbParents, int** parents, int* offspring,
   int crossIdx = -1;
   for (int i=1; i< nbColor; ++i){
 
-    if (crossIdx < nbCross-1) ++crossIdx;
-    else crossIdx = 0;
+    //if (crossIdx < nbCross-1) ++crossIdx;
+    //else crossIdx = 0;
+
+    crossIdx =  (rand()/(float)RAND_MAX) * nbCross;
 
     int colorIdx = maxColorClass(pcopies[crossIdx], offspring, graph);
     int ith = crossIdx;
