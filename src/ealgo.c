@@ -1352,7 +1352,8 @@ int mutation_sub(int *a, char **graph, int removeColorNb, int *weightVars){
 
 bool mutation_iis(int *a, char **graph, int removeColorNb, int *weightVars){
   
-  generate_sub(a, graph);
+  //generate_sub(a, graph);
+  generate_sub_simple(a, graph, weightVars);
   
   for (int i=0; i<nbSommets; ++i){
 	if (a[i]<nbColor-1) continue;
@@ -1762,7 +1763,7 @@ bool ea(char** graph, char *savefile){
   int cent = 0;
   //bool switchX = true; // should be true
   int gen = 0; // crossover number
-  int switchIteration = populationSize;
+  int switchIteration = populationSize/2;
 
   //int MaxRemoveColor = 5;
   int MinRemoveColor = 0;
