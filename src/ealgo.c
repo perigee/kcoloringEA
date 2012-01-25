@@ -423,11 +423,7 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration, int *weightVar
     
     int rdx=(rand()/(float)RAND_MAX) * LValue;
     //rdx += weightPercent*nbConflict;
-
-    int weightedTabu = lambdaValue;
-    if(hasSuperWeight(move->sommet, weightVars)){
-      weightedTabu += weightVars[move->sommet]/100;
-    }
+   
     rdx += lambdaValue*(move->nbVars);
      
     
@@ -1329,21 +1325,26 @@ void crossover_sub(int nbParents, int** parents, int* offspring, char** graph, i
  */
 int mutation_sub(int *a, char **graph, int removeColorNb, int *weightVars){
 
-  generate_sub_simple(a, graph, weightVars);
 
-  int subColor = nbColor - removeColorNb;
+  for (int r=1; r<removeColorNb+1; ++r){
+    //generate_sub_simple(a, graph, weightVars);
+    generate_sub(a, graph);
+    
+    int subColor = nbColor - r;
 
-  // resign the subproblem
-  for (int i=0; i<nbSommets; ++i){
-    if (a[i] < subColor ) continue;
+    // resign the subproblem
+    for (int i=0; i<nbSommets; ++i){
+      if (a[i] < subColor ) continue;
 
-    a[i] = 0; // simply assign the lowest index color
+      a[i] = 0; // simply assign the lowest index color
+    }
+  
+  
+    tabuCol(a, graph, subColor, nbLocalSearch, weightVars);
+    //tabuCol(a, graph, subColor, MAX_LocalSearch_Iteration, weightVars);
   }
-  
-  
-  //  return  tabuCol(a, graph, subColor, nbLocalSearch, weightVars);
-  return  tabuCol(a, graph, subColor, MAX_LocalSearch_Iteration, weightVars);
 
+  return cost(a, graph);
 }
 
 
@@ -1368,8 +1369,8 @@ void crossover_cardinality(int nbParents, int** parents, int* offspring, char** 
   nbCross += 2;
   int* idxParents = malloc(sizeof(int)*nbCross);
 
-  //randomParents(nbCross, idxParents, nbParents);
-  lessFreqParents(nbCross, idxParents, nbParents, parents, freqParents);
+  randomParents(nbCross, idxParents, nbParents);
+  //lessFreqParents(nbCross, idxParents, nbParents, parents, freqParents);
 
   int **pcopies = malloc(sizeof(int*)*nbCross);
   
@@ -1515,10 +1516,10 @@ void crossover_enforced2(int nbParents, int** parents, int* offspring,
   int crossIdx = -1;
   for (int i=1; i< nbColor; ++i){
 
-    //if (crossIdx < nbCross-1) ++crossIdx;
-    //else crossIdx = 0;
+    if (crossIdx < nbCross-1) ++crossIdx;
+    else crossIdx = 0;
 
-    crossIdx =  (rand()/(float)RAND_MAX) * nbCross;
+    //crossIdx =  (rand()/(float)RAND_MAX) * nbCross;
 
     int colorIdx = maxColorClass(pcopies[crossIdx], offspring, graph);
     int ith = crossIdx;
@@ -1629,16 +1630,16 @@ void printSolution(int iteration, int costx, int *a, FILE *f ){
  */
 bool ea(char** graph, char *savefile){
   
-  FILE *f;
-  f = fopen(savefile, "a");
+  //FILE *f;
+  //f = fopen(savefile, "a");
 
   //give the basic information
-  fprintf(f, "d: =========================================== START\n");
-  fprintf(f, "d: nbColor = %d\n", nbColor);
-  fprintf(f, "d: populationSize = %d\n", populationSize);
-  fprintf(f, "d: LS iterations = %d - %d\n", nbLocalSearch, MAX_LocalSearch_Iteration);
-  fprintf(f, "d: nbGeneration = %d\n", Nb_Generation);
-  fprintf(f, "d: Max remove colors = %d\n", MAX_RemoveColors);
+  //fprintf(f, "d: =========================================== START\n");
+  //fprintf(f, "d: nbColor = %d\n", nbColor);
+  //fprintf(f, "d: populationSize = %d\n", populationSize);
+  //fprintf(f, "d: LS iterations = %d - %d\n", nbLocalSearch, MAX_LocalSearch_Iteration);
+  //fprintf(f, "d: nbGeneration = %d\n", Nb_Generation);
+  //fprintf(f, "d: Max remove colors = %d\n", MAX_RemoveColors);
   
   
 
@@ -1737,18 +1738,16 @@ bool ea(char** graph, char *savefile){
       initialArray(tmpSolutions[cross],nbSommets,-1);
     }
       
-    
+    /*
     printf("n:");
     for (int w = 0; w<nbSommets;++w){
-      /*
+      
       if (!hasSuperWeight(w,weightsLearned))
-		weightsLearned[w] = 0;*/
+		weightsLearned[w] = 0;
 
       printf(" %d",weightsLearned[w]);
     }
-    
-
-    printf("\n");
+    printf("\n");*/
 
     //// crossover operator ==================================== BGN
     //if (true){
@@ -1806,7 +1805,7 @@ bool ea(char** graph, char *savefile){
 	      bCost = tCost;
 	    }
 	    // print best solution so far 
-	    printSolution(g, bCost, bestSolution, f);
+	    //printSolution(g, bCost, bestSolution, f);
 	    cent = 0;
 	    totalMutationNb = 0;
 
@@ -1886,7 +1885,7 @@ bool ea(char** graph, char *savefile){
       //if (mutation_iteration != MAX_LocalSearch_Iteration && tval > 4){
       //printf("in mutation sub\n");
 
-      for (int mi=0; mi<populationSize/2;++mi){
+      for (int mi=0; mi<populationSize/3;++mi){
 
 	// in case the remove color number greater than authorised remove number
 	removeColor = (rand()/(float)RAND_MAX) * MAX_RemoveColors;
@@ -1966,23 +1965,23 @@ bool ea(char** graph, char *savefile){
 
 
     // print info
-    /*
+    
       printf("costp:");
       for (int i=0; i<populationSize;++i){
       int cx = cost(population[i],graph);
       printf("\t%d[%d]",cx,freqParents[i]);
       }
-      printf("\n");*/
+      printf("\n");
     printf("costg:\t%d\t%d\t%d/%d\n",g,bCost,mutationCnt,removeColor);
-    fprintf(f,"costg:\t%d\t%d\t%d/%d\n",g,bCost,mutationCnt,removeColor);
+    //fprintf(f,"costg:\t%d\t%d\t%d/%d\n",g,bCost,mutationCnt,removeColor);
   }
   
   //printf("r: %d\t%d\t%d\n", gen, gen-mutationCnt, mutationCnt); 
     // print best solution so far 
-  printSolution(g, bCost, bestSolution, f);
+  //printSolution(g, bCost, bestSolution, f);
 
 
-  fprintf(f,"r: %d\t%d\t%d\t", g, g-mutationCnt, mutationCnt); 
+//fprintf(f,"r: %d\t%d\t%d\t", g, g-mutationCnt, mutationCnt); 
 
 
   // free the dynamic memory
@@ -1997,7 +1996,7 @@ bool ea(char** graph, char *savefile){
     
     for (int i=0; i<nbSommets; ++i){
       if (bestSolution[i] < 0 || bestSolution[i] > nbColor-1){
-	fprintf(f,"solution is partial\n");
+	//fprintf(f,"solution is partial\n");
 	consistent = false;
 	break;
       }
@@ -2006,7 +2005,7 @@ bool ea(char** graph, char *savefile){
 	if (graph[i][j]){
 	  //printf("%d\t%d\n",i,j);
 	  if (bestSolution[i] == bestSolution[j]){
-	    fprintf(f,"solution isn't consistent\n");
+	    //fprintf(f,"solution isn't consistent\n");
 	    consistent = false;
 	    break;
 	  }
@@ -2036,9 +2035,11 @@ bool ea(char** graph, char *savefile){
   weightsLearned = NULL;
 
   if (consistent)
-    fprintf(f,"feasible\n");
+    printf("feasible\n");
+//fprintf(f,"feasible\n");
   else
-    fprintf(f,"infeasible\n");
+    printf("infeasible\n");
+//fprintf(f,"infeasible\n");
   
 
   
@@ -2054,17 +2055,17 @@ bool ea(char** graph, char *savefile){
 
 
       
-  fprintf(f, "t: %s",buffer);
+//fprintf(f, "t: %s",buffer);
   printf("t: %s",buffer);
     
-  fprintf(f, "\t%04d-%02d-%02d %02d:%02d:%02d\n",
+/*fprintf(f, "\t%04d-%02d-%02d %02d:%02d:%02d\n",
 	  tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
-	  tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
+	  tmx->tm_hour, tmx->tm_min, tmx->tm_sec);*/
   printf("\t%04d-%02d-%02d %02d:%02d:%02d\n",
 	  tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
 	  tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
 
-  fclose(f);
+//fclose(f);
 
   return consistent;
   
