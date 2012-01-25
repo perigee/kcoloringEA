@@ -415,9 +415,10 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration, int *weightVar
     // update move
     updateMove(move->sommet, tTmpColor[move->sommet], move->color, 
 	       tGamma, graph, tTmpColor, tConflict);
-    //++moveFreq[move->sommet];
-    if (stableCnt > StableItr)
-      ++weightVars[move->sommet];
+    // ============================= Record circle variable ===== BGN
+    //if (stableCnt > StableItr)
+    //++weightVars[move->sommet];
+    // ============================= Record circle variable ===== END
 
 
     
@@ -1229,7 +1230,8 @@ void generate_sub_simple(int *a, char **graph, int *weightVars){
   
 
   while(hasConflictSolution(a,graph)){
-    int index = weightedConflict(a, graph, weightVars);
+    //int index = weightedConflict(a, graph, weightVars);
+    int index = randomConflict(a, graph);
     a[index] = -1; // remove the chosen node
   }
 
@@ -1345,6 +1347,61 @@ int mutation_sub(int *a, char **graph, int removeColorNb, int *weightVars){
   }
 
   return cost(a, graph);
+}
+
+
+bool mutation_iis(int *a, char **graph, int removeColorNb, int *weightVars){
+  
+  generate_sub(a, graph);
+  
+  for (int i=0; i<nbSommets; ++i){
+	if (a[i]<nbColor-1) continue;
+	a[i] = nbColor -2;
+  }
+
+  while(!tabuCol(a, graph, nbColor-1, nbLocalSearch, weightVars)){
+    int cidx = randomConflict(a, graph);
+    a[cidx] = -1; 
+  }
+
+
+  for (int i=0; i<nbSommets; ++i){
+	if (a[i]>-1) continue;
+	a[i] = nbColor -1;
+  }
+
+  return !hasConflictSolution(a,graph);
+
+  
+  //====== second strategy
+
+
+  bool feasible = false;
+
+  bool isFirst = true;
+  while(!feasible){  
+    int cidx = randomConflict(a, graph);
+    a[cidx] = -1; 
+    
+    if (isFirst){
+      isFirst = false;
+      for (int i=0; i<nbSommets; ++i){
+	if (a[i]<nbColor-1) continue;
+	a[i] = nbColor -2;
+      }
+    }
+  
+    feasible = tabuCol(a, graph, nbColor-1, nbLocalSearch, weightVars);
+  }
+
+  for (int i=0; i<nbSommets; ++i){
+	if (a[i]>-1) continue;
+	a[i] = nbColor -1;
+  }
+
+  return !hasConflictSolution(a,graph);
+
+  
 }
 
 
@@ -1620,6 +1677,11 @@ void printSolution(int iteration, int costx, int *a, FILE *f ){
     fprintf(f, "\t%d", a[i]); 
   }
   fprintf(f,"\n");
+}
+
+
+void verifyOptimalSolution(int *a, int *optimal, char **graph){
+  
 }
 
 /*!
@@ -1910,19 +1972,20 @@ bool ea(char** graph, char *savefile){
 	}
 
 	freqParents[jth] = 0;
-	//int costx = cost(population[jth], graph);
-	//printf("i: mutation operator\n");
-	//crossCost = cost(population[jth], graph);
-      
-	mutation_sub(population[jth], graph, removeColor, weightsLearned);
 
-	//tCost = cost(population[jth], graph);
-	
-	/*
-	int maxLimit = weightsLearned[0];
-	for (int w = 0; w<nbSommets;++w){
-	  maxLimit = (maxLimit + weightsLearned[w])/2;
-	}*/
+	//mutation_sub(population[jth], graph, removeColor, weightsLearned);
+	bool isConsistent = mutation_iis(population[jth], graph, removeColor, weightsLearned);
+
+	if (isConsistent){
+	  for (int bs=0; bs<nbSommets;++bs){
+	    bestSolution[bs] = population[jth][bs];
+	  }
+
+	  bCost = 0;
+	  
+	  printf("find consistent solution by mut_iis\n");
+	  break;
+	}
 	
     
        for (int w = 0; w<nbSommets;++w){
@@ -1933,6 +1996,9 @@ bool ea(char** graph, char *savefile){
        }
 
       }
+
+      if (bCost<1)
+	break;
 
     }
 
