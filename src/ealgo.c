@@ -1804,7 +1804,7 @@ bool ea(char** graph, char *savefile){
       initialArray(tmpSolutions[cross],nbSommets,-1);
     }
       
-    
+    /*
     printf("n:");
     for (int w = 0; w<nbSommets;++w){
       
@@ -1813,7 +1813,7 @@ bool ea(char** graph, char *savefile){
 
       printf(" %d",weightsLearned[w]);
     }
-    printf("\n");
+    printf("\n");*/
 
     //// crossover operator ==================================== BGN
     //if (true){
@@ -2001,6 +2001,31 @@ bool ea(char** graph, char *savefile){
 
       }
 
+      
+      // mutation on best solution
+      int jth = -1;// = (rand()/(float)RAND_MAX) * populationSize;
+      
+      int freq = -1;
+      for (int i = 0; i<populationSize; ++i){
+	if (freq < 0 || freq < freqParents[i]){
+	  freq = freqParents[i];
+	  jth = i;
+	}
+      }
+
+      for (int i=0; i<nbSommets; ++i){
+	population[jth][i] = bestSolution[i];
+      }
+      
+      if (mutation_iis(population[jth], graph, removeColor, weightsLearned)){
+	for (int bs=0; bs<nbSommets;++bs){
+	  bestSolution[bs] = population[jth][bs];
+	}
+
+	bCost = 0;
+	  
+      }
+
       if (bCost<1)
 	break;
 
@@ -2035,13 +2060,13 @@ bool ea(char** graph, char *savefile){
 
 
     // print info
-    
+    /*
       printf("costp:");
       for (int i=0; i<populationSize;++i){
       int cx = cost(population[i],graph);
       printf("\t%d[%d]",cx,freqParents[i]);
       }
-      printf("\n");
+      printf("\n");*/
     printf("costg:\t%d\t%d\t%d/%d\n",g,bCost,mutationCnt,removeColor);
     //fprintf(f,"costg:\t%d\t%d\t%d/%d\n",g,bCost,mutationCnt,removeColor);
   }
