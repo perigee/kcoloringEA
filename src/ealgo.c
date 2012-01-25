@@ -976,7 +976,7 @@ int weightedConflict(int* a, char** graph, int *weightVars){
     if (a[i] > -1 && hasConflict(i, a, graph)){
       
       
-      if (maxWeight < 0 || maxWeight < weightVars[i]){
+      if (maxWeight < 0 || maxWeight > weightVars[i]){
 	maxWeight =  weightVars[i];
 	idx = i;
 	eqCnt = 1;
@@ -1230,9 +1230,10 @@ void generate_sub_simple(int *a, char **graph, int *weightVars){
   
 
   while(hasConflictSolution(a,graph)){
-    //int index = weightedConflict(a, graph, weightVars);
-    int index = randomConflict(a, graph);
+    int index = weightedConflict(a, graph, weightVars);
+    //int index = randomConflict(a, graph);
     a[index] = -1; // remove the chosen node
+    ++weightVars[index];
   }
 
 }
@@ -1361,8 +1362,10 @@ bool mutation_iis(int *a, char **graph, int removeColorNb, int *weightVars){
   }
 
   while(!tabuCol(a, graph, nbColor-1, nbLocalSearch, weightVars)){
-    int cidx = randomConflict(a, graph);
+    int cidx = weightedConflict(a, graph, weightVars);
+      //int cidx = randomConflict(a, graph);
     a[cidx] = -1; 
+    ++weightVars[cidx];
   }
 
 
@@ -1801,16 +1804,16 @@ bool ea(char** graph, char *savefile){
       initialArray(tmpSolutions[cross],nbSommets,-1);
     }
       
-    /*
+    
     printf("n:");
     for (int w = 0; w<nbSommets;++w){
       
-      if (!hasSuperWeight(w,weightsLearned))
-		weightsLearned[w] = 0;
+      //if (!hasSuperWeight(w,weightsLearned))
+      //	weightsLearned[w] = 0;
 
       printf(" %d",weightsLearned[w]);
     }
-    printf("\n");*/
+    printf("\n");
 
     //// crossover operator ==================================== BGN
     //if (true){
@@ -1878,7 +1881,7 @@ bool ea(char** graph, char *savefile){
 	      maxLimit = (maxLimit + weightsLearned[w])/2;
 	    }
 	
-    
+	    // when best so far found, reduce the weights
 	    for (int w = 0; w<nbSommets;++w){
 	      if (weightsLearned[w] > maxLimit)
 		weightsLearned[w] -= maxLimit;
@@ -1989,12 +1992,12 @@ bool ea(char** graph, char *savefile){
 	}
 	
     
-       for (int w = 0; w<nbSommets;++w){
+	//for (int w = 0; w<nbSommets;++w){
 	 //if (weightsLearned[w] > maxLimit)
 	 //weightsLearned[w] -= maxLimit;
 	 //else
-	  weightsLearned[w] = 0;
-       }
+	 // weightsLearned[w] = 0;
+	//}
 
       }
 
