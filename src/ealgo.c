@@ -1772,7 +1772,7 @@ bool ea(char** graph, char *savefile){
   int MinRemoveColor = 0;
   //int removeColor = MinRemoveColor;
   int totalMutationNb = 0;
-  int Max_MutationNoImprove = populationSize; // maximal number of mutaions accepted without improvement
+  int Max_MutationNoImprove = populationSize/2; // maximal number of mutaions accepted without improvement
   int removeColor = 1;
   int mutationCnt = 0;
 
@@ -1868,17 +1868,17 @@ bool ea(char** graph, char *savefile){
 	    foundBest = true;
 	    for (int i = 0; i<nbSommets; ++i){
 	      bestSolution[i] = tmpSolutions[cross][i];
-	      bCost = tCost;
 	    }
+	    bCost = tCost;
 	    // print best solution so far 
 	    //printSolution(g, bCost, bestSolution, f);
 	    cent = 0;
-	    totalMutationNb = 0;
+	    mutationCnt = 0;
 
 
 	    int maxLimit = weightsLearned[0];
 	    for (int w = 0; w<nbSommets;++w){
-	      maxLimit = (maxLimit + weightsLearned[w])/2;
+	     maxLimit = (maxLimit + weightsLearned[w])/2;
 	    }
 	
 	    // when best so far found, reduce the weights
@@ -1889,16 +1889,19 @@ bool ea(char** graph, char *savefile){
 		weightsLearned[w] = 0;
 	    }
 	    
+	  }else if (bCost == tCost){
+	    for (int i = 0; i<nbSommets; ++i){
+	      bestSolution[i] = tmpSolutions[cross][i];
+	    }
+
+    	    cent = 0;
+	    mutationCnt = 0;
+
+
 	  } 
+
 	}
 	
-	/*
-	  printf("costb:");
-	  for (int i=0; i<populationSize;++i){
-	  int cx = cost(population[i],graph);
-	  printf("\t%d[%d]",cx,freqParents[i]);
-	  }
-	  printf("\n");*/
       }
 
       if (bCost < 1){
@@ -1934,17 +1937,8 @@ bool ea(char** graph, char *savefile){
     //if (false){
     if (cent > switchIteration -1){
 
-      if (totalMutationNb > Max_MutationNoImprove){
-	totalMutationNb = 0;
-	++removeColor;
-      }
-
       ++totalMutationNb;
       ++mutationCnt;
-      
-
-      
-    
       
 
       cent = 0;
@@ -1991,13 +1985,6 @@ bool ea(char** graph, char *savefile){
 	  break;
 	}
 	
-    
-	//for (int w = 0; w<nbSommets;++w){
-	 //if (weightsLearned[w] > maxLimit)
-	 //weightsLearned[w] -= maxLimit;
-	 //else
-	 // weightsLearned[w] = 0;
-	//}
 
       }
 
@@ -2029,6 +2016,14 @@ bool ea(char** graph, char *savefile){
       if (bCost<1)
 	break;
 
+
+      
+	if (mutationCnt > Max_MutationNoImprove){
+	  mutationCnt = 0;
+	  for (int w = 0; w<nbSommets;++w){
+	    weightsLearned[w] = 0;
+	  }
+	}
     }
 
     /*
@@ -2067,8 +2062,8 @@ bool ea(char** graph, char *savefile){
       printf("\t%d[%d]",cx,freqParents[i]);
       }
       printf("\n");*/
-    printf("costg:\t%d\t%d\t%d/%d\n",g,bCost,mutationCnt,removeColor);
-    //fprintf(f,"costg:\t%d\t%d\t%d/%d\n",g,bCost,mutationCnt,removeColor);
+    printf("costg:\t%d\t%d\t%d/%d\n",g,bCost,totalMutationNb,removeColor);
+    //fprintf(f,"costg:\t%d\t%d\t%d/%d\n",g,bCost,totalMutationNb,removeColor);
   }
   
   //printf("r: %d\t%d\t%d\n", gen, gen-mutationCnt, mutationCnt); 
