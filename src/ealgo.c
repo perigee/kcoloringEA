@@ -1296,6 +1296,24 @@ void generate_sub_simple(int *a, char **graph, int *weightVars){
 }
 
 
+void generate_sub_weighted(int *a, char **graph, int *weightVars){
+    
+  //return generate_sub(a, graph); // remove all conflict nodes
+
+  // randomly remove the conflict nodes one by one, 
+  // until a consistent partial solution 
+  
+
+  while(hasConflictSolution(a,graph)){
+    //int index = lessWeightedConflict(a, graph, weightVars);
+    int index = lessWeightedConflict(a, graph,weightVars);
+    a[index] = -1; // remove the chosen node
+    ++weightVars[index];
+  }
+
+}
+
+
 /*!
  * crossover inspired by the IIS detection
  * the computational time of local search, at sametime, it
@@ -1468,29 +1486,58 @@ bool mutation_iis(int *a, char **graph, int removeColorNb, int *weightVars){
 
 bool mutation_weighted(int *a, char **graph, int removeColorNb, int *weightVars){
   
+  //generate_sub_weighted(a, graph, weightVars);
+
+  for (int i=0; i<nbSommets; ++i){
+	if (a[i]<nbColor-1) continue;
+	a[i] = nbColor -2;
+  }
+
+
+  while(!tabuCol(a, graph, nbColor-1, MAX_LocalSearch_Iteration, weightVars)){
+    int cidx = lessWeightedConflict(a, graph, weightVars);
+    a[cidx] = -1; 
+    ++weightVars[cidx];
+  }
+
+ 
+
+  int nb = 0;  
+  for (int i=0; i<nbSommets; ++i){
+  	if (a[i]>-1) continue;
+  	a[i] = nbColor -1;
+	++nb;
+  }
+
+  printf("mutation remove: %d\n",nb);
+
+  return !hasConflictSolution(a,graph);
+  //return tabuCol(a, graph, nbColor, MAX_LocalSearch_Iteration, weightVars);
+}
+
+
+
+bool mutation_weighted_simple(int *a, char **graph, int removeColorNb, int *weightVars){
+  
+  generate_sub_weighted(a, graph, weightVars);
   
   for (int i=0; i<nbSommets; ++i){
 	if (a[i]<nbColor-1) continue;
 	a[i] = nbColor -2;
   }
 
-  int nb = 0;
-  while(!tabuCol(a, graph, nbColor-1, nbLocalSearch, weightVars)){
-    int cidx = lessWeightedConflict(a, graph, weightVars);
-    a[cidx] = -1; 
-    ++nb;
-    ++weightVars[cidx];
+  if (!tabuCol(a, graph, nbColor-1, MAX_LocalSearch_Iteration, weightVars)){
+    generate_sub_weighted(a, graph, weightVars);
   }
 
-  
-  for (int i=0; i<nbSommets; ++i){
-  	if (a[i]>-1) continue;
-  	a[i] = nbColor -1;
+  int nb = 0;
+  for (int i=0; i<nbSommets; ++i){ 
+    if (a[i]>-1) continue;
+    a[i] = nbColor -1;
+    ++nb;
   }
 
   printf("mutation remove: %d\n",nb);
-  
- 
 
   return !hasConflictSolution(a,graph);
   //return tabuCol(a, graph, nbColor, MAX_LocalSearch_Iteration, weightVars);
@@ -2068,6 +2115,9 @@ bool ea(char** graph, char *savefile){
 	//mutation_sub(population[jth], graph, removeColor, weightsLearned);
 	//	bool isConsistent = mutation_iis(population[jth], graph, removeColor, weightsLearned);
 	bool isConsistent = mutation_weighted(population[jth], graph, removeColor, weightsLearned);
+	//bool isConsistent = mutation_weighted_simple(population[jth], 
+	//					     graph, removeColor, 
+	//					     weightsLearned);
 
 	if (isConsistent){
 	  for (int bs=0; bs<nbSommets;++bs){
