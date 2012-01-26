@@ -1882,12 +1882,12 @@ bool ea(char** graph, char *savefile){
 	    }
 	
 	    // when best so far found, reduce the weights
-	    for (int w = 0; w<nbSommets;++w){
-	      if (weightsLearned[w] > maxLimit)
-		weightsLearned[w] -= maxLimit;
-	      else
-		weightsLearned[w] = 0;
-	    }
+	    //for (int w = 0; w<nbSommets;++w){
+	      //if (weightsLearned[w] > maxLimit)
+		//weightsLearned[w] -= maxLimit;
+	      //else
+		//weightsLearned[w] = 0;
+	      //}
 	    
 	  }else if (bCost == tCost){
 	    for (int i = 0; i<nbSommets; ++i){
@@ -1929,11 +1929,6 @@ bool ea(char** graph, char *savefile){
 
   
     //// mutation  operator =========================== BGN
-   
-    
-    
-    // mutation operator (subproblem )============================
-    
     //if (false){
     if (cent > switchIteration -1){
 
@@ -1988,14 +1983,12 @@ bool ea(char** graph, char *savefile){
 
       }
 
-      
-
-      
+ 
+      // =============================================== 
       if (mutationCnt > Max_MutationNoImprove){
 	mutationCnt = 0;
-	for (int w = 0; w<nbSommets;++w){
-	  weightsLearned[w] = 0;
-	}
+
+	initialArray(weightsLearned, nbSommets, 0);
 
 	// mutation on best solution
 	int jth = -1;// = (rand()/(float)RAND_MAX) * populationSize;
