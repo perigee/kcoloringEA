@@ -2038,10 +2038,10 @@ bool ea(char** graph, char *savefile){
 	      bestSolution[i] = tmpSolutions[cross][i];
 	    }
 
-    	    cent = 0;
-	    mutationCnt = 0;
+    	    //cent = 0;
+	    //mutationCnt = 0;
 
-	    initialArray(weightsLearned, nbSommets, 0);
+	    //initialArray(weightsLearned, nbSommets, 0);
 	  } 
 
 	  
