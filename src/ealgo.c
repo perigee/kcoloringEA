@@ -1326,7 +1326,7 @@ void crossover_sub(int nbParents, int** parents, int* offspring, char** graph, i
  * @param graph adjacent martrix graph
  * @return true if mutation finds consistent solution
  */
-int mutation_sub(int *a, char **graph, int removeColorNb, int *weightVars){
+bool mutation_sub(int *a, char **graph, int removeColorNb, int *weightVars){
 
 
   for (int r=1; r<removeColorNb+1; ++r){
@@ -1369,12 +1369,12 @@ bool mutation_iis(int *a, char **graph, int removeColorNb, int *weightVars){
   }
 
 
-  for (int i=0; i<nbSommets; ++i){
-	if (a[i]>-1) continue;
-	a[i] = nbColor -1;
-  }
+  //for (int i=0; i<nbSommets; ++i){
+  //	if (a[i]>-1) continue;
+  //	a[i] = nbColor -1;
+  //}
 
-  return !hasConflictSolution(a,graph);
+  return false;//!hasConflictSolution(a,graph);
 
   
   //====== second strategy
@@ -1942,7 +1942,7 @@ bool ea(char** graph, char *savefile){
       //if (mutation_iteration != MAX_LocalSearch_Iteration && tval > 4){
       //printf("in mutation sub\n");
 
-      for (int mi=0; mi<populationSize/3;++mi){
+      for (int mi=0; mi<populationSize/4;++mi){
 
 	// in case the remove color number greater than authorised remove number
 	removeColor = (rand()/(float)RAND_MAX) * MAX_RemoveColors;
