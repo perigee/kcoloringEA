@@ -1539,7 +1539,9 @@ void crossover_enforced2(int nbParents, int** parents, int* offspring,
   initialArray(offspring, nbSommets, -1);
 
   int nbCross = (rand()/(float)RAND_MAX) * 3;
-  nbCross += 2;
+  //nbCross += 2;
+  nbCross = 2;
+
   int* idxParents = malloc(sizeof(int)*nbCross);
 
   // the partial over-constrained one can be out of nbCross size
