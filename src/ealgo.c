@@ -1989,41 +1989,47 @@ bool ea(char** graph, char *savefile){
       }
 
       
-      // mutation on best solution
-      int jth = -1;// = (rand()/(float)RAND_MAX) * populationSize;
-      
-      int freq = -1;
-      for (int i = 0; i<populationSize; ++i){
-	if (freq < 0 || freq < freqParents[i]){
-	  freq = freqParents[i];
-	  jth = i;
-	}
-      }
 
-      for (int i=0; i<nbSommets; ++i){
-	population[jth][i] = bestSolution[i];
-      }
       
-      if (mutation_iis(population[jth], graph, removeColor, weightsLearned)){
-	for (int bs=0; bs<nbSommets;++bs){
-	  bestSolution[bs] = population[jth][bs];
+      if (mutationCnt > Max_MutationNoImprove){
+	mutationCnt = 0;
+	for (int w = 0; w<nbSommets;++w){
+	  weightsLearned[w] = 0;
 	}
 
-	bCost = 0;
-	  
+	// mutation on best solution
+	int jth = -1;// = (rand()/(float)RAND_MAX) * populationSize;
+      
+	int freq = -1;
+	for (int i = 0; i<populationSize; ++i){
+	  if (freq < 0 || freq < freqParents[i]){
+	    freq = freqParents[i];
+	    jth = i;
+	  }
+	}
+
+	for (int i=0; i<nbSommets; ++i){
+	  population[jth][i] = bestSolution[i];
+	}
+
+	freqParents[jth] = 0;
+      
+	if (mutation_iis(population[jth], graph, removeColor, weightsLearned)){
+	  for (int bs=0; bs<nbSommets;++bs){
+	    bestSolution[bs] = population[jth][bs];
+	  }
+
+	  bCost = 0; 
+	}
+
       }
+
+	      
 
       if (bCost<1)
 	break;
 
 
-      
-	if (mutationCnt > Max_MutationNoImprove){
-	  mutationCnt = 0;
-	  for (int w = 0; w<nbSommets;++w){
-	    weightsLearned[w] = 0;
-	  }
-	}
     }
 
     /*
