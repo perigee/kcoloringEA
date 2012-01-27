@@ -2402,9 +2402,9 @@ printf("t: beginTime:\t%04d-%02d-%02d %02d:%02d:%02d\n",
   bool feasible = testEA(tConnect, savefilename,filename);
 
 
-  printf("d: %s nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tTimeLimit:%d mins\tMaximalColorRemove:%d\n",
-  	 filename, nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,
-  	 Nb_Generation/60, MAX_RemoveColors);
+  //printf("d: %s nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tTimeLimit:%d mins\tMaximalColorRemove:%d\n",
+  //	 filename, nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,
+  //	 Nb_Generation/60, MAX_RemoveColors);
 
 
 time(&endtime);
