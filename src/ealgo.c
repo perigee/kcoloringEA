@@ -1504,9 +1504,10 @@ bool mutation_weighted(int *a, char **graph, int removeColorNb, int *weightVars)
 
   int nb = 0;  
   for (int i=0; i<nbSommets; ++i){
-  	if (a[i]>-1) continue;
-  	a[i] = nbColor -1;
-	++nb;
+    if (a[i]>-1) continue;
+
+    a[i] = nbColor -1;
+    ++nb;
   }
 
   printf("mutation remove: %d\n",nb);
@@ -1526,8 +1527,10 @@ bool mutation_weighted_simple(int *a, char **graph, int removeColorNb, int *weig
 	a[i] = nbColor -2;
   }
 
-  if (!tabuCol(a, graph, nbColor-1, MAX_LocalSearch_Iteration, weightVars)){
-    generate_sub_weighted(a, graph, weightVars);
+  while (!tabuCol(a, graph, nbColor-1, nbLocalSearch, weightVars)){
+    int cidx = lessWeightedConflict(a, graph, weightVars);
+    a[cidx] = -1; 
+    ++weightVars[cidx];
   }
 
   int nb = 0;
@@ -1539,8 +1542,8 @@ bool mutation_weighted_simple(int *a, char **graph, int removeColorNb, int *weig
 
   printf("mutation remove: %d\n",nb);
 
-  return !hasConflictSolution(a,graph);
-  //return tabuCol(a, graph, nbColor, MAX_LocalSearch_Iteration, weightVars);
+  //return !hasConflictSolution(a,graph);
+  return tabuCol(a, graph, nbColor, MAX_LocalSearch_Iteration, weightVars);
 }
 
 
@@ -1698,6 +1701,8 @@ void crossover_enforced2(int nbParents, int** parents, int* offspring,
     for (int j=0; j<nbSommets; ++j){
       pcopies[i][j] = parents[idxParents[i]][j];
     }
+
+    ++freqParents[idxParents[i]];
     
     
     if (i!=subOne){
@@ -1735,8 +1740,8 @@ void crossover_enforced2(int nbParents, int** parents, int* offspring,
 
     //printf("parent id:%d\t%d\n",idxParents[ith], freqParents[idxParents[ith]]);
 
-    if (ith != subOne)
-      ++freqParents[idxParents[ith]];
+    //if (ith != subOne)
+    //  ++freqParents[idxParents[ith]];
 
     //printf("after: ");
     for (int j=0; j<nbSommets;++j){
@@ -1800,8 +1805,8 @@ void selection_freq(int** population, char** graph, int* offspring, int* freqPar
       bestCnt = 1;
     }else if (max == freqParents[i]){
       ++bestCnt;
-      int tval = (rand()/(float)RAND_MAX) * 10 ;
-      if (tval < 5){
+      float tval = (rand()/(float)RAND_MAX) ;
+      if (tval < 1/(float)bestCnt){
 	index = i;
       }
     }
@@ -1818,8 +1823,6 @@ void selection_freq(int** population, char** graph, int* offspring, int* freqPar
 void printSolution(int iteration, int costx, int *a, FILE *f ){
   
   //return; // ignore
-  
-  
   
   fprintf(f,"s: %d\t%d",iteration, costx);
   for (int i=0; i<nbSommets; ++i){
@@ -1867,7 +1870,8 @@ bool ea(char** graph, char *savefile){
     population[i] = malloc(sizeof(int)*nbSommets);
     randomSolution(population[i]);
     //initialArray(weightsLearned, nbSommets, 0);
-    feasibleInit = tabuCol(population[i],graph, nbColor, nbLocalSearch, weightsLearned);
+    feasibleInit = tabuCol(population[i],graph, nbColor, 
+			   MAX_LocalSearch_Iteration, weightsLearned);
     if (feasibleInit){ 
      
       for (int j=0; j<i+1; ++j){
@@ -1881,8 +1885,6 @@ bool ea(char** graph, char *savefile){
       return true;
     }
   }
-
-
 
   
   int* freqParents = malloc(sizeof(int)*populationSize);
@@ -1917,7 +1919,9 @@ bool ea(char** graph, char *savefile){
   int MinRemoveColor = 0;
   //int removeColor = MinRemoveColor;
   int totalMutationNb = 0;
-  int Max_MutationNoImprove = populationSize; // maximal number of mutaions accepted without improvement
+  int Max_MutationNoImprove = populationSize; // maximal number of mutaions 
+  //accepted without improvement
+  
   int removeColor = 1;
   int mutationCnt = 0;
 
@@ -1944,27 +1948,33 @@ bool ea(char** graph, char *savefile){
   int g;
   for (g = 0; g < Nb_Generation; ++g){
     
+    //for (int i=0; i<populationSize; ++i)
+    //  ++freqParents[i];
+
     // re-initialize parameters
     for (int cross=0; cross<nbChildren; ++cross){
       initialArray(tmpSolutions[cross],nbSommets,-1);
     }
       
     /*
-    printf("n:");
-    for (int w = 0; w<nbSommets;++w){
+      printf("n:");
+      for (int w = 0; w<nbSommets;++w){
       
       //if (!hasSuperWeight(w,weightsLearned))
       //	weightsLearned[w] = 0;
 
       printf(" %d",weightsLearned[w]);
-    }
-    printf("\n");*/
+      }
+      printf("\n");*/
 
     //// crossover operator ==================================== BGN
     //if (true){
     bool foundBest = false;
+    
     if (cent < switchIteration){
       ++cent;
+
+
       //crossover_maximal(populationSize, population, tmpSolution, graph, freqParents);    
       //crossover_nogood(populationSize, population, tmpSolution, graph, freqParents);
       //crossover_sub(populationSize, population, tmpSolution, graph, freqParents);
@@ -2022,16 +2032,16 @@ bool ea(char** graph, char *savefile){
 
 	    int maxLimit = weightsLearned[0];
 	    for (int w = 0; w<nbSommets;++w){
-	     maxLimit = (maxLimit + weightsLearned[w])/2;
+	      maxLimit = (maxLimit + weightsLearned[w])/2;
 	    }
 	
 	    // when best so far found, reduce the weights
 	    //for (int w = 0; w<nbSommets;++w){
-	      //if (weightsLearned[w] > maxLimit)
-		//weightsLearned[w] -= maxLimit;
-	      //else
-		//weightsLearned[w] = 0;
-	      //}
+	    //if (weightsLearned[w] > maxLimit)
+	    //weightsLearned[w] -= maxLimit;
+	    //else
+	    //weightsLearned[w] = 0;
+	    //}
 	    initialArray(weightsLearned, nbSommets, 0);
 	  }else if (bCost == tCost){
 	    for (int i = 0; i<nbSommets; ++i){
@@ -2054,13 +2064,6 @@ bool ea(char** graph, char *savefile){
 	break;
       }
 
-      //crossCost = crossCost/nbChildren;
-
-      // mutation after crossover
-
-      /*
-      if (foundBest)
-      initialArray(weightsLearned, nbSommets, 0);*/
       
       // replace the highest frequenced parent
       for (int cross=0; cross<nbChildren; ++cross){
@@ -2076,7 +2079,7 @@ bool ea(char** graph, char *savefile){
   
     //// mutation  operator =========================== BGN
     //if (false){
-    if (cent > switchIteration -1){
+    if (cent > (switchIteration-1)){
 
       ++totalMutationNb;
       ++mutationCnt;
@@ -2086,7 +2089,7 @@ bool ea(char** graph, char *savefile){
       //if (mutation_iteration != MAX_LocalSearch_Iteration && tval > 4){
       //printf("in mutation sub\n");
 
-      for (int mi=0; mi<populationSize/2;++mi){
+      for (int mi=0; mi<populationSize;++mi){
 
 	// in case the remove color number greater than authorised remove number
 	removeColor = (rand()/(float)RAND_MAX) * MAX_RemoveColors;
@@ -2095,29 +2098,35 @@ bool ea(char** graph, char *savefile){
 	if (removeColor > nbColor)
 	  removeColor = 1;
 
-	int jth = -1;// = (rand()/(float)RAND_MAX) * populationSize;
-      
-	int freq = -1;
-	for (int i = 0; i<populationSize; ++i){
-	  if (freq < 0 || freq < freqParents[i]){
-	    freq = freqParents[i];
-	    jth = i;
-	  }
-	}
+       
+	if (freqParents[mi] < 1) continue;
 
-	if (jth<0){
-	  printf("problem in choosing mutation individual\n");
-	  exit(0);
-	}
+	int jth = -1;// = (rand()/(float)RAND_MAX) * populationSize;
+	jth = mi;
+
+	//int freq = -1;
+	//for (int i = 0; i<populationSize; ++i){
+	//  if (freq < 0 || freq < freqParents[i]){
+	//    freq = freqParents[i];
+	//    jth = i;
+	//  }
+	//}
+
+	//if (jth<0){
+	//  printf("problem in choosing mutation individual\n");
+	//  exit(0);
+	//}
 
 	freqParents[jth] = 0;
 
 	//mutation_sub(population[jth], graph, removeColor, weightsLearned);
-	//	bool isConsistent = mutation_iis(population[jth], graph, removeColor, weightsLearned);
-	bool isConsistent = mutation_weighted(population[jth], graph, removeColor, weightsLearned);
-	//bool isConsistent = mutation_weighted_simple(population[jth], 
-	//					     graph, removeColor, 
-	//					     weightsLearned);
+	//	bool isConsistent = mutation_iis(population[jth], graph, 
+	//				 removeColor, weightsLearned);
+	//bool isConsistent = mutation_weighted(population[jth], graph, 
+	//				      removeColor, weightsLearned);
+	bool isConsistent = mutation_weighted_simple(population[jth], 
+						     graph, removeColor, 
+						     weightsLearned);
 
 	if (isConsistent){
 	  for (int bs=0; bs<nbSommets;++bs){
@@ -2130,101 +2139,34 @@ bool ea(char** graph, char *savefile){
 	  break;
 	}
 
-	
-	initialArray(weightsLearned, nbSommets, 0);
-
       }
 
- 
-      // ===============================================
-      if (false){
-	//if (mutationCnt > Max_MutationNoImprove){
-	mutationCnt = 0;
-
-	initialArray(weightsLearned, nbSommets, 0);
-
-	// mutation on best solution
-	int jth = -1;// = (rand()/(float)RAND_MAX) * populationSize;
       
-	int freq = -1;
-	for (int i = 0; i<populationSize; ++i){
-	  if (freq < 0 || freq < freqParents[i]){
-	    freq = freqParents[i];
-	    jth = i;
-	  }
-	}
-
-	for (int i=0; i<nbSommets; ++i){
-	  population[jth][i] = bestSolution[i];
-	}
-
-	freqParents[jth] = 0;
-      
-	//	if (mutation_iis(population[jth], graph, removeColor, weightsLearned)){
-        if (mutation_weighted(population[jth], graph, removeColor, weightsLearned)){
-	  for (int bs=0; bs<nbSommets;++bs){
-	    bestSolution[bs] = population[jth][bs];
-	  }
-
-	  bCost = 0; 
-	}
-
-      }
-
-	      
-
-      if (bCost<1)
-	break;
-
+      // reset all the learned weights
+      initialArray(weightsLearned, nbSommets, 0);	      
 
     }
 
-    /*
-      int nb = 0;
-      for (int n=0; n<nbSommets;++n){
-      bool isViolated = false;
-      for (int m=0; m<populationSize; ++m){
-      if (hasConflict(n,population[m],graph)){
-      isViolated = true;
-      ++nb;
-      break;
-      }
-	
-      }
-      }
-      printf("i: parents in conflict:%d\n",nb);*/
-    //// mutation (tabuCol) operator =========================== END
-    
-    //// selection operator ============================ BGN
-    //// selection operator: update population
-
-    //// selection operator ============================ BGN
-    
-    //printf("selection\n");
-    
-
-
-    //// selection operator ============================ END
-
-
     // print info
-    /*
-      printf("costp:");
-      for (int i=0; i<populationSize;++i){
+    
+    printf("costp:");
+    for (int i=0; i<populationSize;++i){
       int cx = cost(population[i],graph);
       printf("\t%d[%d]",cx,freqParents[i]);
-      }
-      printf("\n");*/
-    printf("costg:\t%d\t%d\t%d/%d\n",g,bCost,totalMutationNb,removeColor);
+    }
+    //printf("\n");
+    printf("\t%d\t%d\t%d/%d\n",g,bCost,totalMutationNb,removeColor);
     //fprintf(f,"costg:\t%d\t%d\t%d/%d\n",g,bCost,totalMutationNb,removeColor);
+
+    if (bCost<1) break;
   }
   
   //printf("r: %d\t%d\t%d\n", gen, gen-mutationCnt, mutationCnt); 
-    // print best solution so far 
+  // print best solution so far 
   //printSolution(g, bCost, bestSolution, f);
 
 
-//fprintf(f,"r: %d\t%d\t%d\t", g, g-mutationCnt, mutationCnt); 
+  //fprintf(f,"r: %d\t%d\t%d\t", g, g-mutationCnt, mutationCnt); 
 
 
   // free the dynamic memory
@@ -2279,10 +2221,10 @@ bool ea(char** graph, char *savefile){
 
   if (consistent)
     printf("feasible\n");
-//fprintf(f,"feasible\n");
+  //fprintf(f,"feasible\n");
   else
     printf("infeasible\n");
-//fprintf(f,"infeasible\n");
+  //fprintf(f,"infeasible\n");
   
 
   
@@ -2298,17 +2240,17 @@ bool ea(char** graph, char *savefile){
 
 
       
-//fprintf(f, "t: %s",buffer);
+  //fprintf(f, "t: %s",buffer);
   printf("t: %s",buffer);
     
-/*fprintf(f, "\t%04d-%02d-%02d %02d:%02d:%02d\n",
-	  tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
-	  tmx->tm_hour, tmx->tm_min, tmx->tm_sec);*/
+  /*fprintf(f, "\t%04d-%02d-%02d %02d:%02d:%02d\n",
+    tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
+    tmx->tm_hour, tmx->tm_min, tmx->tm_sec);*/
   printf("\t%04d-%02d-%02d %02d:%02d:%02d\n",
-	  tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
-	  tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
+	 tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
+	 tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
 
-//fclose(f);
+  //fclose(f);
 
   return consistent;
   
