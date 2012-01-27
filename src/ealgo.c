@@ -1502,15 +1502,15 @@ bool mutation_weighted(int *a, char **graph, int removeColorNb, int *weightVars)
 
  
 
-  int nb = 0;  
+  //int nb = 0;  
   for (int i=0; i<nbSommets; ++i){
     if (a[i]>-1) continue;
 
     a[i] = nbColor -1;
-    ++nb;
+    //++nb;
   }
 
-  printf("mutation remove: %d\n",nb);
+  //printf("mutation remove: %d\n",nb);
 
   return !hasConflictSolution(a,graph);
   //return tabuCol(a, graph, nbColor, MAX_LocalSearch_Iteration, weightVars);
@@ -1533,14 +1533,14 @@ bool mutation_weighted_simple(int *a, char **graph, int removeColorNb, int *weig
     ++weightVars[cidx];
   }
 
-  int nb = 0;
+  //int nb = 0;
   for (int i=0; i<nbSommets; ++i){ 
     if (a[i]>-1) continue;
     a[i] = nbColor -1;
-    ++nb;
+    //++nb;
   }
 
-  printf("mutation remove: %d\n",nb);
+  //printf("mutation remove: %d\n",nb);
 
   //return !hasConflictSolution(a,graph);
   return tabuCol(a, graph, nbColor, MAX_LocalSearch_Iteration, weightVars);
@@ -1842,7 +1842,7 @@ void verifyOptimalSolution(int *a, int *optimal, char **graph){
  * @param population the table of individuals
  * @return true if the solution found is consistent, otherwise false 
  */
-bool ea(char** graph, char *savefile){
+bool ea(char** graph, char *savefile, char *inputFile){
   
   //FILE *f;
   //f = fopen(savefile, "a");
@@ -1969,7 +1969,7 @@ bool ea(char** graph, char *savefile){
 
     //// crossover operator ==================================== BGN
     //if (true){
-    bool foundBest = false;
+    bool foundBetter = false;
     
     if (cent < switchIteration){
       ++cent;
@@ -2019,7 +2019,7 @@ bool ea(char** graph, char *savefile){
 	  tCost = cost(tmpSolutions[cross],graph);
       
 	  if (bCost < 0 || bCost > tCost){
-	    foundBest = true;
+	    foundBetter = true;
 	    for (int i = 0; i<nbSommets; ++i){
 	      bestSolution[i] = tmpSolutions[cross][i];
 	    }
@@ -2149,19 +2149,22 @@ bool ea(char** graph, char *savefile){
 
     // print info
     
-    printf("costp:");
-    for (int i=0; i<populationSize;++i){
-      int cx = cost(population[i],graph);
-      printf("\t%d[%d]",cx,freqParents[i]);
+    if (g%(Nb_Generation/100) <1 || foundBetter){
+
+      printf("p: %s[%d] ",inputFile, nbColor);
+      for (int i=0; i<populationSize;++i){
+	int cx = cost(population[i],graph);
+	printf("\t%d[%d]",cx,freqParents[i]);
+      }
+      //printf("\n");
+      printf("\t%d\t%d\t%d/%d\n",g,bCost,totalMutationNb,removeColor);
+      //fprintf(f,"costg:\t%d\t%d\t%d/%d\n",g,bCost,totalMutationNb,removeColor);
     }
-    //printf("\n");
-    printf("\t%d\t%d\t%d/%d\n",g,bCost,totalMutationNb,removeColor);
-    //fprintf(f,"costg:\t%d\t%d\t%d/%d\n",g,bCost,totalMutationNb,removeColor);
 
     if (bCost<1) break;
   }
   
-  //printf("r: %d\t%d\t%d\n", gen, gen-mutationCnt, mutationCnt); 
+  printf("r: %d\t%d\t%d\n", g, g, totalMutationNb); 
   // print best solution so far 
   //printSolution(g, bCost, bestSolution, f);
 
@@ -2219,11 +2222,12 @@ bool ea(char** graph, char *savefile){
   free(weightsLearned);
   weightsLearned = NULL;
 
-  if (consistent)
-    printf("feasible\n");
+  
+  //if (consistent)
+  //printf("feasible\n");
   //fprintf(f,"feasible\n");
-  else
-    printf("infeasible\n");
+  //else
+  //  printf("infeasible\n");
   //fprintf(f,"infeasible\n");
   
 
@@ -2286,8 +2290,8 @@ bool testTabu(char** graph){
 }
 
 
-bool testEA(char** graph, char *savefilename){
-  return ea(graph, savefilename);
+bool testEA(char** graph, char *savefilename, char *inputFile){
+  return ea(graph, savefilename, inputFile);
 }
 
 
@@ -2346,9 +2350,9 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   //MAX_LocalSearch_Iteration = 15000;
   //Nb_Generation = 10000;
 
-  printf("d: nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tNbGeneration:%d\tMaximalColorRemove:%d\n",
-	 nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,
-	 Nb_Generation, MAX_RemoveColors);
+  //printf("d: nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tNbGeneration:%d\tMaximalColorRemove:%d\n",
+  //	 nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,
+  //	 Nb_Generation, MAX_RemoveColors);
 
   loadGrapheSimple(filename);
 
@@ -2362,13 +2366,17 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   //bool feasible = testTabu(tConnect);
 
   // Test 2: ea algorithm
-  bool feasible = testEA(tConnect, savefilename);
+  bool feasible = testEA(tConnect, savefilename, filename);
+
+  printf("d: %s nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tNbGeneration:%d\tMaximalColorRemove:%d\n",
+	 filename, nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,
+	 Nb_Generation, MAX_RemoveColors);
   
 
   if (feasible)
-    printf("feasible\n");
+    printf("r: feasible =================== END\n");
   else
-    printf("found infeasible\n");
+    printf("r: found infeasible =========== END\n");
 
 
   // free dynamic memory

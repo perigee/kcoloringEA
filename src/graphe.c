@@ -170,7 +170,7 @@ void loadGrapheSimple(char* filename){
 			}
 			
 			
-			printf("d: Sommets ajoutes: %d\n", nbSommets);
+			//printf("d: Sommets ajoutes: %d\n", nbSommets);
 		}
 		
 		if(*tok=='e'){ // lecture d'une arrete
@@ -184,7 +184,7 @@ void loadGrapheSimple(char* filename){
 		}
 	}
 	
-	printf("d: Arretes ajoutees: %d / %d\n",nbArretesAjoutee ,nbArretes);
+	//printf("d: Arretes ajoutees: %d / %d\n",nbArretesAjoutee ,nbArretes);
 	closefile();
 }
 

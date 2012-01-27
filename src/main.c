@@ -15,7 +15,7 @@ int main (int argc, char * const argv[]) {
 
 
   srand((unsigned)time(NULL));
-  printf("d: Procedure de calcul \n");
+  //printf("d: Procedure de calcul \n");
   
   if(argc<5){
     printf("Erreur d'utilisation !!\n");
