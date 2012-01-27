@@ -1298,14 +1298,9 @@ void generate_sub_simple(int *a, char **graph, int *weightVars){
 
 void generate_sub_weighted(int *a, char **graph, int *weightVars){
     
-  //return generate_sub(a, graph); // remove all conflict nodes
-
-  // randomly remove the conflict nodes one by one, 
-  // until a consistent partial solution 
-  
 
   while(hasConflictSolution(a,graph)){
-    //int index = lessWeightedConflict(a, graph, weightVars);
+
     int index = lessWeightedConflict(a, graph,weightVars);
     a[index] = -1; // remove the chosen node
     ++weightVars[index];
@@ -2168,10 +2163,10 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
       //printf("p: %s[%d] ",inputFile, nbColor);
       printf("p:");
-      for (int i=0; i<populationSize;++i){
-      	int cx = cost(population[i],graph);
-      	printf("\t%d[%d]",cx,freqParents[i]);
-       }
+      //for (int i=0; i<populationSize;++i){
+      //	int cx = cost(population[i],graph);
+      //	printf("\t%d[%d]",cx,freqParents[i]);
+      //}
       //printf("\n");
 
       //int diffT = (int)floor(difftime(now_time, start_time)/60.0); 
@@ -2422,9 +2417,9 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   bool feasible = testEA(tConnect, savefilename,filename);
 
 
-  //printf("d: %s nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tTimeLimit:%d mins\tMaximalColorRemove:%d\n",
-  //	 filename, nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,
-  //	 Nb_Generation/60, MAX_RemoveColors);
+  printf("d: %s nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tTimeLimit:%d mins\tMaximalColorRemove:%d\n",
+  	 filename, nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,
+  	 Nb_Generation/60, MAX_RemoveColors);
 
 
   time(&endtime);
