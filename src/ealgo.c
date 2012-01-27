@@ -49,6 +49,19 @@ void floyd_warshall(char** graph, int** dist){
 
 
 
+/*!
+ * initialize random solution
+ * @param a individual color table
+ */
+void randomSolution(int* a){
+  for (int i=0; i<nbSommets; ++i){
+    int col = (rand()/(float)RAND_MAX) * nbColor ;
+    a[i] = col;
+  }
+}
+
+
+
 
 
 /*!
@@ -1054,204 +1067,6 @@ int weightedNode(int* a, char** graph, int *weightVars){
 
 
 
-
-/*!
- * crossover operator - improve the solution and decrease 
- * the computational time of local search, at sametime, it
- * reduces the diversity
- * @param nbParents the number of whole population
- * @param parents the whole population
- * @param offspring carry out the created offspring
- * @param graph adjacent matrix
- * @param freqParents counter the participation number of each parent
- */
-
-void crossover_nogood(int nbParents, int** parents, int* offspring, 
-		      char** graph, int* freqParents, int *weightVars){
-  
-
-  //printf("in ngood crossover\n");
-  
-  
-
-  initialArray(offspring, nbSommets, -1);
-  
-  // randomly choose two nogoods nodes from 2 parents
-  int totalPartial = 0;
-  for (int p=0; p<3; ++p){
-  
-    int jth = (rand()/(float)RAND_MAX) * nbParents ;
-    ++freqParents[jth];
-
-    /*printf("jth is: %d\n", jth);
-  
-    for (int x = 0; x<nbSommets; ++x){
-      if (parents[jth][x] < 0){
-	printf("1.1. parent has null\n");
-	break;
-      }
-    }*/
-    
-    int indx = randomConflict(parents[jth],graph);
-
-    //printf("random conflict is: %d\n", indx);
-
-    // randomly generate initial solution for subproblem which consists of nogood 
-    for (int i=0; i<nbSommets;++i){
-      if (graph[indx][i] && offspring[i] < 0){
-	int col = (rand()/(float)RAND_MAX) * (nbColor-1) ;
-	offspring[i] = col;
-	++totalPartial;
-      }
-    }
-  }
-
-  
-
-  // tabuCol attempts to find consistent partial soltuion with  nbColor-1
-  //printf("before tabu partial : %d\n", totalPartial);
-  tabuCol(offspring, graph, nbColor-1, nbLocalSearch);
-  int afterTabu = cost(offspring, graph);
-  //printf("after tabu partial\n");
-
-  /*
-  totalPartial = 0;
-  for (int c=0; c<nbSommets;++c){
-    if (offspring[c] > -1) ++totalPartial;
-  }
-  
-  printf("partial: %d\t%d\n", totalPartial, afterTabu);*/
-  
-  
-  int* classSize = malloc(sizeof(int)*nbColor);
-
-  for (int i=0; i<nbSommets;++i){
-    if (offspring[i] < 0) continue;
-
-    ++classSize[offspring[i]];
-  }
-
-  int maxSize = 0;
-  int colorIdx = -1;
-  
-  for (int i=0; i<nbColor;++i){
-    if (maxSize < classSize[i]){
-      maxSize = classSize[i];
-      colorIdx = i;
-    }
-  }
-
-  for (int i=0; i<nbSommets;++i){
-    if (offspring[i] != colorIdx) offspring[i] = -1;
-    else offspring[i] = 0;
-  }
-
-  
-  int nbCross = 4;
-  int* idxParents = malloc(sizeof(int)*nbCross);
-
-  for (int i=0; i<nbCross;++i){
-    idxParents[i] = -1;
-  }
-  
-  for (int i=0; i<nbCross;++i){
-    
-    bool duplicated = true;
-    int iidxx = -1;
-    while (duplicated){
-      
-      iidxx = (rand()/(float)RAND_MAX) * nbParents ;
-      
-      if (i <1) break;
-
-      duplicated = false;
-      for (int j=i-1; j>-1;--j){
-	if (iidxx == idxParents[j]){
-	  duplicated = true;
-	  break;
-	}
-      } 
-    }
-    
-    idxParents[i] = iidxx;
-  }
-  
-  int ith = -1;
-  for (int i=1; i<nbColor; ++i){
-    initialArray(classSize,nbColor,0);
-
-    
-    // get a parent
-    if (ith < nbCross-1) ++ith;
-    else ith = 0;
-
-    int jth = idxParents[ith];
-    //++freqParents[jth];
-    
-    /*printf("2.5 choosen ith and  jth is: %\d\t%d\n", ith, jth);
-    for (int x = 0; x<nbSommets; ++x){
-      if (parents[jth][x] < 0){
-	printf("3. parent has null %d\n", jth);
-	break;
-      }
-    }*/
-    
-    
-    for (int j=0; j<nbSommets;++j){
-      if (offspring[j] > -1) continue;
-      
-      ++classSize[parents[jth][j]];   
-    }
-
-    maxSize = 0;
-    colorIdx = -1;
-    
-    for (int k=0; k<nbColor;++k){
-      if (maxSize < classSize[k]){
-	maxSize = classSize[k];
-	colorIdx = k;
-      }    
-    }
-
-
-
-    for (int j=0; j<nbSommets;++j){
-      if (offspring[j] < 0 && parents[jth][j] == colorIdx ){
-	  offspring[j] = i;
-      }
-    }
-
-
-
-
-  }
-  
-  // find the maximal cardinality color class
-  
-  
-  int conflictNb = cost(offspring, graph);
-
-
-  // complete the partial solution =============== working
- 
-  for (int i=0; i<nbSommets;++i){
-    if (offspring[i] < 0){
-      int col = (rand()/(float)RAND_MAX) * (nbColor) ;
-      offspring[i] = col;
-    
-    }
-  }
-
-  //printf("number of partial nodes: %d\t%d\t%d\n", totalPartial, randomAssigned, conflictNb);
-
-  free(classSize);
-  free(idxParents);
-  classSize = NULL;
-  idxParents = NULL;
-  //printf("out ngood crossover\n");
-}
-
-
 void generate_sub(int *a, char **graph){
     
   // randomly remove the conflict nodes one by one, 
@@ -1898,7 +1713,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
   // initialize the population
 
-  bool setBest = false;
+  //bool setBest = false;
   int* bestSolution = malloc(sizeof(int)*nbSommets);
   //int* tmpSolution = malloc(sizeof(int)*nbSommets);
   
@@ -1917,14 +1732,14 @@ bool ea(char** graph, char *savefile, char *inputFile){
   // iterate the generation
   int cent = 0;
   //bool switchX = true; // should be true
-  int gen = 0; // crossover number
+  //int gen = 0; // crossover number
   int switchIteration = populationSize;
 
   //int MaxRemoveColor = 5;
-  int MinRemoveColor = 0;
+  //int MinRemoveColor = 0;
   //int removeColor = MinRemoveColor;
   int totalMutationNb = 0;
-  int Max_MutationNoImprove = populationSize; // maximal number of mutaions 
+  //int Max_MutationNoImprove = populationSize; // maximal number of mutaions 
   //accepted without improvement
   
   int removeColor = 1;
@@ -2284,18 +2099,6 @@ bool ea(char** graph, char *savefile, char *inputFile){
 }
 
 
-/*!
- * initialize random solution
- * @param a individual color table
- */
-void randomSolution(int* a){
-  for (int i=0; i<nbSommets; ++i){
-    int col = (rand()/(float)RAND_MAX) * nbColor ;
-    a[i] = col;
-  }
-}
-
-
 
 bool testTabu(char** graph){
   int* individual = malloc(sizeof(int)*nbSommets);
@@ -2319,12 +2122,6 @@ bool testEA(char** graph, char *savefilename, char *inputFile){
   return ea(graph, savefilename, inputFile);
 }
 
-
-bool testHeuristic(char** graph){
-  // initialize an individual
-   int* individual = malloc(sizeof(int)*nbSommets);
-   initialArray(individual, nbSommets,-1);
-}
 
 
 void testShortest(char** graph){
@@ -2389,7 +2186,7 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   
   if ((tmx = localtime (&endtime)) == NULL) {
     printf ("Error extracting time stuff\n");
-    return 1;
+    exit(0);
   }
 
 
@@ -2426,7 +2223,7 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   
   if ((tmx = localtime (&endtime)) == NULL) {
     printf ("Error extracting time stuff\n");
-    return 1;
+    exit(0);
   }
 
 
