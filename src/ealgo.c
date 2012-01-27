@@ -2174,7 +2174,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
     if (bCost<1) break;
   }
   
-  printf("r: %d\t%d\t%d\t%d\n", g, g, totalMutationNb,Nb_Generation/60); 
+  printf("r: %d\t%d\t%d\t%d\t%d\n", g, g, totalMutationNb,Nb_Generation/60, bCost); 
   // print best solution so far 
   //printSolution(g, bCost, bestSolution, f);
 
