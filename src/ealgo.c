@@ -91,7 +91,6 @@ int **tTabu = NULL; // the tabu table used in tabuCol
 int **tGamma = NULL;// the Gamma table used in tabuCol
 int *tTmpColor = NULL; // for tmp solution in tabuCol
 Move *tabuMove = NULL;
-char *tabuConflictTable = NULL;
 //================= CENTRAL MEMORY FOR TABUCOL ========== END
 
 
@@ -122,6 +121,7 @@ bool hasConflict(int node, int* a, char** graph){
  */
 int cost(int* a, char** graph){
    int nbConflict = 0;
+   char *tabuConflictTable = malloc(sizeof(char)*nbSommets);
   
   for (int i=0; i<nbSommets; ++i){
     tabuConflictTable[i] = 0;
@@ -147,6 +147,9 @@ int cost(int* a, char** graph){
     
     
   }
+
+  free(tabuConflictTable);
+  tabuConflictTable = NULL;
   
   return nbConflict;
 }
@@ -324,7 +327,7 @@ void mallocTabuColMemory(){
   tGamma = malloc(sizeof(int*)*nbSommets);
   tTmpColor = malloc(sizeof(int)*nbSommets);
   tabuMove = malloc(sizeof(Move));
-  tabuConflictTable = malloc(sizeof(char)*nbSommets);
+  //tabuConflictTable = malloc(sizeof(char)*nbSommets);
   
   for (int i=0; i<nbSommets;++i){
     tTabu[i] = malloc(sizeof(int)*nbColor);
@@ -333,10 +336,6 @@ void mallocTabuColMemory(){
 }
 
 void freeTabuColMemory(){
-  tTabu = malloc(sizeof(int*)*nbSommets);
-  tGamma = malloc(sizeof(int*)*nbSommets);
-  tTmpColor = malloc(sizeof(int)*nbSommets);
-  
 
   for (int i=0; i<nbSommets;++i){
       free(tTabu[i]);
@@ -353,8 +352,8 @@ void freeTabuColMemory(){
   tTmpColor = NULL;
   free(tabuMove);
   tabuMove = NULL;
-  free(tabuConflictTable);
-  tabuConflictTable = NULL;
+  //free(tabuConflictTable);
+  //tabuConflictTable = NULL;
 
 }
 
@@ -2184,7 +2183,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
     if (bCost<1) break;
   }
   
-  printf("r: %d\t%d\t%d\t%d\t%d\n", g, g, totalMutationNb,Nb_Generation/60, bCost); 
+  printf("r:\t%d\t%d\t%d\t%d\t%d\n", g, g, totalMutationNb,Nb_Generation/60, bCost); 
   // print best solution so far 
   //printSolution(g, bCost, bestSolution, f);
 
