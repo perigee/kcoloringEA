@@ -6,6 +6,7 @@ VPATH = src/util:src #space seperate the different dirs
 OBJECTS = $(wildcard *.o)
 
 all : main.o gfile.o graphe.o ealgo.o analyseGraphe.o
+	#$(CC) -o $(TARGET) $^ -pg -lm -O2 -mtune=native -march=native
 	$(CC) -o $(TARGET) $^ -pg -O2 -mtune=native -march=native
 
 #create obj files

@@ -5,6 +5,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <stdlib.h>
+//#include <math.h>
 #include "util/gfile.h"
 #include "ealgo.h"
 
@@ -2151,13 +2152,15 @@ bool ea(char** graph, char *savefile, char *inputFile){
     if (g%100 <1 || foundBetter){
 
       //printf("p: %s[%d] ",inputFile, nbColor);
-      printf("p:");
+      //printf("p:");
       //for (int i=0; i<populationSize;++i){
       //	int cx = cost(population[i],graph);
       //	printf("\t%d[%d]",cx,freqParents[i]);
       // }
       //printf("\n");
-      printf("\t%d\t%d\t%d/%d\n",g,bCost,totalMutationNb,removeColor);
+
+      //int diffT = (int)floor(difftime(now_time, start_time)/60.0); 
+      //printf("\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
       //fprintf(f,"costg:\t%d\t%d\t%d/%d\n",g,bCost,totalMutationNb,removeColor);
 
 
@@ -2171,7 +2174,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
     if (bCost<1) break;
   }
   
-  printf("r: %d\t%d\t%d\n", g, g, totalMutationNb); 
+  printf("r: %d\t%d\t%d\t%d\n", g, g, totalMutationNb,Nb_Generation/60); 
   // print best solution so far 
   //printSolution(g, bCost, bestSolution, f);
 
@@ -2253,7 +2256,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
       
   //fprintf(f, "t: %s",buffer);
-  printf("t: %d mins\n",Nb_Generation/60);
+  //printf("t: %d mins\n",Nb_Generation/60);
     
   /*fprintf(f, "\t%04d-%02d-%02d %02d:%02d:%02d\n",
     tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
@@ -2358,12 +2361,34 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   //MAX_LocalSearch_Iteration = 15000;
   //Nb_Generation = 10000;
 
-  //printf("d: nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tNbGeneration:%d\tMaximalColorRemove:%d\n",
-  //	 nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,
-  //	 Nb_Generation, MAX_RemoveColors);
+  printf("d :%s nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tTimeLimit:%d mins\tMaximalColorRemove:%d\n",
+  	 filename, nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,
+  	 Nb_Generation/60, MAX_RemoveColors);
 
   loadGrapheSimple(filename);
 
+    
+time_t endtime;
+struct tm *tmx;
+time(&endtime);
+
+  
+if ((tmx = localtime (&endtime)) == NULL) {
+  printf ("Error extracting time stuff\n");
+  return 1;
+}
+
+
+      
+    
+  /*fprintf(f, "\t%04d-%02d-%02d %02d:%02d:%02d\n",
+    tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
+    tmx->tm_hour, tmx->tm_min, tmx->tm_sec);*/
+printf("t: beginTime:\t%04d-%02d-%02d %02d:%02d:%02d\n",
+	 tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
+	 tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
+
+  
 
   // Test 0: all pairs shortest path
   //testShortest(tConnect);
@@ -2376,9 +2401,30 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   // Test 2: ea algorithm
   bool feasible = testEA(tConnect, savefilename,filename);
 
-  printf("d: %s nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tNbGeneration:%d hours\tMaximalColorRemove:%d\n",
-	 filename, nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,
-	 Nb_Generation/60, MAX_RemoveColors);
+
+  printf("d: %s nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tTimeLimit:%d mins\tMaximalColorRemove:%d\n",
+  	 filename, nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,
+  	 Nb_Generation/60, MAX_RemoveColors);
+
+
+time(&endtime);
+
+  
+if ((tmx = localtime (&endtime)) == NULL) {
+  printf ("Error extracting time stuff\n");
+  return 1;
+}
+
+
+      
+    
+  /*fprintf(f, "\t%04d-%02d-%02d %02d:%02d:%02d\n",
+    tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
+    tmx->tm_hour, tmx->tm_min, tmx->tm_sec);*/
+printf("t: endTime:\t%04d-%02d-%02d %02d:%02d:%02d\n",
+	 tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
+	 tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
+
   
 
   if (feasible)
