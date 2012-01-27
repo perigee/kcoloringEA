@@ -111,8 +111,8 @@ bool hasConflict(int node, int* a, char** graph){
  * @return the number of violated edges
  */
 int cost(int* a, char** graph){
-  register int nbConflict = 0;
-  register char* conflict = malloc(sizeof(char)*nbSommets);
+   int nbConflict = 0;
+   char* conflict = malloc(sizeof(char)*nbSommets);
   
   for (int i=0; i<nbSommets; ++i){
     conflict[i] = 0;
@@ -371,10 +371,10 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration){//, int *weigh
   Move* move = malloc(sizeof(Move));
 
   // a always records best so far solution
-  StableItr = maxNoImpIteration/3*2;
-  register stableCnt = 0;
+  //StableItr = maxNoImpIteration/3*2;
+  // stableCnt = 0;
   for (int i=0;  i< maxNoImpIteration ; ++i){
-    ++stableCnt;
+    //    ++stableCnt;
     move->sommet = -1;
     move->color = -1;
     move->nbVars = 0;
@@ -548,7 +548,7 @@ bool isPartialSolution(int *a){
  */
 int maxColorClass( int *a, int *b, char **graph){
   
-  register int *classSize = malloc(sizeof(int)*nbColor);
+  int *classSize = malloc(sizeof(int)*nbColor);
   
   initialArray(classSize, nbColor, 0);
   
@@ -583,7 +583,7 @@ int maxColorClass( int *a, int *b, char **graph){
 void maxColorsClasses( int nbParent, int *chosenParent,  int **parents, 
 		       int *b, char **graph, Move *move){
   
-  register int *classSize = malloc(sizeof(int)*nbColor);
+  int *classSize = malloc(sizeof(int)*nbColor);
   
 
   
@@ -618,7 +618,7 @@ void maxColorsClasses( int nbParent, int *chosenParent,  int **parents,
 void maxColorClasses( int nbParent, int **parents, int *b, 
 		      char **graph, Move *move){
   
-  register int *classSize = malloc(sizeof(int)*nbColor);
+  int *classSize = malloc(sizeof(int)*nbColor);
   
 
   
@@ -1259,7 +1259,7 @@ void generate_sub(int *a, char **graph){
   // randomly remove the conflict nodes one by one, 
   // until a consistent partial solution 
   
-  register char *conflict = malloc(sizeof(char)*nbSommets);
+  char *conflict = malloc(sizeof(char)*nbSommets);
   
   for (int i = 0; i<nbSommets; ++i){
     if (hasConflict(i, a, graph))
@@ -2368,15 +2368,15 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   loadGrapheSimple(filename);
 
     
-time_t endtime;
-struct tm *tmx;
-time(&endtime);
+  time_t endtime;
+  struct tm *tmx;
+  time(&endtime);
 
   
-if ((tmx = localtime (&endtime)) == NULL) {
-  printf ("Error extracting time stuff\n");
-  return 1;
-}
+  if ((tmx = localtime (&endtime)) == NULL) {
+    printf ("Error extracting time stuff\n");
+    return 1;
+  }
 
 
       
@@ -2384,7 +2384,7 @@ if ((tmx = localtime (&endtime)) == NULL) {
   /*fprintf(f, "\t%04d-%02d-%02d %02d:%02d:%02d\n",
     tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
     tmx->tm_hour, tmx->tm_min, tmx->tm_sec);*/
-printf("t: beginTime:\t%04d-%02d-%02d %02d:%02d:%02d\n",
+  printf("t: beginTime:\t%04d-%02d-%02d %02d:%02d:%02d\n",
 	 tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
 	 tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
 
@@ -2407,13 +2407,13 @@ printf("t: beginTime:\t%04d-%02d-%02d %02d:%02d:%02d\n",
   //	 Nb_Generation/60, MAX_RemoveColors);
 
 
-time(&endtime);
+  time(&endtime);
 
   
-if ((tmx = localtime (&endtime)) == NULL) {
-  printf ("Error extracting time stuff\n");
-  return 1;
-}
+  if ((tmx = localtime (&endtime)) == NULL) {
+    printf ("Error extracting time stuff\n");
+    return 1;
+  }
 
 
       
@@ -2421,7 +2421,7 @@ if ((tmx = localtime (&endtime)) == NULL) {
   /*fprintf(f, "\t%04d-%02d-%02d %02d:%02d:%02d\n",
     tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
     tmx->tm_hour, tmx->tm_min, tmx->tm_sec);*/
-printf("t: endTime:\t%04d-%02d-%02d %02d:%02d:%02d\n",
+  printf("t: endTime:\t%04d-%02d-%02d %02d:%02d:%02d\n",
 	 tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
 	 tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
 
