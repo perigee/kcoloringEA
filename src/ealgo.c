@@ -1945,9 +1945,14 @@ bool ea(char** graph, char *savefile, char *inputFile){
   
   initialArray(weightsLearned, nbSommets, 0);
 
-  int g;
-  for (g = 0; g < Nb_Generation; ++g){
-    
+  int g = 0;
+  time_t start_time;
+  time_t now_time;
+  time(&start_time);
+  while(true){
+    //for (g = 0; g < Nb_Generation; ++g){
+    ++g;
+
     //for (int i=0; i<populationSize; ++i)
     //  ++freqParents[i];
 
@@ -2149,7 +2154,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
     // print info
     
-    if (g%(Nb_Generation/100) <1 || foundBetter){
+    if (g%100 <1 || foundBetter){
 
       printf("p: %s[%d] ",inputFile, nbColor);
       for (int i=0; i<populationSize;++i){
@@ -2159,8 +2164,15 @@ bool ea(char** graph, char *savefile, char *inputFile){
       //printf("\n");
       printf("\t%d\t%d\t%d/%d\n",g,bCost,totalMutationNb,removeColor);
       //fprintf(f,"costg:\t%d\t%d\t%d/%d\n",g,bCost,totalMutationNb,removeColor);
+
+
+      time(&now_time);
+
+      if (difftime(now_time, start_time) > Nb_Generation) break;
+      
     }
 
+    
     if (bCost<1) break;
   }
   
@@ -2340,7 +2352,7 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   populationSize = atoi(inPopuSize);
   nbLocalSearch = atoi(inLSIter);
   MAX_LocalSearch_Iteration = atoi(inMaxLSIter);
-  Nb_Generation = atoi(inGenItr);
+  Nb_Generation = atoi(inGenItr)*3600;
   MAX_RemoveColors = atoi(inMaxRemoveColor);
   StableItr =  nbLocalSearch/3 * 2;
 
@@ -2368,7 +2380,7 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   // Test 2: ea algorithm
   bool feasible = testEA(tConnect, savefilename, filename);
 
-  printf("d: %s nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tNbGeneration:%d\tMaximalColorRemove:%d\n",
+  printf("d: %s nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tNbGeneration:%d hours\tMaximalColorRemove:%d\n",
 	 filename, nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,
 	 Nb_Generation, MAX_RemoveColors);
   
