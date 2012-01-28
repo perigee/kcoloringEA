@@ -1664,7 +1664,7 @@ void printSolution(int iteration, int costx, int *a, FILE *f ){
   
   //return; // ignore
   
-  fprintf(f,"s: %d\t%d",iteration, costx);
+  fprintf(f,"s:\t%d\t%d",iteration, costx);
   for (int i=0; i<nbSommets; ++i){
     fprintf(f, "\t%d", a[i]); 
   }
@@ -1684,21 +1684,45 @@ void verifyOptimalSolution(int *a, int *optimal, char **graph){
  */
 bool ea(char** graph, char *savefile, char *inputFile){
   
-  //FILE *f;
-  //f = fopen(savefile, "a");
+  FILE *f;
+  f = fopen(savefile, "a");
 
-  //give the basic information
-  //fprintf(f, "d: =========================================== START\n");
-  //fprintf(f, "d: nbColor = %d\n", nbColor);
-  //fprintf(f, "d: populationSize = %d\n", populationSize);
-  //fprintf(f, "d: LS iterations = %d - %d\n", nbLocalSearch, MAX_LocalSearch_Iteration);
-  //fprintf(f, "d: nbGeneration = %d\n", Nb_Generation);
-  //fprintf(f, "d: Max remove colors = %d\n", MAX_RemoveColors);
-  
   //printf("initial memory\n");
   int crossParentsNb = 3;
   mallocTabuColMemory();
   mallocCrossOverMemory(crossParentsNb);
+
+  
+  //give the basic information
+  fprintf(f, "r: =========================================== START\n");
+  fprintf(f, "r: %s\t", inputFile);
+  fprintf(f, "nbColor = %d\t", nbColor);
+  fprintf(f, "populationSize = %d\t", populationSize);
+  fprintf(f, "LS iterations = %d - %d\t", nbLocalSearch, MAX_LocalSearch_Iteration);
+  fprintf(f, "Time Limit = %d mins\t", Nb_Generation/60);
+  fprintf(f, "Max remove colors = %d\t", 3);
+  fprintf(f, "Parents for crossover = %d\n", crossParentsNb);
+
+      
+  time_t endtime;
+  struct tm *tmx;
+  time(&endtime);
+
+  
+  if ((tmx = localtime (&endtime)) == NULL) {
+    printf ("Error extracting time stuff\n");
+    exit(0);
+  }
+
+
+  fprintf(f,"r: beginTime:\t%04d-%02d-%02d %02d:%02d:%02d\n",
+	 tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
+	 tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
+
+
+
+  //fflush ( stdout );
+
 
   int** population = malloc(sizeof(int*)*populationSize);
 
@@ -2007,8 +2031,8 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
       //int diffT = (int)floor(difftime(now_time, start_time)/60.0); 
       printf("\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
-      //fprintf(f,"costg:\t%d\t%d\t%d/%d\n",g,bCost,totalMutationNb,removeColor);
-
+      fprintf(f,"p:\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
+      fflush ( stdout );/* this line */
     }
       time(&now_time);
 
@@ -2020,12 +2044,10 @@ bool ea(char** graph, char *savefile, char *inputFile){
     if (bCost<1) break;
   }
   
-  printf("r:\t%d\t%d\t%d\t%d\t%d\n", g, g, totalMutationNb,Nb_Generation/60, bCost); 
-  // print best solution so far 
-  //printSolution(g, bCost, bestSolution, f);
+  printf("r:\t%d\t%d\t%d\t%d\t%d\n", g, g, totalMutationNb,Nb_Generation/60, bCost);
+  fprintf(f,"r: %d\t%d\t%d\t%d\t%d\n", g, g, totalMutationNb,Nb_Generation/60, bCost);
+  
 
-
-  //fprintf(f,"r: %d\t%d\t%d\t", g, g-mutationCnt, mutationCnt); 
 
   
   // verify the solution
@@ -2034,7 +2056,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
     
     for (int i=0; i<nbSommets; ++i){
       if (bestSolution[i] < 0 || bestSolution[i] > nbColor-1){
-	//fprintf(f,"solution is partial\n");
+	fprintf(f,"e: solution is partial\n");
 	consistent = false;
 	break;
       }
@@ -2043,7 +2065,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
 	if (graph[i][j]){
 	  //printf("%d\t%d\n",i,j);
 	  if (bestSolution[i] == bestSolution[j]){
-	    //fprintf(f,"solution isn't consistent\n");
+	    fprintf(f,"e: solution isn't consistent\n");
 	    consistent = false;
 	    break;
 	  }
@@ -2082,15 +2104,34 @@ bool ea(char** graph, char *savefile, char *inputFile){
   freeTabuColMemory();
   freeCrossOverMemory(crossParentsNb);
 
+  
+  time(&endtime);
 
-  //if (consistent)
-  //printf("feasible\n");
-  //fprintf(f,"feasible\n");
-  //else
-  //  printf("infeasible\n");
-  //fprintf(f,"infeasible\n");
+  
+  if ((tmx = localtime (&endtime)) == NULL) {
+    printf ("Error extracting time stuff\n");
+    exit(0);
+  }
+
+
+      
+    
+  fprintf(f, "r: endtime:\t%04d-%02d-%02d %02d:%02d:%02d\n",
+    tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
+    tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
+
   
 
+  if (consistent){
+    printSolution(g, bCost, bestSolution, f);
+    //printf("feasible\n");
+    fprintf(f,"r: feasible\t=========================== END\n");
+  }else{
+  //  printf("infeasible\n");
+  fprintf(f,"r: reach infeasible\t=========================== END\n");
+  }
+
+    fflush ( stdout );/* this line */
   
   //time_t endtime;
   //struct tm *tmx;
@@ -2114,7 +2155,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
   //	 tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
   //	 tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
 
-  //fclose(f);
+  fclose(f);
 
   return consistent;
   
@@ -2249,7 +2290,7 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   }
 
 
-      
+       
     
   /*fprintf(f, "\t%04d-%02d-%02d %02d:%02d:%02d\n",
     tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
