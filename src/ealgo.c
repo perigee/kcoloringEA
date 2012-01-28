@@ -1329,29 +1329,51 @@ bool mutation_weighted(int *a, char **graph, int removeColorNb, int *weightVars)
 
 bool mutation_weighted_simple(int *a, char **graph, int *weightVars){
   
+  int removeColorNb = (rand()/(float)RAND_MAX) * 3;
+  ++removeColorNb;
+
+  if (removeColorNb > nbColor)
+    removeColorNb = 1;
+
+
   generate_sub_weighted(a, graph, weightVars);
   
   for (int i=0; i<nbSommets; ++i){
-	if (a[i]<nbColor-1) continue;
-	a[i] = nbColor -2;
+    if (a[i]<nbColor-(1+removeColorNb)) continue;
+   
+    a[i] = 0;
   }
 
-  while (!tabuCol(a, graph, nbColor-1, nbLocalSearch)){
-    int cidx = lessWeightedConflict(a, graph, weightVars);
-    a[cidx] = -1; 
-    ++weightVars[cidx];
+  while (!tabuCol(a, graph, nbColor-removeColorNb, nbLocalSearch)){
+    int lastIdx = 0;
+
+    if (cost(a,graph)>2){
+      while(hasConflictSolution(a,graph)){
+	int cidx = lessWeightedConflict(a, graph, weightVars);
+	a[cidx] = -1; 
+	++weightVars[cidx];
+	lastIdx = cidx;
+      }
+
+      a[lastIdx] = 0;
+      --weightVars[lastIdx];
+    }else{
+      int cidx = lessWeightedConflict(a, graph, weightVars);
+      a[cidx] = -1; 
+      ++weightVars[cidx];
+    }
   }
 
   //int nb = 0;
   for (int i=0; i<nbSommets; ++i){ 
     if (a[i]>-1) continue;
-    a[i] = nbColor -1;
+    a[i] = 0;
     //++nb;
   }
 
   //printf("mutation remove: %d\n",nb);
 
-  //return !hasConflictSolution(a,graph);
+  //return false;
   return tabuCol(a, graph, nbColor, MAX_LocalSearch_Iteration);
 }
 
@@ -1674,7 +1696,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
   //fprintf(f, "d: Max remove colors = %d\n", MAX_RemoveColors);
   
   //printf("initial memory\n");
-  int crossParentsNb = 2;
+  int crossParentsNb = 3;
   mallocTabuColMemory();
   mallocCrossOverMemory(crossParentsNb);
 
@@ -1973,15 +1995,15 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
     // print info
     
-    if (g%100 <1 || foundBetter){
+    //if (g%100 <1 || foundBetter){
 
       //printf("p: %s[%d] ",inputFile, nbColor);
       printf("p:");
-      //for (int i=0; i<populationSize;++i){
-      //	int cx = cost(population[i],graph);
-      //	printf("\t%d[%d]",cx,freqParents[i]);
-      //}
-      //printf("\n");
+      for (int i=0; i<populationSize;++i){
+      	int cx = cost(population[i],graph);
+      	printf("\t%d[%d]",cx,freqParents[i]);
+      }
+     
 
       //int diffT = (int)floor(difftime(now_time, start_time)/60.0); 
       printf("\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
@@ -1992,7 +2014,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
       if (difftime(now_time, start_time) > Nb_Generation) break;
       
-    }
+      //}
 
     
     if (bCost<1) break;
