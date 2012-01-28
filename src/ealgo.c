@@ -1998,15 +1998,15 @@ bool ea(char** graph, char *savefile, char *inputFile){
     //if (g%100 <1 || foundBetter){
 
       //printf("p: %s[%d] ",inputFile, nbColor);
-      printf("p:");
-      for (int i=0; i<populationSize;++i){
-      	int cx = cost(population[i],graph);
-      	printf("\t%d[%d]",cx,freqParents[i]);
-      }
+      //printf("p:");
+      //for (int i=0; i<populationSize;++i){
+      //	int cx = cost(population[i],graph);
+      //	printf("\t%d[%d]",cx,freqParents[i]);
+      //}
      
 
       //int diffT = (int)floor(difftime(now_time, start_time)/60.0); 
-      printf("\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
+      //printf("\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
       //fprintf(f,"costg:\t%d\t%d\t%d/%d\n",g,bCost,totalMutationNb,removeColor);
 
 
