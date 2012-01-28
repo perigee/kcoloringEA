@@ -2076,33 +2076,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
     consistent = false;
   }
 
-  // free the dynamic memory
-  for (int cross=0; cross<nbChildren; ++cross){
-    free(tmpSolutions[cross]);
-    tmpSolutions[cross] = NULL;
-  }
 
-  
-  for (int i=0; i<populationSize; ++i){
-    free(population[i]);
-    population[i] = NULL;
-  }
-
-  free(population);
-  population = NULL;
-
-  free(tmpSolutions);
-  tmpSolutions = NULL;
-  free(bestSolution);
-  bestSolution = NULL;
-  free(freqParents);
-  freqParents = NULL;
-
-  free(weightsLearned);
-  weightsLearned = NULL;
-
-  freeTabuColMemory();
-  freeCrossOverMemory(crossParentsNb);
 
   
   time(&endtime);
@@ -2133,6 +2107,38 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
     fflush ( stdout );/* this line */
   
+
+
+
+
+  // free the dynamic memory
+  for (int cross=0; cross<nbChildren; ++cross){
+    free(tmpSolutions[cross]);
+    tmpSolutions[cross] = NULL;
+  }
+
+  
+  for (int i=0; i<populationSize; ++i){
+    free(population[i]);
+    population[i] = NULL;
+  }
+
+  free(population);
+  population = NULL;
+
+  free(tmpSolutions);
+  tmpSolutions = NULL;
+  free(bestSolution);
+  bestSolution = NULL;
+  free(freqParents);
+  freqParents = NULL;
+
+  free(weightsLearned);
+  weightsLearned = NULL;
+
+  freeTabuColMemory();
+  freeCrossOverMemory(crossParentsNb);
+
   //time_t endtime;
   //struct tm *tmx;
   //time(&endtime);
