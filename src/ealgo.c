@@ -2107,7 +2107,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
     fflush ( stdout );/* this line */
   
-
+fclose(f);
 
 
 
@@ -2161,7 +2161,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
   //	 tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
   //	 tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
 
-  fclose(f);
+  
 
   return consistent;
   
