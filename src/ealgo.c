@@ -2235,26 +2235,28 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
     // print info
     
-    //if (foundBetter){
+    if (foundBetter){
 
       
       printf("p:");
-      for (int i=0; i<populationSize;++i){
-      	int cx = cost(population[i],graph);
-      	printf("\t%d[%d]",cx,freqParents[i]);
-      }
+      //for (int i=0; i<populationSize;++i){
+      	//int cx = cost(population[i],graph);
+      	//printf("\t%d[%d]",cx,freqParents[i]);
+	//}
      
 
       //int diffT = (int)floor(difftime(now_time, start_time)/60.0); 
       printf("\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
       fprintf(f,"p:\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
       fflush ( stdout );/* this line */
-      //}
-      time(&now_time);
+    }
+    
 
-      if (difftime(now_time, start_time) > Nb_Generation) break;
+    time(&now_time);
+
+    if (difftime(now_time, start_time) > Nb_Generation) break;
       
-      //}
+    
 
     
     if (bCost<1) break;
