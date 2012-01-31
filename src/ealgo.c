@@ -1289,6 +1289,38 @@ void generate_sub(int *a, char **graph){
   conflict = NULL;
 }
 
+
+
+
+
+void generate_sub_weighted_all(int *a, char **graph, int *weightedVars){
+    
+  // randomly remove the conflict nodes one by one, 
+  // until a consistent partial solution 
+  
+  char *conflict = malloc(sizeof(char)*nbSommets);
+  
+  for (int i = 0; i<nbSommets; ++i){
+    if (hasConflict(i, a, graph)){
+      conflict[i] = 1;
+      ++weightedVars[i];
+    }
+    else
+      conflict[i] = 0;
+  }
+
+  for (int i=0; i<nbSommets; ++i){
+    if (conflict[i]){
+      a[i] = -1;
+      continue;
+    }
+  }
+
+  free(conflict);
+  conflict = NULL;
+}
+
+
 void generate_sub_simple(int *a, char **graph, int *weightVars){
     
   //return generate_sub(a, graph); // remove all conflict nodes
@@ -1542,9 +1574,10 @@ bool mutation_weighted_simple(int *a, char **graph, int *weightVars){
   // define a number of colors removed
   //removeColorNb = MAX_RemoveColors;
 
-  if (removeColorNb > nbColor)
+  if (removeColorNb > nbColor/2)
     removeColorNb = 1;
 
+  //printf("mutation remove colors: %d\n", removeColorNb);
 
   generate_sub_weighted(a, graph, weightVars);
   
@@ -1554,11 +1587,11 @@ bool mutation_weighted_simple(int *a, char **graph, int *weightVars){
     a[i] = 0;
   }
 
-
+  //printf("in mutation\n");
   while (!tabuCol(a, graph, nbColor-removeColorNb, nbLocalSearch)){
     int lastIdx = 0;
-
-    if (cost(a,graph)>1){
+    //printf("in reduce\n");
+    if (cost(a,graph)> 2){
       while(hasConflictSolution(a,graph)){
 	int cidx = lessWeightedConflict(a, graph, weightVars);
 	//int cidx = moreWeightedConflict(a, graph, weightVars);
@@ -1569,25 +1602,27 @@ bool mutation_weighted_simple(int *a, char **graph, int *weightVars){
 
       a[lastIdx] = 0;
       --weightVars[lastIdx];
-    }else{ 
+    }else{
+      int cidx = lessWeightedConflict(a, graph, weightVars);
+	//int cidx = moreWeightedConflict(a, graph, weightVars);
+      a[cidx] = -1; 
+      ++weightVars[cidx];
+      tabuCol(a, graph, nbColor-removeColorNb, nbLocalSearch);
+     
       break;
     }
   }
 
-  tabuCol(a, graph, nbColor-removeColorNb, nbLocalSearch);
+  
 
-  //int nb = 0;
-  for (int i=0; i<nbSommets; ++i){ 
-    if (a[i]>-1) continue;
-    a[i] = 0;
-    //++nb;
-  }
-
-  //printf("mutation remove: %d\n",nb);
-
-  //return false;
-  //return tabuCol(a, graph, nbColor, MAX_LocalSearch_Iteration);
-  return !hasConflictSolution(a, graph);
+  
+    for (int i=0; i<nbSommets; ++i){ 
+      if (a[i] < 0) a[i] = nbColor -1;
+    }
+ 
+    //return false;
+    return tabuCol(a, graph, nbColor, nbLocalSearch);
+    //return !hasConflictSolution(a, graph);
 }
 
 
@@ -1797,6 +1832,7 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
 
     ++freqParents[crossParentsIdx[i]];
     generate_sub_simple(parentsCopies[i], graph, weightVars);      
+    //generate_sub_weighted_all(parentsCopies[i], graph, weightVars);      
   }
   
   //int crossIdx = -1;
@@ -2231,7 +2267,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
     // print info
     
-    if (foundBetter){
+    //if (foundBetter){
 
       
       printf("p:");
@@ -2245,7 +2281,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
       printf("\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
       fprintf(f,"p:\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
       fflush ( stdout );/* this line */
-    }
+      //}
     
 
     time(&now_time);
