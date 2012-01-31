@@ -2267,7 +2267,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
     // print info
     
-    //if (foundBetter){
+    if (foundBetter){
 
       
       printf("p:");
@@ -2281,7 +2281,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
       printf("\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
       fprintf(f,"p:\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
       fflush ( stdout );/* this line */
-      //}
+    }
     
 
     time(&now_time);
