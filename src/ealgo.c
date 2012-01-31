@@ -482,6 +482,193 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration){//, int *weigh
 
 
 
+/*!
+ * initialize the Gamma table
+ * @param a individual color table
+ * @param graph adjacent matrix of graph
+ * @param tGamma gamma table for total incremental objective function computing n*k
+ * @return the number of violated edges
+ */
+int initGammaTable_weighted(int* a, char** graph, int** tGamma,
+			    char *conflictList){//, int *tConflict){
+  /// determine les conflits entre les noeuds
+  int nbConflict=0;    
+	
+  // check the link
+  for (int i=0; i<nbSommets; ++i){
+    if (a[i] < 0) continue;
+
+    for (int j=i; j<nbSommets; ++j){
+      if (a[j] < 0) continue;
+	    
+      if( graph[i][j]){ // only verify assigned node
+
+	if (conflictList[i] || conflictList[j]){
+	  tGamma[i][a[j]] += MAX_Gamma;
+	  tGamma[i][a[j]] += MAX_Gamma;
+	  
+	  if (a[i] == a[j]) nbConflict += MAX_Gamma;
+	}else{
+	
+	  ++tGamma[i][a[j]]; 
+	  ++tGamma[j][a[i]];
+	  
+	  if (a[i] == a[j]) ++nbConflict;
+        }
+      }
+    }
+  }
+
+
+  return nbConflict;
+}
+
+
+/*!
+ * update the Gamma table according to best move found
+ * @param sommet the best move node
+ * @param colorOrigin current assignment of the best move node
+ * @param colorCandidate the best move color
+ * @param tGamma gamma table for total incremental objective function computing
+ * @param graph adjacent matrix of graph
+ * @param ind individual coloring
+ */
+void updateMove_weighted(int sommet, int colorOrigin, int colorCandidate, 
+			 int** tGamma, char** graph, int* ind, char *conflictList){
+  
+  for (int i=0; i< nbSommets; ++i){
+    if (graph[sommet][i]){
+      if (ind[i] > -1){
+	
+        if (conflictList[sommet] || conflictList[i]){
+	  tGamma[i][colorOrigin] -= MAX_Gamma;
+	  tGamma[i][colorCandidate] += MAX_Gamma;
+	}else{
+	  if( tGamma[i][colorOrigin]>0)
+	    --tGamma[i][colorOrigin];
+      
+	  ++tGamma[i][colorCandidate];
+	}
+      }
+    }
+  }
+  
+}
+
+
+/*!
+ * tabuCol implementation
+ * @param a individual color table
+ * @param graph adjacent matrix of graph
+ * @return true if consistent solution found, otherwise false
+ */
+bool tabuCol_weighted(int* a, char** graph, int colorNB, 
+		     int maxIteration, char *weightedList){//, int *weightVars){
+
+  assert(tTabu != NULL && tGamma != NULL && tTmpColor != NULL);
+  
+  
+  int maxNoImpIteration = maxIteration;
+ 
+  //printf("in tabucol\n");
+ 
+  // init Tabu and Gamma Tables
+  for (int i=0; i<nbSommets; ++i) {
+   //copy color assignment     
+    tTmpColor[i] = a[i];
+  
+    for (int j=0; j<colorNB; ++j) {
+	tTabu[i][j]=-1;
+	tGamma[i][j] = 0;
+    }
+  }
+    
+  
+  int obj = initGammaTable_weighted(a,graph,tGamma,weightedList); // init gamma table
+
+  if (obj<1) return true;
+
+  //printf("========= T ========");
+  //printTableNK(tGamma);
+
+  int bestObj = obj;
+
+  // a always records best so far solution
+  //StableItr = maxNoImpIteration/3*2;
+  // stableCnt = 0;
+  for (int i=0;  i< maxNoImpIteration ; ++i){
+    //    ++stableCnt;
+    tabuMove->sommet = -1;
+    tabuMove->color = -1;
+    tabuMove->nbVars = 0;
+    if(bestObj < 1) break; // find consistent solution
+
+    // find best move based on gamma table
+    int delta = bestMove(tabuMove, tGamma, tTabu, tTmpColor, colorNB);
+
+    //printf("%d,%d",move->sommet,move->color);
+    
+    // all tabu case
+    if (tabuMove->sommet < 0 || tabuMove->color < 0) continue;
+
+    //printf("%d:\t%d\t%d\n",i, obj,bestObj);
+    
+    // in case find best delta 
+    if( delta < 0 && obj+delta < bestObj){
+      bestObj = obj+delta;
+      for (int j=0; j<nbSommets; ++j){
+	a[j] = tTmpColor[j];
+      }
+      
+      //i = 0; // reset i if found best so far
+      a[tabuMove->sommet] = tabuMove->color;
+    }else if (bestObj == obj+delta){
+      
+      int tval = (rand()/(float)RAND_MAX) * 10 ;
+      if (tval > 4){
+	for (int j=0; j<nbSommets; ++j){
+	  a[j] = tTmpColor[j];
+	}
+
+	a[tabuMove->sommet] = tabuMove->color;
+      }
+    }
+
+    
+
+    // update move
+    updateMove_weighted(tabuMove->sommet, tTmpColor[tabuMove->sommet], tabuMove->color, 
+			tGamma, graph, tTmpColor, weightedList);
+    // ============================= Record circle variable ===== BGN
+    //if (stableCnt > StableItr)
+    //++weightVars[move->sommet];
+    // ============================= Record circle variable ===== END
+
+
+    
+    int rdx=(rand()/(float)RAND_MAX) * LValue;
+    //rdx += weightPercent*nbConflict;
+   
+    rdx += lambdaValue*(tabuMove->nbVars);
+     
+    
+    tTabu[tabuMove->sommet][tTmpColor[tabuMove->sommet]] = rdx; // tabu duration
+
+    tTmpColor[tabuMove->sommet] =tabuMove->color;
+    obj += delta;
+    
+
+  }
+  
+
+  if(bestObj < 1) return true;
+  
+  return false;
+}
+
+
+
+
 bool hasUnsigned(int* a){
   for (int i=0; i<nbSommets;++i)
     if (a[i]<0) return true;
@@ -531,6 +718,16 @@ int nodeInConflict(int node, int color, int* a, char** graph){
   }
 
   return nb;
+}
+
+bool isNodeInConflict(int index, int *a, char **graph){
+  if (a[index]<0) return false;
+  for (int i=0; i<nbSommets; ++i){
+    if (a[i] < 0) continue;
+    
+    if (graph[index][i] && a[index] == a[i]) return true;
+  }
+  return false;
 }
 
 
@@ -1235,58 +1432,68 @@ bool mutation_sub(int *a, char **graph, int removeColorNb, int *weightVars){
 }
 
 
-bool mutation_iis(int *a, char **graph, int removeColorNb, int *weightVars){
-  
-  //generate_sub(a, graph);
-  generate_sub_simple(a, graph, weightVars);
-  
+bool mutation_iis(int *a, char **graph, int *weightVars){
+
+  //generate_sub_weighted(a, graph, weightVars);
+
+  char *conflictList = malloc(sizeof(char)*nbSommets);
   for (int i=0; i<nbSommets; ++i){
-	if (a[i]<nbColor-1) continue;
-	a[i] = nbColor -2;
+    conflictList[i] = 0;
+
+    if (a[i] > nbColor -2) a[i] = 0;
   }
-
-  while(!tabuCol(a, graph, nbColor-1, nbLocalSearch)){
-    int cidx = lessWeightedConflict(a, graph, weightVars);
-      //int cidx = randomConflict(a, graph);
-    a[cidx] = -1; 
-    ++weightVars[cidx];
-  }
-
-
-  //for (int i=0; i<nbSommets; ++i){
-  //	if (a[i]>-1) continue;
-  //	a[i] = nbColor -1;
-  //}
-
-  return false;//!hasConflictSolution(a,graph);
 
   
-  //====== second strategy
-
-
   bool feasible = false;
+  while(!feasible){
+   
+ 
+    feasible = tabuCol_weighted(a, graph, nbColor-1, 
+				nbLocalSearch, conflictList);
 
-  bool isFirst = true;
-  while(!feasible){  
-    int cidx = randomConflict(a, graph);
-    a[cidx] = -1; 
     
-    if (isFirst){
-      isFirst = false;
-      for (int i=0; i<nbSommets; ++i){
-	if (a[i]<nbColor-1) continue;
-	a[i] = nbColor -2;
+    bool weightedViolated = false;
+    for (int i=0; i<nbSommets; ++i){
+      if (a[i] < 0) continue;
+
+	if(conflictList[i] && isNodeInConflict(i,a, graph)){
+	  weightedViolated = true;
+	  break;
+        }
+    }
+    
+    if (weightedViolated) break;
+    
+    for (int i=0; i<nbSommets; ++i){
+      if (a[i] < 0) continue;
+      if (!conflictList[i] && isNodeInConflict(i,a, graph)){
+	  conflictList[i] = 1;
       }
     }
-  
-    feasible = tabuCol(a, graph, nbColor-1, nbLocalSearch);
+
+    
   }
 
+  //int nb=0;
   for (int i=0; i<nbSommets; ++i){
-	if (a[i]>-1) continue;
-	a[i] = nbColor -1;
+    if(conflictList[i]){
+      a[i] = -1;
+    }
   }
 
+  //  printf("mutation_iis remove nodes: %d\n",nb);
+
+  free(conflictList);
+  conflictList = NULL;
+
+  tabuCol(a, graph, nbColor-1, MAX_LocalSearch_Iteration);
+  
+  for (int i=0; i<nbSommets; ++i){
+    if(a[i]<0){
+      a[i] = nbColor-1;
+    }
+  }
+  
   return !hasConflictSolution(a,graph);
 
   
@@ -1329,8 +1536,11 @@ bool mutation_weighted(int *a, char **graph, int removeColorNb, int *weightVars)
 
 bool mutation_weighted_simple(int *a, char **graph, int *weightVars){
   
-  int removeColorNb = (rand()/(float)RAND_MAX) * 3;
+  int removeColorNb = (rand()/(float)RAND_MAX) * MAX_RemoveColors;
   ++removeColorNb;
+
+  // define a number of colors removed
+  //removeColorNb = MAX_RemoveColors;
 
   if (removeColorNb > nbColor)
     removeColorNb = 1;
@@ -1344,12 +1554,14 @@ bool mutation_weighted_simple(int *a, char **graph, int *weightVars){
     a[i] = 0;
   }
 
+
   while (!tabuCol(a, graph, nbColor-removeColorNb, nbLocalSearch)){
     int lastIdx = 0;
 
     if (cost(a,graph)>2){
       while(hasConflictSolution(a,graph)){
 	int cidx = lessWeightedConflict(a, graph, weightVars);
+	//int cidx = moreWeightedConflict(a, graph, weightVars);
 	a[cidx] = -1; 
 	++weightVars[cidx];
 	lastIdx = cidx;
@@ -1359,10 +1571,14 @@ bool mutation_weighted_simple(int *a, char **graph, int *weightVars){
       --weightVars[lastIdx];
     }else{
       int cidx = lessWeightedConflict(a, graph, weightVars);
+      //int cidx = moreWeightedConflict(a, graph, weightVars);
       a[cidx] = -1; 
       ++weightVars[cidx];
+      break;
     }
   }
+
+  tabuCol(a, graph, nbColor-removeColorNb, nbLocalSearch);
 
   //int nb = 0;
   for (int i=0; i<nbSommets; ++i){ 
@@ -1374,7 +1590,8 @@ bool mutation_weighted_simple(int *a, char **graph, int *weightVars){
   //printf("mutation remove: %d\n",nb);
 
   //return false;
-  return tabuCol(a, graph, nbColor, MAX_LocalSearch_Iteration);
+  //return tabuCol(a, graph, nbColor, MAX_LocalSearch_Iteration);
+  return !hasConflictSolution(a, graph);
 }
 
 
@@ -1991,8 +2208,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
 	freqParents[jth] = 0;
 
 	//mutation_sub(population[jth], graph, removeColor, weightsLearned);
-	//	bool isConsistent = mutation_iis(population[jth], graph, 
-	//				 removeColor, weightsLearned);
+	//bool isConsistent = mutation_iis(population[jth], graph,weightsLearned);
 	//bool isConsistent = mutation_weighted(population[jth], graph, 
 	//				      removeColor, weightsLearned);
 	bool isConsistent = mutation_weighted_simple(population[jth], 
@@ -2019,21 +2235,21 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
     // print info
     
-    if (foundBetter){
+    //if (foundBetter){
 
       
       printf("p:");
-      //for (int i=0; i<populationSize;++i){
-      //	int cx = cost(population[i],graph);
-      //	printf("\t%d[%d]",cx,freqParents[i]);
-      //}
+      for (int i=0; i<populationSize;++i){
+      	int cx = cost(population[i],graph);
+      	printf("\t%d[%d]",cx,freqParents[i]);
+      }
      
 
       //int diffT = (int)floor(difftime(now_time, start_time)/60.0); 
       printf("\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
       fprintf(f,"p:\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
       fflush ( stdout );/* this line */
-    }
+      //}
       time(&now_time);
 
       if (difftime(now_time, start_time) > Nb_Generation) break;
