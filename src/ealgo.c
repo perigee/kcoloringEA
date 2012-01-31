@@ -1558,7 +1558,7 @@ bool mutation_weighted_simple(int *a, char **graph, int *weightVars){
   while (!tabuCol(a, graph, nbColor-removeColorNb, nbLocalSearch)){
     int lastIdx = 0;
 
-    if (cost(a,graph)>2){
+    if (cost(a,graph)>1){
       while(hasConflictSolution(a,graph)){
 	int cidx = lessWeightedConflict(a, graph, weightVars);
 	//int cidx = moreWeightedConflict(a, graph, weightVars);
@@ -1569,11 +1569,7 @@ bool mutation_weighted_simple(int *a, char **graph, int *weightVars){
 
       a[lastIdx] = 0;
       --weightVars[lastIdx];
-    }else{
-      int cidx = lessWeightedConflict(a, graph, weightVars);
-      //int cidx = moreWeightedConflict(a, graph, weightVars);
-      a[cidx] = -1; 
-      ++weightVars[cidx];
+    }else{ 
       break;
     }
   }
