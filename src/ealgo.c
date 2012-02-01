@@ -1506,26 +1506,37 @@ bool mutation_iis(int *a, char **graph, int *weightVars){
     
   }
 
-  //int nb=0;
+  int *partialS = malloc(sizeof(int)*nbSommets);
+  // remove in conflict node
   for (int i=0; i<nbSommets; ++i){
     if(conflictList[i]){
       a[i] = -1;
+      partialS[i] = nbColor -1;
+    }else{
+      partialS[i] = -1;
     }
   }
+
+  
 
   //  printf("mutation_iis remove nodes: %d\n",nb);
 
-  free(conflictList);
-  conflictList = NULL;
-
   tabuCol(a, graph, nbColor-1, MAX_LocalSearch_Iteration);
+  tabuCol(partialS, graph, nbColor, MAX_LocalSearch_Iteration);
   
   for (int i=0; i<nbSommets; ++i){
     if(a[i]<0){
-      a[i] = nbColor-1;
+      a[i] = partialS[i];
     }
   }
   
+  
+  free(conflictList);
+  conflictList = NULL;
+  free(partialS);
+  partialS=NULL;
+  
+  return tabuCol(a, graph, nbColor, nbLocalSearch);
   return !hasConflictSolution(a,graph);
 
   
