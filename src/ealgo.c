@@ -1543,7 +1543,7 @@ bool mutation_iis(int *a, char **graph, int *weightVars){
   free(partialS);
   partialS=NULL;
   
-  return tabuCol(a, graph, nbColor, nbLocalSearch);
+  return tabuCol(a, graph, nbColor, MAX_LocalSearch_Iteration);
   return !hasConflictSolution(a,graph);
 
   
