@@ -1547,7 +1547,7 @@ bool mutation_weighted(int *a, char **graph, int *weightVars){
     
     for (int i=0; i<nbSommets; ++i){
       if (a[i]<nbColor-l) continue;
-      a[i] = nbColor -(l+1);
+      a[i] = nbColor -l -1;
     }
 
     tabuCol(a, graph, nbColor-l, nbLocalSearch);
@@ -2000,7 +2000,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
   f = fopen(savefile, "a");
 
   //printf("initial memory\n");
-  int crossParentsNb = 2;
+  int crossParentsNb = 3;
   mallocTabuColMemory();
   mallocCrossOverMemory(crossParentsNb);
 
