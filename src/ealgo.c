@@ -2305,7 +2305,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
 	//mutation_sub(population[jth], graph, removeColor, weightsLearned);
 	//bool isConsistent = mutation_iis(population[jth], graph,weightsLearned);
 	bool isConsistent = mutation_weighted(population[jth], graph, 
-					      removeColor, weightsLearned);
+					      weightsLearned);
 	//bool isConsistent = mutation_weighted_simple(population[jth], 
 	//					     graph, weightsLearned);
 
