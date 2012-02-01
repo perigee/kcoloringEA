@@ -1471,9 +1471,15 @@ bool mutation_iis(int *a, char **graph, int *weightVars){
   char *conflictList = malloc(sizeof(char)*nbSommets);
   for (int i=0; i<nbSommets; ++i){
     conflictList[i] = 0;
+    if (isNodeInConflict(i,a,graph)) conflictList[i] = 1;
+  }
 
+  for (int i=0; i<nbSommets; ++i){
     if (a[i] > nbColor -2) a[i] = 0;
   }
+
+  
+  
 
   
   bool feasible = false;
@@ -1481,7 +1487,8 @@ bool mutation_iis(int *a, char **graph, int *weightVars){
    
  
     feasible = tabuCol_weighted(a, graph, nbColor-1, 
-				nbLocalSearch, conflictList);
+				MAX_LocalSearch_Iteration, 
+				conflictList);
 
     
     bool weightedViolated = false;
@@ -1521,8 +1528,8 @@ bool mutation_iis(int *a, char **graph, int *weightVars){
 
   //  printf("mutation_iis remove nodes: %d\n",nb);
 
-  tabuCol(a, graph, nbColor-1, MAX_LocalSearch_Iteration);
-  tabuCol(partialS, graph, nbColor, MAX_LocalSearch_Iteration);
+  tabuCol(a, graph, nbColor-1, nbLocalSearch);
+  tabuCol(partialS, graph, nbColor, nbLocalSearch);
   
   for (int i=0; i<nbSommets; ++i){
     if(a[i]<0){
