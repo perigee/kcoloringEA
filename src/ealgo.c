@@ -2406,8 +2406,10 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
       //int diffT = (int)floor(difftime(now_time, start_time)/60.0); 
       printf("\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
+      if (foundBetter){
       fprintf(f,"p:\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
       fflush ( stdout );/* this line */
+      }
     }
     
 
