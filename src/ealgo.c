@@ -1532,7 +1532,14 @@ bool mutation_iis(int *a, char **graph, int *weightVars){
 }
 
 
-bool mutation_weighted(int *a, char **graph, int removeColorNb, int *weightVars){
+bool mutation_weighted(int *a, char **graph, int *weightVars){
+
+  int removeColorNb = (rand()/(float)RAND_MAX) * MAX_RemoveColors;
+  ++removeColorNb;
+
+
+  if (removeColorNb > nbColor/2)
+    removeColorNb = 1;
   
   
   for (int l=1; l<=removeColorNb; ++l){
