@@ -1543,7 +1543,7 @@ bool mutation_weighted(int *a, char **graph, int *weightVars){
   
   
   for (int l=1; l<=removeColorNb; ++l){
-    generate_sub_weighted(a,graph,weightVars);
+    generate_sub_simple(a,graph,weightVars);
     
     for (int i=0; i<nbSommets; ++i){
       if (a[i]<nbColor-l) continue;
@@ -1829,6 +1829,39 @@ void maxIndependentSet( int nbParent, int **parents, int *b,
 }
 
 
+void maxIndependentSetPure( int nbParent, int **parents, int *b, 
+			char **graph, int **freq,int *freqParents, Move *move){
+  
+  
+  int maxIdx = -1;
+  int parentIdx = -1;
+  int maxSize = 0;
+  for (int i=0; i<nbParent;++i){
+    
+    initialArray(setSize, nbColor, 0);    
+
+    for (int j=0; j<nbSommets;++j){
+      if (b[j] > -1 || parents[i][j] <0) continue;
+      
+      ++setSize[parents[i][j]];
+      
+      int tmp = setSize[parents[i][j]];
+      
+      if (maxIdx < 0 || maxSize < tmp){
+	maxIdx = parents[i][j];
+	parentIdx = i;
+	maxSize = tmp;
+
+      }
+    }
+  }
+
+  
+  move->sommet = parentIdx;
+  move->color = maxIdx;
+}
+
+
 
 /*!
  * crossover inspired by the IIS detection
@@ -1873,7 +1906,7 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
       }
     }
 
-    ++freqParents[crossParentsIdx[i]];
+    //++freqParents[crossParentsIdx[i]];
     generate_sub_simple(parentsCopies[i], graph, weightVars);      
     //generate_sub_weighted_all(parentsCopies[i], graph, weightVars);      
   }
@@ -1883,14 +1916,25 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
   int ith = -1;
   int *freqP = malloc(sizeof(int)*crossParents);
   initialArray(freqP, crossParents,1);
+  
+  int wellInformed = 1;
+  float tval = (rand()/(float)RAND_MAX) ;
+  if (tval < 0.3)
+    wellInformed = 0;
+
   for (int i=1; i< nbColor; ++i){
 
     //int colorIdx = maxColorClass(pcopies[crossIdx], offspring, graph);
     //int ith = crossIdx;
     
-
-    maxIndependentSet(crossParents, parentsCopies, offspring, 
+    if (wellInformed == 0)
+      maxIndependentSetPure(crossParents, parentsCopies, offspring, 
 		      graph, conflictColors,freqP, crossMove);
+    else 
+      maxIndependentSet(crossParents, parentsCopies, offspring, 
+		      graph, conflictColors,freqP, crossMove);
+
+
     colorIdx = crossMove->color;
     ith = crossMove->sommet;
 
@@ -1899,6 +1943,7 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
 
     if (ith < 0 || colorIdx < 0) continue;
     ++freqP[ith];
+    ++freqParents[crossParentsIdx[ith]];
     
 
     for (int j=0; j<nbSommets;++j){
