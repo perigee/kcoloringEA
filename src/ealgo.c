@@ -1924,7 +1924,7 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
       }
     }
 
-    //++freqParents[crossParentsIdx[i]];
+    ++freqParents[crossParentsIdx[i]];
     generate_sub_simple(parentsCopies[i], graph, weightVars);      
     //generate_sub_weighted_all(parentsCopies[i], graph, weightVars);      
   }
@@ -1961,7 +1961,7 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
 
     if (ith < 0 || colorIdx < 0) continue;
     ++freqP[ith];
-    ++freqParents[crossParentsIdx[ith]];
+    //++freqParents[crossParentsIdx[ith]];
     
 
     for (int j=0; j<nbSommets;++j){
