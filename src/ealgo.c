@@ -462,7 +462,7 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration){//, int *weigh
     int rdx=(rand()/(float)RAND_MAX) * LValue;
     //rdx += weightPercent*nbConflict;
    
-    rdx += lambdaValue*(tabuMove->nbVars);
+    rdx +=  lambdaValue*(tabuMove->nbVars);
      
     
     tTabu[tabuMove->sommet][tTmpColor[tabuMove->sommet]] = rdx; // tabu duration
@@ -1534,7 +1534,21 @@ bool mutation_iis(int *a, char **graph, int *weightVars){
 
 bool mutation_weighted(int *a, char **graph, int removeColorNb, int *weightVars){
   
-  //generate_sub_weighted(a, graph, weightVars);
+  
+  for (int l=1; l<=removeColorNb; ++l){
+    generate_sub_weighted(a,graph,weightVars);
+    
+    for (int i=0; i<nbSommets; ++i){
+      if (a[i]<nbColor-l) continue;
+      a[i] = nbColor -(l+1);
+    }
+
+    tabuCol(a, graph, nbColor-l, nbLocalSearch);
+  }
+
+  return false;
+
+  generate_sub_weighted(a, graph, weightVars);
 
   for (int i=0; i<nbSommets; ++i){
 	if (a[i]<nbColor-1) continue;
@@ -1542,7 +1556,7 @@ bool mutation_weighted(int *a, char **graph, int removeColorNb, int *weightVars)
   }
 
 
-  while(!tabuCol(a, graph, nbColor-1, MAX_LocalSearch_Iteration)){
+  while(!tabuCol(a, graph, nbColor-1, nbLocalSearch)){
     int cidx = lessWeightedConflict(a, graph, weightVars);
     a[cidx] = -1; 
     ++weightVars[cidx];
@@ -1616,13 +1630,13 @@ bool mutation_weighted_simple(int *a, char **graph, int *weightVars){
   
 
   
-    for (int i=0; i<nbSommets; ++i){ 
-      if (a[i] < 0) a[i] = nbColor -1;
-    }
+  //for (int i=0; i<nbSommets; ++i){ 
+    //if (a[i] < 0) a[i] = nbColor -1;
+    //}
  
-    //return false;
-    return tabuCol(a, graph, nbColor, nbLocalSearch);
-    //return !hasConflictSolution(a, graph);
+  return false;
+  //return tabuCol(a, graph, nbColor, nbLocalSearch);
+  return !hasConflictSolution(a, graph);
 }
 
 
@@ -1774,12 +1788,12 @@ void freeCrossOverMemory(int crossParents){
 
 
 void maxIndependentSet( int nbParent, int **parents, int *b, 
-		      char **graph, Move *move){
+			char **graph, int **freq,int *freqParents, Move *move){
   
   
   int maxIdx = -1;
   int parentIdx = -1;
-  int maxSize = 0;
+  double maxSize = 0;
   for (int i=0; i<nbParent;++i){
     
     initialArray(setSize, nbColor, 0);    
@@ -1788,10 +1802,16 @@ void maxIndependentSet( int nbParent, int **parents, int *b,
       if (b[j] > -1 || parents[i][j] <0) continue;
       
       ++setSize[parents[i][j]];
-      if (maxIdx < 0 || maxSize < setSize[parents[i][j]]){
+      
+      double tmp = (double)setSize[parents[i][j]]
+	/(double)freq[i][parents[i][j]];
+      ///(double)freqParents[i];
+      
+      if (maxIdx < 0 || maxSize < tmp){
 	maxIdx = parents[i][j];
 	parentIdx = i;
-	maxSize = setSize[parents[i][j]]; 
+	maxSize = tmp;
+
       }
     }
   }
@@ -1819,6 +1839,8 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
 			 int removeColor, int *weightVars){
   
   assert(parentsCopies != NULL && crossParentsIdx != NULL);
+
+  int **conflictColors = malloc(sizeof(int*)*crossParents);
   
   // initialize 
   initialArray(offspring, nbSommets, -1);
@@ -1826,8 +1848,22 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
   //lessFreqParents(crossParents, crossParentsIdx, nbParents, parents, freqParents);
   
   for (int i=0; i<crossParents; ++i){
+    conflictColors[i] = malloc(sizeof(int)*nbColor);
+    initialArray(conflictColors[i], nbColor, 1);
+
     for (int j=0; j<nbSommets; ++j){
       parentsCopies[i][j] = parents[crossParentsIdx[i]][j];
+
+      if (isNodeInConflict(j, parents[crossParentsIdx[i]], graph)){
+	for (int k = 0; k<nbSommets; ++k){
+	  if (parentsCopies[i][k] > -1 && j != k && graph[j][k]){
+	    if (!isNodeInConflict(k,parents[crossParentsIdx[i]], graph))
+	      ++conflictColors[i][parentsCopies[i][k]];
+	  }
+	}
+	
+	//++conflictColors[i][parentsCopies[i][j]];
+      }
     }
 
     ++freqParents[crossParentsIdx[i]];
@@ -1838,17 +1874,24 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
   //int crossIdx = -1;
   int colorIdx = -1;
   int ith = -1;
+  int *freqP = malloc(sizeof(int)*crossParents);
+  initialArray(freqP, crossParents,1);
   for (int i=1; i< nbColor; ++i){
 
     //int colorIdx = maxColorClass(pcopies[crossIdx], offspring, graph);
     //int ith = crossIdx;
     
 
-    maxIndependentSet(crossParents, parentsCopies, offspring, graph, crossMove);
+    maxIndependentSet(crossParents, parentsCopies, offspring, 
+		      graph, conflictColors,freqP, crossMove);
     colorIdx = crossMove->color;
     ith = crossMove->sommet;
 
+
+    
+
     if (ith < 0 || colorIdx < 0) continue;
+    ++freqP[ith];
     
 
     for (int j=0; j<nbSommets;++j){
@@ -1860,7 +1903,20 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
     //printf("\n");
   }
   
-
+  //printf("p: cross ratios");
+  //for (int i=0; i<crossParents; ++i){
+  // printf("\t%d",freqP[i]);
+  //}
+  //printf("\n");
+  free(freqP);
+  freqP = NULL;
+  for (int i=0; i<crossParents;++i){
+    free(conflictColors[i]);
+    conflictColors[i] = NULL;
+  }
+  free(conflictColors);
+  conflictColors = NULL;
+  
   // complete the partial solution ===============
   for (int i=0; i<nbSommets;++i){
     if (offspring[i] < 0){
@@ -1937,7 +1993,7 @@ bool ea(char** graph, char *savefile, char *inputFile){
   f = fopen(savefile, "a");
 
   //printf("initial memory\n");
-  int crossParentsNb = 3;
+  int crossParentsNb = 2;
   mallocTabuColMemory();
   mallocCrossOverMemory(crossParentsNb);
 
@@ -2241,10 +2297,10 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
 	//mutation_sub(population[jth], graph, removeColor, weightsLearned);
 	//bool isConsistent = mutation_iis(population[jth], graph,weightsLearned);
-	//bool isConsistent = mutation_weighted(population[jth], graph, 
-	//				      removeColor, weightsLearned);
-	bool isConsistent = mutation_weighted_simple(population[jth], 
-						     graph, weightsLearned);
+	bool isConsistent = mutation_weighted(population[jth], graph, 
+					      removeColor, weightsLearned);
+	//bool isConsistent = mutation_weighted_simple(population[jth], 
+	//					     graph, weightsLearned);
 
 	if (isConsistent){
 	  for (int bs=0; bs<nbSommets;++bs){
@@ -2267,14 +2323,15 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
     // print info
     
-    if (foundBetter){
+    if (true){
+      //if (foundBetter){
 
       
       printf("p:");
-      //for (int i=0; i<populationSize;++i){
-      	//int cx = cost(population[i],graph);
-      	//printf("\t%d[%d]",cx,freqParents[i]);
-	//}
+      for (int i=0; i<populationSize;++i){
+      	int cx = cost(population[i],graph);
+      	printf("\t%d[%d]",cx,freqParents[i]);
+      }
      
 
       //int diffT = (int)floor(difftime(now_time, start_time)/60.0); 
