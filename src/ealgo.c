@@ -1961,7 +1961,7 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
 
     if (ith < 0 || colorIdx < 0) continue;
     ++freqP[ith];
-    //++freqParents[crossParentsIdx[ith]];
+    ++freqParents[crossParentsIdx[ith]];
     
 
     for (int j=0; j<nbSommets;++j){
