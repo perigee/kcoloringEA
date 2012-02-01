@@ -1927,10 +1927,10 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
     //int colorIdx = maxColorClass(pcopies[crossIdx], offspring, graph);
     //int ith = crossIdx;
     
-    if (wellInformed == 0)
-      maxIndependentSetPure(crossParents, parentsCopies, offspring, 
-		      graph, conflictColors,freqP, crossMove);
-    else 
+    //if (wellInformed == 0)
+    //  maxIndependentSetPure(crossParents, parentsCopies, offspring, 
+    //		      graph, conflictColors,freqP, crossMove);
+    //else 
       maxIndependentSet(crossParents, parentsCopies, offspring, 
 		      graph, conflictColors,freqP, crossMove);
 
@@ -2348,9 +2348,9 @@ bool ea(char** graph, char *savefile, char *inputFile){
 	freqParents[jth] = 0;
 
 	//mutation_sub(population[jth], graph, removeColor, weightsLearned);
-	//bool isConsistent = mutation_iis(population[jth], graph,weightsLearned);
-	bool isConsistent = mutation_weighted(population[jth], graph, 
-					      weightsLearned);
+	bool isConsistent = mutation_iis(population[jth], graph,weightsLearned);
+	//bool isConsistent = mutation_weighted(population[jth], graph, 
+	//				      weightsLearned);
 	//bool isConsistent = mutation_weighted_simple(population[jth], 
 	//					     graph, weightsLearned);
 
