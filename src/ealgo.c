@@ -1571,7 +1571,18 @@ bool mutation_weighted(int *a, char **graph, int *weightVars){
     tabuCol(a, graph, nbColor-l, nbLocalSearch);
   }
 
-  return false;
+  
+  //int nb = 0;  
+  for (int i=0; i<nbSommets; ++i){
+    if (a[i]>-1) continue;
+
+    a[i] = nbColor -1;
+    //++nb;
+  }
+
+  
+
+  return tabuCol(a, graph, nbColor, MAX_LocalSearch_Iteration);
 
   generate_sub_weighted(a, graph, weightVars);
 
