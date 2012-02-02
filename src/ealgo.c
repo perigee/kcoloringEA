@@ -1466,17 +1466,24 @@ bool mutation_sub(int *a, char **graph, int removeColorNb, int *weightVars){
 
 bool mutation_iis(int *a, char **graph, int *weightVars){
 
+  generate_sub_simple(a, graph, weightVars);
   //generate_sub_weighted(a, graph, weightVars);
 
   char *conflictList = malloc(sizeof(char)*nbSommets);
   for (int i=0; i<nbSommets; ++i){
     conflictList[i] = 0;
-    if (isNodeInConflict(i,a,graph)) conflictList[i] = 1;
+    if (a[i] < 0){
+      conflictList[i] = 1;
+      a[i] = 0;
+    }
+    
+    
+    //if (isNodeInConflict(i,a,graph)) conflictList[i] = 1;
   }
 
-  for (int i=0; i<nbSommets; ++i){
-    if (a[i] > nbColor -2) a[i] = 0;
-  }
+  //for (int i=0; i<nbSommets; ++i){
+  //  if (a[i] > nbColor -2) a[i] = 0;
+  //}
 
   
   
@@ -1513,39 +1520,46 @@ bool mutation_iis(int *a, char **graph, int *weightVars){
     
   }
 
-  //int *partialS = malloc(sizeof(int)*nbSommets);
+  int *partialS = malloc(sizeof(int)*nbSommets);
   // remove in conflict node
   for (int i=0; i<nbSommets; ++i){
     if(conflictList[i]){
       a[i] = -1;
-      //partialS[i] = nbColor -1;
+      partialS[i] = nbColor -1;
     }else{
-      //partialS[i] = -1;
+      partialS[i] = -1;
     }
   }
 
-  
 
-  //  printf("mutation_iis remove nodes: %d\n",nb);
-
-  tabuCol(a, graph, nbColor-1, nbLocalSearch);
-  //tabuCol(partialS, graph, nbColor, nbLocalSearch);
+  // only to resolve one IIS 
+  tabuCol(partialS, graph, nbColor, nbLocalSearch);
   
+  // return the nodes to the subproblem with 
+  // all the nodes of IIS except one node 
   for (int i=0; i<nbSommets; ++i){
-    if(a[i]<0){
-      //a[i] = partialS[i];
-      a[i] = nbColor-1;
+    if(a[i]<0 && partialS[i] != nbColor-1){
+      a[i] = partialS[i];
+      //a[i] = nbColor-1;
     }
   }
   
+  // working on rest of problem with k-1 colors
+  tabuCol(a, graph, nbColor-1, MAX_LocalSearch_Iteration);
   
+  // complete solution
+  for (int i=0; i<nbSommets; ++i){
+    if(a[i]<0 ) a[i] = nbColor-1;
+  }
+
+
   free(conflictList);
   conflictList = NULL;
-  //free(partialS);
-  //partialS=NULL;
+  free(partialS);
+  partialS=NULL;
   
-  return tabuCol(a, graph, nbColor, MAX_LocalSearch_Iteration);
-  //return !hasConflictSolution(a,graph);
+  //return tabuCol(a, graph, nbColor, MAX_LocalSearch_Iteration);
+  return !hasConflictSolution(a,graph);
 }
 
 
@@ -2630,6 +2644,8 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   Nb_Generation = atoi(inGenItr)*60;
   MAX_RemoveColors = atoi(inMaxRemoveColor);
   StableItr =  nbLocalSearch/3 * 2;
+
+  MAX_Gamma = nbSommets +1;
 
   //nbColor = 48;
   //populationSize = 10;
