@@ -1813,7 +1813,7 @@ void freeCrossOverMemory(int crossParents){
 
 
 void maxIndependentSet( int nbParent, int **parents, int *b, 
-			char **graph, int **freq,int *freqParents, Move *move){
+			char **graph, int **freq, Move *move){
   
   
   int maxIdx = -1;
@@ -1932,13 +1932,13 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
   //int crossIdx = -1;
   int colorIdx = -1;
   int ith = -1;
-  int *freqP = malloc(sizeof(int)*crossParents);
-  initialArray(freqP, crossParents,1);
+  //int *freqP = malloc(sizeof(int)*crossParents);
+  //initialArray(freqP, crossParents,1);
   
-  int wellInformed = 1;
-  float tval = (rand()/(float)RAND_MAX) ;
-  if (tval < 0.3)
-    wellInformed = 0;
+  //int wellInformed = 1;
+  //float tval = (rand()/(float)RAND_MAX) ;
+  //if (tval < 0.3)
+  //  wellInformed = 0;
 
   for (int i=1; i< nbColor; ++i){
 
@@ -1950,7 +1950,7 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
     //		      graph, conflictColors,freqP, crossMove);
     //else 
       maxIndependentSet(crossParents, parentsCopies, offspring, 
-		      graph, conflictColors,freqP, crossMove);
+		      graph, conflictColors, crossMove);
 
 
     colorIdx = crossMove->color;
@@ -1960,7 +1960,7 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
     
 
     if (ith < 0 || colorIdx < 0) continue;
-    ++freqP[ith];
+    //++freqP[ith];
     ++freqParents[crossParentsIdx[ith]];
     
 
@@ -1978,8 +1978,8 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
   // printf("\t%d",freqP[i]);
   //}
   //printf("\n");
-  free(freqP);
-  freqP = NULL;
+  //free(freqP);
+  //freqP = NULL;
   for (int i=0; i<crossParents;++i){
     free(conflictColors[i]);
     conflictColors[i] = NULL;
@@ -2365,11 +2365,19 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
 	freqParents[jth] = 0;
 
+	bool isConsistent = false;
+	
+	float tval = (rand()/(float)RAND_MAX) ;
+  
+  
 	//mutation_sub(population[jth], graph, removeColor, weightsLearned);
-	bool isConsistent = mutation_iis(population[jth], graph,weightsLearned);
-	//bool isConsistent = mutation_weighted(population[jth], graph, 
-	//				      weightsLearned);
-	//bool isConsistent = mutation_weighted_simple(population[jth], 
+	if (tval < 0.7)
+	  isConsistent = mutation_iis(population[jth], graph,weightsLearned);
+	else
+	  isConsistent = mutation_weighted(population[jth], graph, 
+					      weightsLearned);
+
+	//isConsistent = mutation_weighted_simple(population[jth], 
 	//					     graph, weightsLearned);
 
 	if (isConsistent){
@@ -2393,15 +2401,15 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
     // print info
     
-    if (true){
-      //if (foundBetter){
+    //if (true){
+    if (foundBetter){
 
       
       printf("p:");
-      for (int i=0; i<populationSize;++i){
-      	int cx = cost(population[i],graph);
-      	printf("\t%d[%d]",cx,freqParents[i]);
-      }
+      //for (int i=0; i<populationSize;++i){
+      //	int cx = cost(population[i],graph);
+      //	printf("\t%d[%d]",cx,freqParents[i]);
+      //}
      
 
       //int diffT = (int)floor(difftime(now_time, start_time)/60.0); 
