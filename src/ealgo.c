@@ -433,7 +433,7 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration){//, int *weigh
 	a[j] = tTmpColor[j];
       }
       
-      //i = 0; // reset i if found best so far
+      i = 0; // reset i if found best so far
       a[tabuMove->sommet] = tabuMove->color;
     }else if (bestObj == obj+delta){
       
@@ -620,7 +620,7 @@ bool tabuCol_weighted(int* a, char** graph, int colorNB,
 	a[j] = tTmpColor[j];
       }
       
-      //i = 0; // reset i if found best so far
+      i = 0; // reset i if found best so far
       a[tabuMove->sommet] = tabuMove->color;
     }else if (bestObj == obj+delta){
       
