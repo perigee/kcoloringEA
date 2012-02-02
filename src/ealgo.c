@@ -1513,14 +1513,14 @@ bool mutation_iis(int *a, char **graph, int *weightVars){
     
   }
 
-  int *partialS = malloc(sizeof(int)*nbSommets);
+  //int *partialS = malloc(sizeof(int)*nbSommets);
   // remove in conflict node
   for (int i=0; i<nbSommets; ++i){
     if(conflictList[i]){
       a[i] = -1;
-      partialS[i] = nbColor -1;
+      //partialS[i] = nbColor -1;
     }else{
-      partialS[i] = -1;
+      //partialS[i] = -1;
     }
   }
 
@@ -1529,24 +1529,23 @@ bool mutation_iis(int *a, char **graph, int *weightVars){
   //  printf("mutation_iis remove nodes: %d\n",nb);
 
   tabuCol(a, graph, nbColor-1, nbLocalSearch);
-  tabuCol(partialS, graph, nbColor, nbLocalSearch);
+  //tabuCol(partialS, graph, nbColor, nbLocalSearch);
   
   for (int i=0; i<nbSommets; ++i){
     if(a[i]<0){
-      a[i] = partialS[i];
+      //a[i] = partialS[i];
+      a[i] = nbColor-1;
     }
   }
   
   
   free(conflictList);
   conflictList = NULL;
-  free(partialS);
-  partialS=NULL;
+  //free(partialS);
+  //partialS=NULL;
   
   return tabuCol(a, graph, nbColor, MAX_LocalSearch_Iteration);
-  return !hasConflictSolution(a,graph);
-
-  
+  //return !hasConflictSolution(a,graph);
 }
 
 
@@ -2378,15 +2377,14 @@ bool ea(char** graph, char *savefile, char *inputFile){
 
 	bool isConsistent = false;
 	
-	float tval = (rand()/(float)RAND_MAX) ;
+	//float tval = (rand()/(float)RAND_MAX) ;
   
   
 	//mutation_sub(population[jth], graph, removeColor, weightsLearned);
-	if (tval < 0.7)
+	//if (tval < 0.7)
 	  isConsistent = mutation_iis(population[jth], graph,weightsLearned);
-	else
-	  isConsistent = mutation_weighted(population[jth], graph, 
-					      weightsLearned);
+	  //else
+	  //isConsistent = mutation_weighted(population[jth], graph,weightsLearned);
 
 	//isConsistent = mutation_weighted_simple(population[jth], 
 	//					     graph, weightsLearned);
