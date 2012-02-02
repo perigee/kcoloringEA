@@ -1464,6 +1464,97 @@ bool mutation_sub(int *a, char **graph, int removeColorNb, int *weightVars){
 }
 
 
+/*!
+ * @param a: individual (complete or partial
+ * @param colorNb: given color number
+ * @param conflictList: bring out the color class
+ * @param graph: adjacent matrix of graph
+ */
+bool extractColorClass(int *a, int colorNb, char *conflictList, char **graph){
+  
+  // initialize
+  for (int i=0; i<nbSommets;++i) conflictList[i] = 0;
+  
+  while(hasConflictSolution(a,graph)){
+    int index = randomConflict(a, graph);
+    a[index] = -1; // remove the chosen node
+    conflictList[index] = 1;
+  }
+
+  for (int i=0; i<nbSommets;++i){
+    if (a[i] < colorNb ) continue;
+    a[i] = 0;
+  }
+
+
+  
+  bool feasible = false;
+  while(!feasible){
+   
+ 
+    feasible = tabuCol_weighted(a, graph, nbColor-1, 
+				MAX_LocalSearch_Iteration, 
+				conflictList);
+
+    
+    bool weightedViolated = false;
+    for (int i=0; i<nbSommets; ++i){
+      if (a[i] < 0) continue;
+
+	if(conflictList[i] && isNodeInConflict(i,a, graph)){
+	  weightedViolated = true;
+	  break;
+        }
+    }
+    
+    if (weightedViolated) break;
+    
+    for (int i=0; i<nbSommets; ++i){
+      if (a[i] < 0) continue;
+      if (!conflictList[i] && isNodeInConflict(i,a, graph)){
+	  conflictList[i] = 1;
+      }
+    }
+
+    
+  }
+
+  int *partialS = malloc(sizeof(int)*nbSommets);
+  // remove in conflict node
+  for (int i=0; i<nbSommets; ++i){
+    if(conflictList[i]){
+      a[i] = -1;
+      partialS[i] = nbColor -1;
+    }else{
+      partialS[i] = -1;
+    }
+  }
+
+
+  // only to resolve one IIS 
+  tabuCol(partialS, graph, nbColor, nbLocalSearch);
+  
+  // return the nodes to the subproblem with 
+  // all the nodes of IIS except one node 
+  for (int i=0; i<nbSommets; ++i){
+    if(a[i]<0 && partialS[i] != nbColor-1){
+      a[i] = partialS[i];
+      //a[i] = nbColor-1;
+    }
+  }
+  
+  // working on rest of problem with k-1 colors
+  tabuCol(a, graph, nbColor-1, MAX_LocalSearch_Iteration);
+  
+  // complete solution
+  for (int i=0; i<nbSommets; ++i){
+    if(a[i]<0 ) a[i] = nbColor-1;
+  }
+
+
+}
+
+
 bool mutation_iis(int *a, char **graph, int *weightVars){
 
   generate_sub_simple(a, graph, weightVars);
@@ -1477,17 +1568,10 @@ bool mutation_iis(int *a, char **graph, int *weightVars){
       a[i] = 0;
     }
     
-    
-    //if (isNodeInConflict(i,a,graph)) conflictList[i] = 1;
+    // modify all high index color assignment
+    if(a[i] > nbColor -2) a[i] = 0;
+   
   }
-
-  //for (int i=0; i<nbSommets; ++i){
-  //  if (a[i] > nbColor -2) a[i] = 0;
-  //}
-
-  
-  
-
   
   bool feasible = false;
   while(!feasible){
@@ -1872,7 +1956,7 @@ void maxIndependentSet( int nbParent, int **parents, int *b,
 
 
 void maxIndependentSetPure( int nbParent, int **parents, int *b, 
-			char **graph, int **freq,int *freqParents, Move *move){
+			char **graph, Move *move){
   
   
   int maxIdx = -1;
@@ -1970,11 +2054,11 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
     //int ith = crossIdx;
     
     //if (wellInformed == 0)
-    //  maxIndependentSetPure(crossParents, parentsCopies, offspring, 
-    //		      graph, conflictColors,freqP, crossMove);
+    //maxIndependentSetPure(crossParents, parentsCopies, offspring, 
+    //		      graph,crossMove);
     //else 
       maxIndependentSet(crossParents, parentsCopies, offspring, 
-		      graph, conflictColors, crossMove);
+     		      graph, conflictColors, crossMove);
 
 
     colorIdx = crossMove->color;
@@ -2580,15 +2664,44 @@ fclose(f);
 
 
 bool testTabu(char** graph){
-  int* individual = malloc(sizeof(int)*nbSommets);
-  randomSolution(individual);
+  int* a = malloc(sizeof(int)*nbSommets);
+  randomSolution(a);
 
   //int *weightsLearned = malloc(sizeof(int)*nbSommets);
   mallocTabuColMemory();
-  bool feasible = tabuCol(individual, graph, nbColor, nbLocalSearch);//, weightsLearned);
+  
+  char *conflictList = malloc(sizeof(char)*nbSommets);
+  int *partitionSolution = malloc(sizeof(int)*nbSommets);
+  
+  int colorIdx = nbColor-1;
+
+  while(!tabuCol(a, graph, colorIdx, nbLocalSearch)){
+    generate_sub_simple(a, graph, partitionSolution);
+    for (int i=0; i<nbSommets; ++i){
+      conflictList[i] = 0;
+      if (a[i] < 0){
+	conflictList[i] = 1;
+	a[i] = 0;
+      }
+    }
+    
+  }
+  
+
+  for (int i=nbColor; i>0; --i){
+    tabuCol(a, graph, nbColor, nbLocalSearch);
+    
+    
+  }
+
+  
+  
+  
+
+  bool feasible = tabuCol(a, graph, nbColor, nbLocalSearch);//, weightsLearned);
   freeTabuColMemory();
 
-  int costx = cost(individual,graph);
+  int costx = cost(a,graph);
   printf("tabu cost: %d\n", costx);
 
   //free(weightsLearned);
