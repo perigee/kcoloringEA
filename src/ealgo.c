@@ -1578,6 +1578,13 @@ bool identifyColorClass(int *a, int colorNb, char *conflictList, char **graph){
 }
 
 
+
+/*!
+ * mutation operator
+ * @param a  carry out the mutant (input the origin)
+ * @param graph adjacent matrix
+ * @return true if the individual is complete and consistent
+ */
 bool mutation_identifyClasses(int *a, char **graph){
   
   char *colorClass = malloc(sizeof(char)*nbSommets);
@@ -2050,13 +2057,15 @@ void maxIndependentSetPure( int nbParent, int **parents, int *b,
  * crossover inspired by the IIS detection
  * the computational time of local search, at sametime, it
  * reduces the diversity
+ * @param crossParents number of parents participated in crossover
  * @param nbParents the number of whole population
  * @param parents the whole population
  * @param offspring carry out the created offspring
  * @param graph adjacent matrix
  * @param freqParents counter the participation number of each parent
+ * @param removeColor maximal number of removed colors
+ * @param weightVars weights on variables/nodes
  */
-
 void crossover_enforced2(int crossParents, int nbParents, int** parents, 
 			 int* offspring, char** graph, int* freqParents, 
 			 int removeColor, int *weightVars){
@@ -2219,10 +2228,10 @@ void verifyOptimalSolution(int *a, int *optimal, char **graph){
 /*!
  * ea + distance
  * @param graph adjacent matrix of given graph
- * @param population the table of individuals
+ * @param savefile output file
+ * @param inputFile input file
  * @return true if the solution found is consistent, otherwise false 
  */
-//bool ea(char** graph, char *savefile, char *inputFile){
 bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr, 
 	char** graph, char *savefile, char *inputFile){
   
