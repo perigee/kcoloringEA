@@ -5,10 +5,27 @@
 //#include "graphe.h"
 #include "ealgo.h"
 
+typedef int (*funcDef)(int,int, int*);
 
+
+int changeInt(int a, int b, int* c){
+  c[0] = 8;
+  return a+b;
+
+}
 
 
 int main (int argc, char * const argv[]) {
+  
+  /*
+  int *changeOne = malloc(sizeof(int));
+  changeOne[0] = 1;
+
+  funcDef myFunc = &changeInt;
+
+  int tmp = (*myFunc)(5,6, changeOne);
+  printf("result: %d\t%d\n",tmp,changeOne[0]);
+  return 0;*/
 
 
   //================================== IIS inspired algorithm ================ BGN

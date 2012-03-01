@@ -972,6 +972,8 @@ int similarityNogood(char* a, char* b){
   return s;
 }
 
+
+
 /*!
  * TOTAL RANDOM CROSSOVER
  * crossover operator - improve the solution and decrease 
@@ -981,7 +983,8 @@ int similarityNogood(char* a, char* b){
  * @param offspring carry out the created offspring
  * @return the number of conflicted edges
  */
-void crossover_maximal(int nbParents, int** parents, int* offspring, char** graph, int* freqParents){
+void crossover_maximal(int nbParents, int** parents, int* offspring, 
+		       char** graph, int* freqParents){
 
   // initialize the offspring  
   initialArray(offspring,nbSommets,-1);
@@ -1290,6 +1293,39 @@ void generate_sub(int *a, char **graph){
 }
 
 
+void generate_sub_disjoint(int *a, char **graph){
+    
+  // randomly remove the conflict nodes one by one, 
+  // until a consistent partial solution 
+  
+  bool firstItr = true;
+  while (hasConflictSolution(a,graph)){
+    if (firstItr){
+      firstItr = false;
+      int index = randomConflict(a, graph);
+      a[index] = -1; // remove the chosen node
+    }else {
+      int index = -1;
+      for (int i=0; i<nbSommets; ++i){
+	if (a[i] < 0){
+	  for (int j=0; j<nbSommets;++j){
+	    if (i != j && !graph[i][j] && isNodeInConflict(j,a,graph)){
+	      index = j;
+	      break;
+	    }
+	  }
+	}
+
+	if (index > -1) break;
+      }
+
+      if (index < 0) index = randomConflict(a, graph);
+      
+      a[index] = -1; // remove the chosen node
+    }
+  }
+
+}
 
 
 
@@ -1470,7 +1506,7 @@ bool mutation_sub(int *a, char **graph, int removeColorNb, int *weightVars){
  * @param conflictList: bring out the color class
  * @param graph: adjacent matrix of graph
  */
-bool extractColorClass(int *a, int colorNb, char *conflictList, char **graph){
+bool identifyColorClass(int *a, int colorNb, char *conflictList, char **graph){
   
   // initialize
   for (int i=0; i<nbSommets;++i) conflictList[i] = 0;
@@ -1482,17 +1518,14 @@ bool extractColorClass(int *a, int colorNb, char *conflictList, char **graph){
   }
 
   for (int i=0; i<nbSommets;++i){
-    if (a[i] < colorNb ) continue;
-    a[i] = 0;
+    if (a[i] > colorNb -1) a[i] = 0;
   }
-
-
   
   bool feasible = false;
   while(!feasible){
    
  
-    feasible = tabuCol_weighted(a, graph, nbColor-1, 
+    feasible = tabuCol_weighted(a, graph, colorNb, 
 				MAX_LocalSearch_Iteration, 
 				conflictList);
 
@@ -1515,43 +1548,67 @@ bool extractColorClass(int *a, int colorNb, char *conflictList, char **graph){
 	  conflictList[i] = 1;
       }
     }
-
-    
   }
 
   int *partialS = malloc(sizeof(int)*nbSommets);
   // remove in conflict node
   for (int i=0; i<nbSommets; ++i){
     if(conflictList[i]){
-      a[i] = -1;
-      partialS[i] = nbColor -1;
-    }else{
+      partialS[i] = colorNb;
+    }else
       partialS[i] = -1;
-    }
+    
   }
 
-
   // only to resolve one IIS 
-  tabuCol(partialS, graph, nbColor, nbLocalSearch);
+  tabuCol(partialS, graph, colorNb+1, nbLocalSearch);
   
   // return the nodes to the subproblem with 
   // all the nodes of IIS except one node 
   for (int i=0; i<nbSommets; ++i){
-    if(a[i]<0 && partialS[i] != nbColor-1){
-      a[i] = partialS[i];
-      //a[i] = nbColor-1;
+    if(partialS[i] != colorNb){
+      conflictList[i] = 0;
     }
   }
   
-  // working on rest of problem with k-1 colors
-  tabuCol(a, graph, nbColor-1, MAX_LocalSearch_Iteration);
+  free(partialS);
+  partialS = NULL;
   
-  // complete solution
-  for (int i=0; i<nbSommets; ++i){
-    if(a[i]<0 ) a[i] = nbColor-1;
+  return feasible;
+}
+
+
+bool mutation_identifyClasses(int *a, char **graph){
+  
+  char *colorClass = malloc(sizeof(char)*nbSommets);
+  int *tmpSolution = malloc(sizeof(int)*nbSommets);
+  initialArray(tmpSolution, nbSommets,-1);
+
+  int removeColor = MAX_RemoveColors;
+  ++removeColor;
+ 
+  for (int i=1; i<removeColor; ++i){
+    bool feasible = identifyColorClass(a,nbColor-i,colorClass,graph);
+    for  (int j=0; j<nbSommets;++j){
+      if(colorClass[j]) tmpSolution[j] = nbColor-i;
+    }
+
+    if (feasible) break;
+  }
+ 
+
+  for (int i=0; i<nbSommets;++i){
+    if (a[i] < 0) a[i] = tmpSolution[i];
+    if (a[i] < 0) a[i] = 0;
   }
 
+  
+  free(colorClass);
+  colorClass = NULL;
+  free(tmpSolution);
+  tmpSolution = NULL;
 
+  return !hasConflictSolution(a,graph);
 }
 
 
@@ -2033,7 +2090,8 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
     }
 
     ++freqParents[crossParentsIdx[i]];
-    generate_sub_simple(parentsCopies[i], graph, weightVars);      
+    //generate_sub_simple(parentsCopies[i], graph, weightVars);      
+    generate_sub_disjoint(parentsCopies[i], graph);      
     //generate_sub_weighted_all(parentsCopies[i], graph, weightVars);      
   }
   
@@ -2106,7 +2164,6 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
 
 
 
-
 /*!
  * create the offspring based on parents
  * @param population the whole population
@@ -2165,7 +2222,9 @@ void verifyOptimalSolution(int *a, int *optimal, char **graph){
  * @param population the table of individuals
  * @return true if the solution found is consistent, otherwise false 
  */
-bool ea(char** graph, char *savefile, char *inputFile){
+//bool ea(char** graph, char *savefile, char *inputFile){
+bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr, 
+	char** graph, char *savefile, char *inputFile){
   
   FILE *f;
   f = fopen(savefile, "a");
@@ -2274,23 +2333,6 @@ bool ea(char** graph, char *savefile, char *inputFile){
   int removeColor = 1;
   int mutationCnt = 0;
 
-  //time_t now;
-  //struct tm *tm;
-  //time(&now);
-
-  //if ((tm = localtime (&now)) == NULL) {
-  //  printf ("Error extracting time stuff\n");
-  //  return 1;
-  //}
-
-  //char buffer [50];
-
-  
-  
-  //sprintf(buffer, "%04d-%02d-%02d %02d:%02d:%02d",
-  //	  tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-  //	  tm->tm_hour, tm->tm_min, tm->tm_sec);
-  
   
   initialArray(weightsLearned, nbSommets, 0);
 
@@ -2327,32 +2369,15 @@ bool ea(char** graph, char *savefile, char *inputFile){
     
     if (cent < switchIteration){
       ++cent;
-
-
-      //crossover_maximal(populationSize, population, tmpSolution, graph, freqParents);    
-      //crossover_nogood(populationSize, population, tmpSolution, graph, freqParents);
-      //crossover_sub(populationSize, population, tmpSolution, graph, freqParents);
-      //crossover_sub_simple(populationSize, population, tmpSolution, graph, freqParents);
       
-      //initialArray(weightsLearned, nbSommets, 0);
+      //cent = 0; // skip mutation
 
       crossCost = 0;
       for (int cross=0; cross<nbChildren; ++cross){
-	//crossover_cardinality(populationSize, population, tmpSolutions[cross], graph, freqParents);
 
-	//crossover_enforced(populationSize, population, tmpSolutions[cross], 
-	//		   graph, freqParents, removeColor);
-
-	crossover_enforced2(crossParentsNb, populationSize, population, tmpSolutions[cross], 
+	(*funcCrossPtr)(crossParentsNb, populationSize, population, tmpSolutions[cross], 
 			    graph, freqParents, removeColor, weightsLearned);
 
-	
-	//crossCost += cost(tmpSolutions[cross], graph);
-	
-	//float tval = (rand()/(float)RAND_MAX) ;
-	//	int mutation_iteration = nbLocalSearch;
-	//int mutation_iteration = MAX_LocalSearch_Iteration;
-	
 
 	if (tabuCol(tmpSolutions[cross],graph,nbColor,MAX_LocalSearch_Iteration)){
       
@@ -2458,34 +2483,13 @@ bool ea(char** graph, char *savefile, char *inputFile){
 	int jth = -1;// = (rand()/(float)RAND_MAX) * populationSize;
 	jth = mi;
 
-	//int freq = -1;
-	//for (int i = 0; i<populationSize; ++i){
-	//  if (freq < 0 || freq < freqParents[i]){
-	//    freq = freqParents[i];
-	//    jth = i;
-	//  }
-	//}
-
-	//if (jth<0){
-	//  printf("problem in choosing mutation individual\n");
-	//  exit(0);
-	//}
 
 	freqParents[jth] = 0;
 
 	bool isConsistent = false;
 	
-	//float tval = (rand()/(float)RAND_MAX) ;
-  
-  
-	//mutation_sub(population[jth], graph, removeColor, weightsLearned);
-	//if (tval < 0.7)
-	  isConsistent = mutation_iis(population[jth], graph,weightsLearned);
-	  //else
-	  //isConsistent = mutation_weighted(population[jth], graph,weightsLearned);
-
-	//isConsistent = mutation_weighted_simple(population[jth], 
-	//					     graph, weightsLearned);
+	//isConsistent = mutation_identifyClasses(population[jth], graph);
+	isConsistent = (*funcMutationPtr)(population[jth], graph);
 
 	if (isConsistent){
 	  for (int bs=0; bs<nbSommets;++bs){
@@ -2711,7 +2715,11 @@ bool testTabu(char** graph){
 
 
 bool testEA(char** graph, char *savefilename, char *inputFile){
-  return ea(graph, savefilename, inputFile);
+
+  FuncCrossover* cross = &crossover_enforced2;
+  FuncMutation* mutation = &mutation_identifyClasses;
+
+  return ea(cross, mutation, graph, savefilename, inputFile);
 }
 
 
