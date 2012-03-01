@@ -20,6 +20,8 @@ int MAX_RemoveColors;
 
 //==================================================== BGN
 // define the crossover and mutation function types
+// ease the testing among different crossover and mutation 
+// combinations
 
 /*!
  * crossover operator
@@ -32,7 +34,6 @@ int MAX_RemoveColors;
  * @param 6 maximal number of removed colors
  * @param 7 weights on variables/nodes
  */
-
 typedef void (*FuncCrossover)(int, int, int**, int*, 
 			      char**, int*,int, int*);
 
@@ -50,9 +51,8 @@ typedef bool (*FuncMutation)(int*, char**);
 
 bool tabuCol(int* a, char** graph, int colorNB, 
 	     int maxIteration); /// tabuCol with gamma matrix
-//int distance(int* a, int* b); /// distance between two individuals
-//int** chooseParents(int** population); /// choose the parents from population
-//int crossover(int** parents, int* offspring); /// crossover the parents to create offspring
+
+
 bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
 	char** graph, char *filename, char *inputFile); /// ea + distance 
 
