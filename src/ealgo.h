@@ -53,6 +53,15 @@ bool tabuCol(int* a, char** graph, int colorNB,
 	     int maxIteration); /// tabuCol with gamma matrix
 
 
+/*!
+ * ea + distance
+ * @param funcCrossPtr crossover operator
+ * @param funcMutationPtr mutation operator
+ * @param graph adjacent matrix of given graph
+ * @param savefile output file
+ * @param inputFile input file
+ * @return true if the solution found is consistent, otherwise false 
+ */
 bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
 	char** graph, char *filename, char *inputFile); /// ea + distance 
 

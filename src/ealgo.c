@@ -2227,6 +2227,8 @@ void verifyOptimalSolution(int *a, int *optimal, char **graph){
 
 /*!
  * ea + distance
+ * @param funcCrossPtr crossover operator
+ * @param funcMutationPtr mutation operator
  * @param graph adjacent matrix of given graph
  * @param savefile output file
  * @param inputFile input file
@@ -2385,7 +2387,7 @@ bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
       for (int cross=0; cross<nbChildren; ++cross){
 
 	(*funcCrossPtr)(crossParentsNb, populationSize, population, tmpSolutions[cross], 
-			    graph, freqParents, removeColor, weightsLearned);
+			graph, freqParents, removeColor, weightsLearned);
 
 
 	if (tabuCol(tmpSolutions[cross],graph,nbColor,MAX_LocalSearch_Iteration)){
