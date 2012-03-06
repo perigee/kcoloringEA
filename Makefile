@@ -16,7 +16,7 @@ gfile.o : gfile.c gfile.h
 	$(CC) -c $(CFLAGS) $< -o $@
 graphe.o: graphe.c graphe.h
 	$(CC) -c $(CFLAGS) $< -o $@
-ealgo.o : ealgo.c ealgo.h
+ealgo.o : ealgo.c kmeans.c ealgo.h
 	$(CC) -c $(CFLAGS) $< -o $@
 analyseGraphe.o: analyseGraphe.c analyseGraphe.h
 	$(CC) -c $(CFLAGS) $< -o $@

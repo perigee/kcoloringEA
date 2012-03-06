@@ -65,6 +65,7 @@ bool tabuCol(int* a, char** graph, int colorNB,
 bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
 	char** graph, char *filename, char *inputFile); /// ea + distance 
 
+
 void testAlgo(char *filename, char *inNbColor, char *inPopuSize, 
 	      char *inLSIter, char *inMaxLSIter, char *inGenItr,
 	      char *inMaxRemoveColor, char* savefilename);

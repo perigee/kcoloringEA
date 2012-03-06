@@ -8,7 +8,7 @@
 #include <assert.h>
 #include "util/gfile.h"
 #include "ealgo.h"
-
+#include "kmeans.c"
 
 
 float lambdaValue = 0.6;
@@ -21,6 +21,13 @@ void initialArray(int* a,int size,int value){
     a[i] = value;
   }
 }
+
+
+/*!
+ * strongly connected component
+ */
+
+
 
 
 /*!
@@ -293,6 +300,106 @@ int bestMove(Move* move, int** tGamma,  int** tTabu, int* individual, int colorN
 }
 
 
+
+/*!
+ * find the best move in tabu search, and increase the weights
+ * on violated variables
+ * @param move bring out the best move
+ * @param tGamma gamma table for total incremental objective function computing
+ * @param tTabu tabu value duration table
+ * @param individual individual color table
+ * @param weightsVars bring out the learnt weights
+ * @return the change of objective function
+ */
+int bestMoveWeights(Move* move, int** tGamma,  int** tTabu, 
+	     int* individual, int colorNB, int* weightsVars){
+  int delta = -1;// best delta found, be careful the value 
+  bool isSet = false;
+  int bestCnt = 0;
+  int bestVarCnt = 0;
+
+  // traverse all the nodes
+  for (int i=0; i<nbSommets; ++i){
+    if (individual[i] > -1 && tGamma[i][individual[i]]>0){
+
+      // increase the weight on violated variable
+      ++weightsVars[i];
+
+      // traverse all the non-tabu colors of sommet i
+      int minGamma = -1;
+      int tmpSommet = -1;
+      int tmpColor = -1;
+
+      ++(move->nbVars);
+
+      for (int j=0; j<colorNB; ++j){
+       
+	// decrease the tabu duration and skip the tabu color
+	if (tTabu[i][j]>0){
+	  --tTabu[i][j];
+	  continue;
+	}
+	// skip  assigned color
+	if (j == individual[i])
+	  continue;
+	
+	if (minGamma < 0 || minGamma > tGamma[i][j]){
+	  minGamma = tGamma[i][j];
+	  tmpSommet = i; 
+	  tmpColor = j;
+	  bestCnt = 1;
+	}else if (minGamma == tGamma[i][j]){
+	  ++bestCnt;
+	  float tval=(rand()/(float)RAND_MAX);
+
+	  //if (tval > 100/bestCnt){
+	  if (tval < 1/(float)bestCnt){
+	    tmpSommet = i; 
+	    tmpColor = j;
+	  }
+	}
+      }
+
+      // update delta if necessary, in case of all tabu
+      if (minGamma < 0){
+	int color = individual[i];
+	while (color == individual[i])
+	  color = (rand()/(float)RAND_MAX)*colorNB;
+
+	minGamma = tGamma[i][color];
+        tmpSommet = i;
+	tmpColor = color;
+      } 
+
+      if (!isSet || delta > minGamma - tGamma[i][individual[i]]){
+	if (!isSet) isSet = true;
+
+	delta = minGamma - tGamma[i][individual[i]];
+	move->sommet = tmpSommet;
+	move->color =  tmpColor;
+	bestVarCnt = 1;
+	//printf("bestMove: %d,%d", move->sommet, move->color);
+      }else if (delta == minGamma - tGamma[i][individual[i]]){
+	// 
+	++bestVarCnt;
+	float tval=(rand()/(float)RAND_MAX);
+
+	if (tval < 1/(float)bestVarCnt){
+	  move->sommet = tmpSommet;
+	  move->color =  tmpColor;
+	}
+      }
+    }
+  }
+
+  if (isSet)  return delta;
+  
+  // in case all tabu, very rare
+  
+  return delta;
+}
+
+
 /*!
  * update the Gamma table according to best move found
  * @param sommet the best move node
@@ -426,6 +533,126 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration){//, int *weigh
 
     //printf("%d:\t%d\t%d\n",i, obj,bestObj);
     
+    // in case find best delta 
+    if( delta < 0 && obj+delta < bestObj){
+      bestObj = obj+delta;
+      for (int j=0; j<nbSommets; ++j){
+	a[j] = tTmpColor[j];
+      }
+      
+      i = 0; // reset i if found best so far
+      a[tabuMove->sommet] = tabuMove->color;
+    }else if (bestObj == obj+delta){
+      
+      int tval = (rand()/(float)RAND_MAX) * 10 ;
+      if (tval > 4){
+	for (int j=0; j<nbSommets; ++j){
+	  a[j] = tTmpColor[j];
+	}
+
+	a[tabuMove->sommet] = tabuMove->color;
+      }
+    }
+
+    
+
+    // update move
+    updateMove(tabuMove->sommet, tTmpColor[tabuMove->sommet], tabuMove->color, 
+	       tGamma, graph, tTmpColor);
+    // ============================= Record circle variable ===== BGN
+    //if (stableCnt > StableItr)
+    //++weightVars[move->sommet];
+    // ============================= Record circle variable ===== END
+
+
+    
+    int rdx=(rand()/(float)RAND_MAX) * LValue;
+    //rdx += weightPercent*nbConflict;
+   
+    rdx +=  lambdaValue*(tabuMove->nbVars);
+     
+    
+    tTabu[tabuMove->sommet][tTmpColor[tabuMove->sommet]] = rdx; // tabu duration
+
+    tTmpColor[tabuMove->sommet] =tabuMove->color;
+    obj += delta;
+    
+
+  }
+  
+
+  if(bestObj < 1) return true;
+  
+  return false;
+}
+
+
+/*!
+ * tabuCol implementation
+ * @param a individual color table
+ * @param graph adjacent matrix of graph
+ * @param weightsVars bring out the weights learnt from violation 
+ * @return true if consistent solution found, otherwise false
+ */
+bool tabuColLearntWeights(int* a, char** graph, 
+			  int colorNB, int maxIteration,
+			  int* weightsVars){
+
+  assert(tTabu != NULL && tGamma != NULL && tTmpColor != NULL);
+  
+  
+  int maxNoImpIteration = maxIteration;
+ 
+  //printf("in tabucol\n");
+ 
+  // init Tabu and Gamma Tables
+  for (int i=0; i<nbSommets; ++i) {
+   //copy color assignment     
+    tTmpColor[i] = a[i];
+  
+    for (int j=0; j<colorNB; ++j) {
+	tTabu[i][j]=-1;
+	tGamma[i][j] = 0;
+    }
+  }
+    
+  
+  int obj = initGammaTable(a,graph,tGamma); // init gamma table
+
+  if (obj<1) return true;
+
+  //printf("========= T ========");
+  //printTableNK(tGamma);
+
+  int bestObj = obj;
+
+  // a always records best so far solution
+  //StableItr = maxNoImpIteration/3*2;
+  // stableCnt = 0;
+  for (int i=0;  i< maxNoImpIteration ; ++i){
+    //    ++stableCnt;
+    tabuMove->sommet = -1;
+    tabuMove->color = -1;
+    tabuMove->nbVars = 0;
+    if(bestObj < 1) break; // find consistent solution
+
+    // find best move based on gamma table and increase the weights
+    int delta = bestMoveWeights(tabuMove, tGamma, tTabu, 
+    				tTmpColor, colorNB, weightsVars);
+
+    //int delta = bestMove(tabuMove, tGamma, tTabu, 
+    //				tTmpColor, colorNB);
+
+
+    //printf("%d,%d",move->sommet,move->color);
+    
+    // all tabu case
+    if (tabuMove->sommet < 0 || tabuMove->color < 0) continue;
+
+    //printf("%d:\t%d\t%d\n",i, obj,bestObj);
+    //++weightsVars[tabuMove->sommet];
+
+
     // in case find best delta 
     if( delta < 0 && obj+delta < bestObj){
       bestObj = obj+delta;
@@ -2727,12 +2954,109 @@ bool testTabu(char** graph){
 
 bool testEA(char** graph, char *savefilename, char *inputFile){
 
+  // define the operators
   FuncCrossover* cross = &crossover_enforced2;
   FuncMutation* mutation = &mutation_identifyClasses;
 
   return ea(cross, mutation, graph, savefilename, inputFile);
 }
 
+/*!
+ * identify the critical subgraph
+ * @param graph adjacency matrix
+ */
+void testCritical(char** graph){
+
+  int* weightsVars = malloc(sizeof(int)*nbSommets);
+  double **weightsDegrees = malloc(sizeof(double*)*nbSommets);
+  int k = 5;
+  double **certio = malloc(sizeof(double*)*k);
+  
+  // initialize the node data and node degree
+  for (int i=0; i<nbSommets; ++i){
+    weightsDegrees[i] = malloc(sizeof(double)*2);
+
+    if (i<k){
+      certio[i] = malloc(sizeof(double)*2);
+      certio[i][0] = 0.0;
+      certio[i][1] = 0.0;
+    }
+    for (int j=0; j<nbSommets; ++j){
+      if (graph[i][j]) ++weightsDegrees[i][1]; 
+    }
+  }
+  mallocTabuColMemory();
+
+  int* a = malloc(sizeof(int)*nbSommets);
+  randomSolution(a);
+  //tabuCol(a, graph, nbColor, nbLocalSearch);
+  
+  
+  while(!tabuColLearntWeights(a, graph, nbColor, 
+			      nbLocalSearch, weightsVars)){
+    
+    for (int i=0; i<nbSommets; ++i){
+      weightsDegrees[i][0] = weightsVars[i];
+      printf("%d\t", weightsVars[i]);
+      weightsVars[i] = 0;
+    }
+    printf("\n");
+
+    int* labels = k_means(weightsDegrees, nbSommets, 1, k, 0.0001, certio);
+
+    double minLabel = -1.0;
+    int labelIdx = 0;
+    for (int i=0; i<k; ++i){
+
+      if (minLabel < 0 || certio[i][0] < minLabel){
+	minLabel = certio[i][0];
+	labelIdx = i;
+      }
+      printf("%d:%f\t%f\n", i, certio[i][0], certio[i][1]);
+    }
+
+    int nbRemoved = 0;
+    for (int i=0; i<nbSommets; ++i){
+      printf("%d\t", labels[i]);
+      if (labels[i] == labelIdx){
+	a[i] = -1;
+	++nbRemoved;
+      }
+    }
+    
+    printf("\n%d\t%d\n", nbRemoved, nbSommets);
+
+
+    
+    
+    free(labels);
+    
+
+    //break;
+  }
+    
+
+  // free memory
+  freeTabuColMemory();
+  for (int i=0; i<nbSommets; ++i){
+    free(weightsDegrees[i]);
+
+    
+    weightsDegrees[i] = NULL;
+
+    if(i<k){
+      free(certio[i]);
+      certio[i] = NULL;
+    }
+  }
+  
+  free(certio);
+  certio = NULL;
+  free(weightsDegrees);
+  weightsDegrees = NULL;
+  free(weightsVars);
+  weightsVars = NULL;
+}
 
 
 void testShortest(char** graph){
@@ -2823,8 +3147,9 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   //bool feasible = testTabu(tConnect);
 
   // Test 2: ea algorithm
-  bool feasible = testEA(tConnect, savefilename,filename);
-
+  //bool feasible = testEA(tConnect, savefilename,filename);
+  bool feasible = false;
+  testCritical(tConnect);
 
   printf("d: %s nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tTimeLimit:%d mins\tMaximalColorRemove:%d\n",
   	 filename, nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,
