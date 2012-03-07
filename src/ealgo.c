@@ -2969,7 +2969,7 @@ void testCritical(char** graph){
 
   int* weightsVars = malloc(sizeof(int)*nbSommets);
   double **weightsDegrees = malloc(sizeof(double*)*nbSommets);
-  int k = 5;
+  int k = 3;
   double **certio = malloc(sizeof(double*)*k);
   
   // initialize the node data and node degree
@@ -2996,31 +2996,65 @@ void testCritical(char** graph){
 			      nbLocalSearch, weightsVars)){
     
     for (int i=0; i<nbSommets; ++i){
+      
+      if (i<k){
+	certio[i][0] = 0.0;
+	certio[i][1] = 0.0;
+      }
+
       weightsDegrees[i][0] = weightsVars[i];
       printf("%d\t", weightsVars[i]);
-      weightsVars[i] = 0;
+
+      double sumWeights = 0.0;
+      int degreeNode = 0;
+      for (int j=0; j<nbSommets; ++j){
+	if (graph[i][j] && a[j]>-1){
+	  ++degreeNode;
+	  sumWeights += weightsVars[j];
+	}
+      }
+      
+      weightsDegrees[i][1] = sumWeights;
+      
     }
     printf("\n");
 
-    int* labels = k_means(weightsDegrees, nbSommets, 1, k, 0.0001, certio);
+    int* labels = k_means(weightsDegrees, nbSommets, 2, k, 0.0001, certio);
 
-    double minLabel = -1.0;
-    int labelIdx = 0;
+
+    double maxNeighbors = -1.0;
+    double maxSelf = -1.0;
+    int labelSelf = 0;
+    int labelNeighbors = 0;
+
     for (int i=0; i<k; ++i){
 
-      if (minLabel < 0 || certio[i][0] < minLabel){
-	minLabel = certio[i][0];
-	labelIdx = i;
+      if ( maxNeighbors < 0 || certio[i][1] > maxNeighbors){
+	 maxNeighbors = certio[i][1];
+	 labelNeighbors = i;
       }
+      
+      if ( maxSelf < 0 || certio[i][0] > maxSelf){
+	 maxSelf = certio[i][0];
+	 labelSelf = i;
+      }
+
+
       printf("%d:%f\t%f\n", i, certio[i][0], certio[i][1]);
     }
 
+    // remove the nodes from graph
     int nbRemoved = 0;
     for (int i=0; i<nbSommets; ++i){
+      weightsVars[i] = 0; // erase the weights
       printf("%d\t", labels[i]);
-      if (labels[i] == labelIdx){
+      if (labels[i] != labelSelf || labels[i] !=labelNeighbors){
 	a[i] = -1;
 	++nbRemoved;
+        for (int j=0; j<nbSommets;++j){
+	  graph[i][j] = 0;
+	  graph[j][i] = 0;
+	}
       }
     }
     
@@ -3032,9 +3066,17 @@ void testCritical(char** graph){
     free(labels);
     
 
-    //break;
+    break;
   }
     
+
+  for (int i=0; i<nbSommets; ++i){
+    
+    if(i< nbSommets-1)
+      for (int j=i+1; j<nbSommets; ++j){
+	if (graph[i][j]) printf("%d--%d\n", i,j);
+      }
+  }
 
   // free memory
   freeTabuColMemory();
