@@ -24,13 +24,6 @@ void initialArray(int* a,int size,int value){
 
 
 /*!
- * strongly connected component
- */
-
-
-
-
-/*!
  * All pairs shortest path
  */
 void floyd_warshall(char** graph, int** dist){
@@ -472,9 +465,6 @@ void freeTabuColMemory(){
   tTmpColor = NULL;
   free(tabuMove);
   tabuMove = NULL;
-  //free(tabuConflictTable);
-  //tabuConflictTable = NULL;
-
 }
 
 /*!
@@ -1812,7 +1802,7 @@ bool identifyColorClass(int *a, int colorNb, char *conflictList, char **graph){
  * @param graph adjacent matrix
  * @return true if the individual is complete and consistent
  */
-bool mutation_identifyClasses(int *a, char **graph){
+bool mutation_identifyClasses(int *a, char **graph, int* varsWeights){
   
   char *colorClass = malloc(sizeof(char)*nbSommets);
   int *tmpSolution = malloc(sizeof(int)*nbSommets);
@@ -2061,6 +2051,115 @@ bool mutation_weighted_simple(int *a, char **graph, int *weightVars){
   return false;
   //return tabuCol(a, graph, nbColor, nbLocalSearch);
   return !hasConflictSolution(a, graph);
+}
+
+
+int minClass(int node, int *a, char** graph){
+
+  int* colorArray = malloc(sizeof(int)*nbColor);
+  initialArray(colorArray, nbColor, 0);
+  int colorIdx = 0;
+  int minWeight = -1;
+  for (int i=0; i<nbSommets; ++i){
+    if (graph[node][i]) ++colorArray[a[i]];
+    
+    if (minWeight < 0 || minWeight > colorArray[a[i]]){
+      minWeight = colorArray[a[i]];
+      colorIdx = a[i];
+    }
+  }
+
+  free(colorArray);
+  return colorIdx;
+}
+
+
+
+int minClassNb(int node, int *a, char** graph){
+
+  int* colorArray = malloc(sizeof(int)*nbColor);
+  initialArray(colorArray, nbColor, 0);
+  int colorIdx = 0;
+  int minWeight = -1;
+  for (int i=0; i<nbSommets; ++i){
+    if (graph[node][i]) ++colorArray[a[i]];
+    
+    if (minWeight < 0 || minWeight > colorArray[a[i]]){
+      minWeight = colorArray[a[i]];
+      colorIdx = a[i];
+    }
+  }
+  
+  colorIdx = colorArray[colorIdx];
+  free(colorArray);
+  return colorIdx;
+}
+
+/*!
+ * Mutaion adopts the Grenade structure in VNS paper
+ * diversify the population
+ */
+bool mutation_grenade(int *a, char **graph, int** varWeights){
+
+
+  int nodeth = 0;
+  int minWeight = -1;
+  char* neighborArray = malloc(sizeof(char)*nbSommets);
+
+  // less weighted node;
+  for (int i=0; i<nbSommets; ++i){
+    if (isNodeInConflict(i,a,graph)) ++varWeights[i];
+
+    if (minWeight < 0 || minWeight > varWeights[i]){
+      minWeight = varWeights[i];
+      nodeth = i;
+    }
+  }
+  
+  varWeights[nodeth] += 5; // increase weight on grenade node
+
+  int colorIdx = minClass(nodeth, a, graph);
+
+  // change the color
+  a[nodeth] = colorIdx;
+
+
+  int nbNeighbors = 0;
+  for (int i=0; i<nbSommets; ++i){
+    if (graph[nodeth][i]){ 
+      neighborArray[i] = 1;
+      ++nbNeighbors;
+    }
+    else neighborArray[i] = 0;  
+  }
+  
+  
+  // find minimal conflict node in new conflict nodes
+  for (int j=0; j<nbNeighbors; ++j){
+
+      int tmpDegree = -1;
+      int minDegree = -1;
+      int newConflictIdx = 0;
+
+
+      for (int i=0; i<nbSommets; ++i){
+	if (graph[nodeth][i] && neighborArray[i]){
+	  tmpDegree = minClassNb(i,a,graph);
+      
+	  if (minDegree < 0 || minDegree > tmpDegree){
+	    minDegree = tmpDegree;
+	    newConflictIdx = i;
+	  }
+	}
+      }
+
+      int newConflictColor = minClass(newConflictIdx,a,graph);
+      neighborArray[newConflictIdx] = 0;
+  }
+
+  free(neighborArray);
+  return !hasConflictSolution(a, graph);
+  
 }
 
 
@@ -2727,7 +2826,7 @@ bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
 	bool isConsistent = false;
 	
 	//isConsistent = mutation_identifyClasses(population[jth], graph);
-	isConsistent = (*funcMutationPtr)(population[jth], graph);
+	isConsistent = (*funcMutationPtr)(population[jth], graph, weightsLearned);
 
 	if (isConsistent){
 	  for (int bs=0; bs<nbSommets;++bs){

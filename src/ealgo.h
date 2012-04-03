@@ -43,7 +43,7 @@ typedef void (*FuncCrossover)(int, int, int**, int*,
  * @param 1 adjacent matrix
  * @return true if the individual is complete and consistent
  */
-typedef bool (*FuncMutation)(int*, char**);
+typedef bool (*FuncMutation)(int*, char**, int*);
 //==================================================== END
 
 
