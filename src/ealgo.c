@@ -2101,64 +2101,67 @@ int minClassNb(int node, int *a, char** graph){
  */
 bool mutation_grenade(int *a, char **graph, int** varWeights){
 
-  printf("in mutation_grenade\n");
-
-  int grenade = 0; // the grenade node
-  int minWeight = -1;
+  //  printf("in mutation_grenade\n");
   char* neighborArray = malloc(sizeof(char)*nbSommets);
-
-  // less weighted node;
-  for (int i=0; i<nbSommets; ++i){
-    if (isNodeInConflict(i,a,graph)) ++varWeights[i];
-
-    if (minWeight < 0 || minWeight > varWeights[i]){
-      minWeight = varWeights[i];
-      grenade = i;
-    }
-  }
+  for (int k=0; k<3; ++k){
+    int grenade = 0; // the grenade node
+    int minWeight = -1;
   
-  varWeights[grenade] += 5; // increase weight on grenade node
 
-  // change the color
-  a[grenade] = minClass(grenade, a, graph);
-
-
-  int nbNeighbors = 0;
-  for (int i=0; i<nbSommets; ++i){
-    if (graph[grenade][i]){ 
-      neighborArray[i] = 1;
-      ++nbNeighbors;
-    }
-    else neighborArray[i] = 0;  
-  }
-  
-  
-  // find minimal conflict node in new conflict nodes
-  for (int j=0; j<nbNeighbors; ++j){
-
-    int tmpDegree = -1;
-    int minDegree = -1;
-    int newConflictIdx = 0;
-
-
+    // less weighted node;
     for (int i=0; i<nbSommets; ++i){
-      if (graph[grenade][i] && neighborArray[i]){
-	tmpDegree = minClassNb(i,a,graph);
-      
-	if (minDegree < 0 || minDegree > tmpDegree){
-	  minDegree = tmpDegree;
-	  newConflictIdx = i;
-	}
+      if (isNodeInConflict(i,a,graph)) ++varWeights[i];
+
+      if (minWeight < 0 || minWeight > varWeights[i]){
+	minWeight = varWeights[i];
+	grenade = i;
       }
     }
+  
+    varWeights[grenade] += 5; // increase weight on grenade node
+
+    // change the color
+    a[grenade] = minClass(grenade, a, graph);
+
+
+    int nbNeighbors = 0;
+    for (int i=0; i<nbSommets; ++i){
+      if (graph[grenade][i]){ 
+	neighborArray[i] = 1;
+	++nbNeighbors;
+      }
+      else neighborArray[i] = 0;  
+    }
+  
+  
+    // find minimal conflict node in new conflict nodes
+    for (int j=0; j<nbNeighbors; ++j){
+
+      int tmpDegree = -1;
+      int minDegree = -1;
+      int newConflictIdx = 0;
+
+
+      for (int i=0; i<nbSommets; ++i){
+	if (graph[grenade][i] && neighborArray[i]){
+	  tmpDegree = minClassNb(i,a,graph);
       
-    // change the color class of new conflict node
-    a[newConflictIdx] = minClass(newConflictIdx,a,graph);
-    neighborArray[newConflictIdx] = 0;
+	  if (minDegree < 0 || minDegree > tmpDegree){
+	    minDegree = tmpDegree;
+	    newConflictIdx = i;
+	  }
+	}
+      }
+      
+      // change the color class of new conflict node
+      a[newConflictIdx] = minClass(newConflictIdx,a,graph);
+      neighborArray[newConflictIdx] = 0;
+    }
   }
 
   free(neighborArray);
-  return !hasConflictSolution(a, graph);
+  //return !hasConflictSolution(a, graph);
+  return tabuCol(a, graph, nbColor, MAX_LocalSearch_Iteration);
 }
 
 
@@ -2439,7 +2442,7 @@ bool crossover_enforced2(int crossParents, int nbParents, int** parents,
 
     ++freqParents[crossParentsIdx[i]];
     //generate_sub_simple(parentsCopies[i], graph, weightVars);      
-    generate_sub_disjoint(parentsCopies[i], graph);      
+    //generate_sub_disjoint(parentsCopies[i], graph);      
     //generate_sub_weighted_all(parentsCopies[i], graph, weightVars);      
   }
   
@@ -2449,8 +2452,11 @@ bool crossover_enforced2(int crossParents, int nbParents, int** parents,
 
   for (int i=1; i< nbColor; ++i){
  
-    maxIndependentSet(crossParents, parentsCopies, offspring, 
+        maxIndependentSet(crossParents, parentsCopies, offspring, 
      		      graph, conflictColors, crossMove);
+
+	//maxIndependentSetPure(crossParents, parentsCopies, offspring, 
+     	//	      graph, crossMove);
 
 
     colorIdx = crossMove->color;
@@ -2750,7 +2756,7 @@ bool ea(CrossoverFuncPtr funcCrossPtr, MutationFuncPtr funcMutationPtr,
       ++mutationCnt;
       cent = 0; // switch to crossover
      
-      for (int mi=0; mi<populationSize;++mi){
+      for (int mi=0; mi<3;++mi){
 
 	// in case the remove color number greater than authorised remove number
 	removeColor = (rand()/(float)RAND_MAX) * MAX_RemoveColors;
@@ -2801,6 +2807,11 @@ bool ea(CrossoverFuncPtr funcCrossPtr, MutationFuncPtr funcMutationPtr,
       }
     }
     
+    printf("parents:\t%d",g);
+    for (int parentIdx = 0; parentIdx < populationSize; ++parentIdx){
+      printf("\t%d", cost(population[parentIdx],graph));
+    }
+    printf("\n");
 
     time(&now_time);
     if (difftime(now_time, start_time) > Nb_Generation) break; // time out
