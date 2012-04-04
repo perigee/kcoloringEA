@@ -133,8 +133,8 @@ bool hasConflict(int node, int* a, char** graph){
  * @return the number of violated edges
  */
 int cost(int* a, char** graph){
-   int nbConflict = 0;
-   char *tabuConflictTable = malloc(sizeof(char)*nbSommets);
+  int nbConflict = 0;
+  char *tabuConflictTable = malloc(sizeof(char)*nbSommets);
   
   for (int i=0; i<nbSommets; ++i){
     tabuConflictTable[i] = 0;
@@ -187,10 +187,10 @@ int initGammaTable(int* a, char** graph, int** tGamma){//, int *tConflict){
 	    
       if( graph[i][j]){ // only verify assigned node
 	
-	  ++tGamma[i][a[j]]; 
-	  ++tGamma[j][a[i]];
+	++tGamma[i][a[j]]; 
+	++tGamma[j][a[i]];
 	  
-	  if (a[i] == a[j]) ++nbConflict;
+	if (a[i] == a[j]) ++nbConflict;
 
       }
     }
@@ -305,7 +305,7 @@ int bestMove(Move* move, int** tGamma,  int** tTabu, int* individual, int colorN
  * @return the change of objective function
  */
 int bestMoveWeights(Move* move, int** tGamma,  int** tTabu, 
-	     int* individual, int colorNB, int* weightsVars){
+		    int* individual, int colorNB, int* weightsVars){
   int delta = -1;// best delta found, be careful the value 
   bool isSet = false;
   int bestCnt = 0;
@@ -410,17 +410,17 @@ void updateMove(int sommet, int colorOrigin, int colorCandidate,
       if (ind[i] > -1){
 	
 	//	if (tConflict[sommet] || tConflict[i]){
-	  //	  	if( tGamma[i][colorOrigin]>0)
-		  //		  tGamma[i][colorOrigin] -=MAX_Gamma;
+	//	  	if( tGamma[i][colorOrigin]>0)
+	//		  tGamma[i][colorOrigin] -=MAX_Gamma;
       
-		//		tGamma[i][colorCandidate] +=MAX_Gamma;
-		//}else{
+	//		tGamma[i][colorCandidate] +=MAX_Gamma;
+	//}else{
 
-	  if( tGamma[i][colorOrigin]>0)
-	    --tGamma[i][colorOrigin];
+	if( tGamma[i][colorOrigin]>0)
+	  --tGamma[i][colorOrigin];
       
-	  ++tGamma[i][colorCandidate];
-	  //}
+	++tGamma[i][colorCandidate];
+	//}
       }
     }
   }
@@ -451,10 +451,10 @@ void mallocTabuColMemory(){
 void freeTabuColMemory(){
 
   for (int i=0; i<nbSommets;++i){
-      free(tTabu[i]);
-      tTabu[i] = NULL;
-      free(tGamma[i]);
-      tGamma[i] = NULL;
+    free(tTabu[i]);
+    tTabu[i] = NULL;
+    free(tGamma[i]);
+    tGamma[i] = NULL;
   }
 
   free(tTabu);
@@ -484,12 +484,12 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration){//, int *weigh
  
   // init Tabu and Gamma Tables
   for (int i=0; i<nbSommets; ++i) {
-   //copy color assignment     
+    //copy color assignment     
     tTmpColor[i] = a[i];
   
     for (int j=0; j<colorNB; ++j) {
-	tTabu[i][j]=-1;
-	tGamma[i][j] = 0;
+      tTabu[i][j]=-1;
+      tGamma[i][j] = 0;
     }
   }
     
@@ -597,12 +597,12 @@ bool tabuColLearntWeights(int* a, char** graph,
  
   // init Tabu and Gamma Tables
   for (int i=0; i<nbSommets; ++i) {
-   //copy color assignment     
+    //copy color assignment     
     tTmpColor[i] = a[i];
   
     for (int j=0; j<colorNB; ++j) {
-	tTabu[i][j]=-1;
-	tGamma[i][j] = 0;
+      tTabu[i][j]=-1;
+      tGamma[i][j] = 0;
     }
   }
     
@@ -780,7 +780,7 @@ void updateMove_weighted(int sommet, int colorOrigin, int colorCandidate,
  * @return true if consistent solution found, otherwise false
  */
 bool tabuCol_weighted(int* a, char** graph, int colorNB, 
-		     int maxIteration, char *weightedList){//, int *weightVars){
+		      int maxIteration, char *weightedList){//, int *weightVars){
 
   assert(tTabu != NULL && tGamma != NULL && tTmpColor != NULL);
   
@@ -791,12 +791,12 @@ bool tabuCol_weighted(int* a, char** graph, int colorNB,
  
   // init Tabu and Gamma Tables
   for (int i=0; i<nbSommets; ++i) {
-   //copy color assignment     
+    //copy color assignment     
     tTmpColor[i] = a[i];
   
     for (int j=0; j<colorNB; ++j) {
-	tTabu[i][j]=-1;
-	tGamma[i][j] = 0;
+      tTabu[i][j]=-1;
+      tGamma[i][j] = 0;
     }
   }
     
@@ -982,19 +982,19 @@ int maxColorClass( int *a, int *b, char **graph){
   int eqCnt = 0;
   float tval;
   for (int j=0; j<nbSommets;++j){
-      if (b[j] > -1 || a[j] <0) continue;
+    if (b[j] > -1 || a[j] <0) continue;
       
-      ++classSize[a[j]];
-      if (maxIdx < 0 || maxSize < classSize[a[j]]){
+    ++classSize[a[j]];
+    if (maxIdx < 0 || maxSize < classSize[a[j]]){
+      maxIdx = a[j];
+      maxSize = classSize[a[j]];
+      eqCnt = 1;
+    }else if (maxSize == classSize[a[j]]){
+      ++eqCnt;
+      tval = (rand()/(float)RAND_MAX) ;
+      if (tval < 1/(float)eqCnt)
 	maxIdx = a[j];
-	maxSize = classSize[a[j]];
-	eqCnt = 1;
-      }else if (maxSize == classSize[a[j]]){
-	++eqCnt;
-	tval = (rand()/(float)RAND_MAX) ;
-	if (tval < 1/(float)eqCnt)
-	  maxIdx = a[j];
-      }
+    }
   }
 
 
@@ -1291,16 +1291,16 @@ void crossover_maximal(int nbParents, int** parents, int* offspring,
     for (int j=0; j<nbColor;++j){
 
       if (maxSize < classSize[j]){
-	  maxSize = classSize[j];
+	maxSize = classSize[j];
+	sizeIdx = j; // index of color class
+	equSize = 0;
+      }else if (maxSize == classSize[j]){
+	++equSize;
+	int val = (rand()/(float)RAND_MAX) * 100 ;
+	if (val > 100/equSize){
 	  sizeIdx = j; // index of color class
-	  equSize = 0;
-	}else if (maxSize == classSize[j]){
-	  ++equSize;
-	  int val = (rand()/(float)RAND_MAX) * 100 ;
-	  if (val > 100/equSize){
-	    sizeIdx = j; // index of color class
-	  }
 	}
+      }
 
 
       if (classSize[j] < 1)
@@ -1309,30 +1309,30 @@ void crossover_maximal(int nbParents, int** parents, int* offspring,
       
 
       if (maxClassSize > classConflict[j]){
-	  maxClassSize = classConflict[j];
+	maxClassSize = classConflict[j];
+	maxColorIdx = j; // index of color class
+	equBest = 0;
+      }else if (maxClassSize == classConflict[j]){
+	++equBest;
+	int val = (rand()/(float)RAND_MAX) * 100 ;
+	if (val > 100/equBest){
 	  maxColorIdx = j; // index of color class
-	  equBest = 0;
-	}else if (maxClassSize == classConflict[j]){
-	  ++equBest;
-	  int val = (rand()/(float)RAND_MAX) * 100 ;
-	  if (val > 100/equBest){
-	    maxColorIdx = j; // index of color class
-	  }
 	}
+      }
 
 	
 
     }
     
     /*
-    printf("crossover conflict nb by classes:\n");
-    for (int j=0; j<nbColor;++j){
+      printf("crossover conflict nb by classes:\n");
+      for (int j=0; j<nbColor;++j){
       printf("%d:%d;",j,classSize[j]);
-    }
+      }
 
     
 
-    printf("\nchosen color:%d\n",maxColorIdx);*/
+      printf("\nchosen color:%d\n",maxColorIdx);*/
 
     if (maxColorIdx < 0) maxColorIdx = sizeIdx;
 
@@ -1345,7 +1345,7 @@ void crossover_maximal(int nbParents, int** parents, int* offspring,
     // assign choose color class 
     for (int j=0; j<nbSommets;++j){
       if (offspring[j] <0 && parents[jth][j] == maxColorIdx){
-	  offspring[j] = i;
+	offspring[j] = i;
       }
     }
 
@@ -1654,7 +1654,7 @@ void crossover_sub(int nbParents, int** parents, int* offspring, char** graph, i
 
     for (int j=0; j<nbSommets;++j){
       if (offspring[j] < 0 && pcopies[ith][j] == colorIdx ){
-	  offspring[j] = i;
+	offspring[j] = i;
       }
     }
   }
@@ -1751,10 +1751,10 @@ bool identifyColorClass(int *a, int colorNb, char *conflictList, char **graph){
     for (int i=0; i<nbSommets; ++i){
       if (a[i] < 0) continue;
 
-	if(conflictList[i] && isNodeInConflict(i,a, graph)){
-	  weightedViolated = true;
-	  break;
-        }
+      if(conflictList[i] && isNodeInConflict(i,a, graph)){
+	weightedViolated = true;
+	break;
+      }
     }
     
     if (weightedViolated) break;
@@ -1762,7 +1762,7 @@ bool identifyColorClass(int *a, int colorNb, char *conflictList, char **graph){
     for (int i=0; i<nbSommets; ++i){
       if (a[i] < 0) continue;
       if (!conflictList[i] && isNodeInConflict(i,a, graph)){
-	  conflictList[i] = 1;
+	conflictList[i] = 1;
       }
     }
   }
@@ -1867,10 +1867,10 @@ bool mutation_iis(int *a, char **graph, int *weightVars){
     for (int i=0; i<nbSommets; ++i){
       if (a[i] < 0) continue;
 
-	if(conflictList[i] && isNodeInConflict(i,a, graph)){
-	  weightedViolated = true;
-	  break;
-        }
+      if(conflictList[i] && isNodeInConflict(i,a, graph)){
+	weightedViolated = true;
+	break;
+      }
     }
     
     if (weightedViolated) break;
@@ -1878,7 +1878,7 @@ bool mutation_iis(int *a, char **graph, int *weightVars){
     for (int i=0; i<nbSommets; ++i){
       if (a[i] < 0) continue;
       if (!conflictList[i] && isNodeInConflict(i,a, graph)){
-	  conflictList[i] = 1;
+	conflictList[i] = 1;
       }
     }
 
@@ -1965,8 +1965,8 @@ bool mutation_weighted(int *a, char **graph, int *weightVars){
   generate_sub_weighted(a, graph, weightVars);
 
   for (int i=0; i<nbSommets; ++i){
-	if (a[i]<nbColor-1) continue;
-	a[i] = nbColor -2;
+    if (a[i]<nbColor-1) continue;
+    a[i] = nbColor -2;
   }
 
 
@@ -2032,7 +2032,7 @@ bool mutation_weighted_simple(int *a, char **graph, int *weightVars){
       --weightVars[lastIdx];
     }else{
       int cidx = lessWeightedConflict(a, graph, weightVars);
-	//int cidx = moreWeightedConflict(a, graph, weightVars);
+      //int cidx = moreWeightedConflict(a, graph, weightVars);
       a[cidx] = -1; 
       ++weightVars[cidx];
       tabuCol(a, graph, nbColor-removeColorNb, nbLocalSearch);
@@ -2045,8 +2045,8 @@ bool mutation_weighted_simple(int *a, char **graph, int *weightVars){
 
   
   //for (int i=0; i<nbSommets; ++i){ 
-    //if (a[i] < 0) a[i] = nbColor -1;
-    //}
+  //if (a[i] < 0) a[i] = nbColor -1;
+  //}
  
   return false;
   //return tabuCol(a, graph, nbColor, nbLocalSearch);
@@ -2097,12 +2097,13 @@ int minClassNb(int node, int *a, char** graph){
 
 /*!
  * Mutaion adopts the Grenade structure in VNS paper
- * diversify the population
+ * diversify the population by simply changing the configuration of assignment
  */
 bool mutation_grenade(int *a, char **graph, int** varWeights){
 
+  printf("in mutation_grenade\n");
 
-  int nodeth = 0;
+  int grenade = 0; // the grenade node
   int minWeight = -1;
   char* neighborArray = malloc(sizeof(char)*nbSommets);
 
@@ -2112,21 +2113,19 @@ bool mutation_grenade(int *a, char **graph, int** varWeights){
 
     if (minWeight < 0 || minWeight > varWeights[i]){
       minWeight = varWeights[i];
-      nodeth = i;
+      grenade = i;
     }
   }
   
-  varWeights[nodeth] += 5; // increase weight on grenade node
-
-  int colorIdx = minClass(nodeth, a, graph);
+  varWeights[grenade] += 5; // increase weight on grenade node
 
   // change the color
-  a[nodeth] = colorIdx;
+  a[grenade] = minClass(grenade, a, graph);
 
 
   int nbNeighbors = 0;
   for (int i=0; i<nbSommets; ++i){
-    if (graph[nodeth][i]){ 
+    if (graph[grenade][i]){ 
       neighborArray[i] = 1;
       ++nbNeighbors;
     }
@@ -2137,29 +2136,29 @@ bool mutation_grenade(int *a, char **graph, int** varWeights){
   // find minimal conflict node in new conflict nodes
   for (int j=0; j<nbNeighbors; ++j){
 
-      int tmpDegree = -1;
-      int minDegree = -1;
-      int newConflictIdx = 0;
+    int tmpDegree = -1;
+    int minDegree = -1;
+    int newConflictIdx = 0;
 
 
-      for (int i=0; i<nbSommets; ++i){
-	if (graph[nodeth][i] && neighborArray[i]){
-	  tmpDegree = minClassNb(i,a,graph);
+    for (int i=0; i<nbSommets; ++i){
+      if (graph[grenade][i] && neighborArray[i]){
+	tmpDegree = minClassNb(i,a,graph);
       
-	  if (minDegree < 0 || minDegree > tmpDegree){
-	    minDegree = tmpDegree;
-	    newConflictIdx = i;
-	  }
+	if (minDegree < 0 || minDegree > tmpDegree){
+	  minDegree = tmpDegree;
+	  newConflictIdx = i;
 	}
       }
-
-      int newConflictColor = minClass(newConflictIdx,a,graph);
-      neighborArray[newConflictIdx] = 0;
+    }
+      
+    // change the color class of new conflict node
+    a[newConflictIdx] = minClass(newConflictIdx,a,graph);
+    neighborArray[newConflictIdx] = 0;
   }
 
   free(neighborArray);
   return !hasConflictSolution(a, graph);
-  
 }
 
 
@@ -2197,7 +2196,7 @@ void crossover_cardinality(int nbParents, int** parents, int* offspring, char** 
     
     //int tavl = (rand()/(float)RAND_MAX) * 10 ;
     //if (tavl<4) 
-      generate_sub(pcopies[i], graph);
+    generate_sub(pcopies[i], graph);
 
   }
 
@@ -2216,10 +2215,10 @@ void crossover_cardinality(int nbParents, int** parents, int* offspring, char** 
     int ith = crossIdx;
     // need more random choose?
     /*
-    maxColorClasses(nbCross, pcopies, offspring, graph, move);
+      maxColorClasses(nbCross, pcopies, offspring, graph, move);
 
-    int ith = move->sommet;
-    int colorIdx = move->color;
+      int ith = move->sommet;
+      int colorIdx = move->color;
     */
     
     if (colorIdx < 0){
@@ -2230,7 +2229,7 @@ void crossover_cardinality(int nbParents, int** parents, int* offspring, char** 
     //printf("parent id:%d\t%d\n",idxParents[ith], freqParents[idxParents[ith]]);
 
     //if (ith != 0)
-      ++freqParents[idxParents[ith]];
+    ++freqParents[idxParents[ith]];
 
     //printf("after: ");
     for (int j=0; j<nbSommets;++j){
@@ -2247,12 +2246,12 @@ void crossover_cardinality(int nbParents, int** parents, int* offspring, char** 
 
   // complete the partial solution ===============
   if (true){
-  for (int i=0; i<nbSommets;++i){
-    if (offspring[i] < 0){
-      int col = (rand()/(float)RAND_MAX) * (nbColor) ;
-      offspring[i] = col;
+    for (int i=0; i<nbSommets;++i){
+      if (offspring[i] < 0){
+	int col = (rand()/(float)RAND_MAX) * (nbColor) ;
+	offspring[i] = col;
+      }
     }
-  }
   }
 
   //printf("number of partial nodes: %d\t%d\t%d\n", totalPartial, randomAssigned, conflictNb);
@@ -2309,7 +2308,10 @@ void freeCrossOverMemory(int crossParents){
 }
 
 
-
+/*!
+ * max independent set by function:
+ * 
+ */
 void maxIndependentSet( int nbParent, int **parents, int *b, 
 			char **graph, int **freq, Move *move){
   
@@ -2317,6 +2319,7 @@ void maxIndependentSet( int nbParent, int **parents, int *b,
   int maxIdx = -1;
   int parentIdx = -1;
   double maxSize = 0;
+
   for (int i=0; i<nbParent;++i){
     
     initialArray(setSize, nbColor, 0);    
@@ -2328,7 +2331,7 @@ void maxIndependentSet( int nbParent, int **parents, int *b,
       
       double tmp = (double)setSize[parents[i][j]]
 	/(double)freq[i][parents[i][j]];
-      ///(double)freqParents[i];
+
       
       if (maxIdx < 0 || maxSize < tmp){
 	maxIdx = parents[i][j];
@@ -2346,7 +2349,7 @@ void maxIndependentSet( int nbParent, int **parents, int *b,
 
 
 void maxIndependentSetPure( int nbParent, int **parents, int *b, 
-			char **graph, Move *move){
+			    char **graph, Move *move){
   
   
   int maxIdx = -1;
@@ -2377,6 +2380,14 @@ void maxIndependentSetPure( int nbParent, int **parents, int *b,
   move->color = maxIdx;
 }
 
+// zombie function
+bool crossover_zombie(int crossParents, int nbParents, int** parents, 
+			 int* offspring, char** graph, int* freqParents, 
+			 int removeColor, int *weightVars){
+
+  printf("empty function\n");
+  return false;
+}
 
 
 /*!
@@ -2392,9 +2403,11 @@ void maxIndependentSetPure( int nbParent, int **parents, int *b,
  * @param removeColor maximal number of removed colors
  * @param weightVars weights on variables/nodes
  */
-void crossover_enforced2(int crossParents, int nbParents, int** parents, 
+bool crossover_enforced2(int crossParents, int nbParents, int** parents, 
 			 int* offspring, char** graph, int* freqParents, 
 			 int removeColor, int *weightVars){
+
+  //printf("in crossover\n");
   
   assert(parentsCopies != NULL && crossParentsIdx != NULL);
 
@@ -2433,24 +2446,10 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
   //int crossIdx = -1;
   int colorIdx = -1;
   int ith = -1;
-  //int *freqP = malloc(sizeof(int)*crossParents);
-  //initialArray(freqP, crossParents,1);
-  
-  //int wellInformed = 1;
-  //float tval = (rand()/(float)RAND_MAX) ;
-  //if (tval < 0.3)
-  //  wellInformed = 0;
 
   for (int i=1; i< nbColor; ++i){
-
-    //int colorIdx = maxColorClass(pcopies[crossIdx], offspring, graph);
-    //int ith = crossIdx;
-    
-    //if (wellInformed == 0)
-    //maxIndependentSetPure(crossParents, parentsCopies, offspring, 
-    //		      graph,crossMove);
-    //else 
-      maxIndependentSet(crossParents, parentsCopies, offspring, 
+ 
+    maxIndependentSet(crossParents, parentsCopies, offspring, 
      		      graph, conflictColors, crossMove);
 
 
@@ -2471,16 +2470,8 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
 	offspring[j] = i;
       }
     }
-    //printf("\n");
   }
-  
-  //printf("p: cross ratios");
-  //for (int i=0; i<crossParents; ++i){
-  // printf("\t%d",freqP[i]);
-  //}
-  //printf("\n");
-  //free(freqP);
-  //freqP = NULL;
+
   for (int i=0; i<crossParents;++i){
     free(conflictColors[i]);
     conflictColors[i] = NULL;
@@ -2494,6 +2485,8 @@ void crossover_enforced2(int crossParents, int nbParents, int** parents,
       offspring[i] = 0;
     }
   }
+
+  return tabuCol(offspring,graph,nbColor,MAX_LocalSearch_Iteration);
 
 }
 
@@ -2547,9 +2540,7 @@ void printSolution(int iteration, int costx, int *a, FILE *f ){
 }
 
 
-void verifyOptimalSolution(int *a, int *optimal, char **graph){
-  
-}
+
 
 /*!
  * ea + distance
@@ -2560,7 +2551,7 @@ void verifyOptimalSolution(int *a, int *optimal, char **graph){
  * @param inputFile input file
  * @return true if the solution found is consistent, otherwise false 
  */
-bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr, 
+bool ea(CrossoverFuncPtr funcCrossPtr, MutationFuncPtr funcMutationPtr, 
 	char** graph, char *savefile, char *inputFile){
   
   FILE *f;
@@ -2595,26 +2586,24 @@ bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
 
 
   fprintf(f,"r: beginTime:\t%04d-%02d-%02d %02d:%02d:%02d\n",
-	 tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
-	 tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
+	  tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
+	  tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
 
 
-
-  //fflush ( stdout );
-
-
-  int** population = malloc(sizeof(int*)*populationSize);
-
+  int** population = malloc(sizeof(int*)*populationSize);  
+  int* weightsLearned = malloc(sizeof(int)*nbSommets);
+  int* freqParents = malloc(sizeof(int)*populationSize);  
   
-  int *weightsLearned = malloc(sizeof(int)*nbSommets);
- 
+  initialArray(weightsLearned, nbSommets, 0); //initialize the weights on nodes
+  initialArray(freqParents,  populationSize, 0); //initialize the frequency of parents
 
-  
+  //printf("create random solution\n");
   bool feasibleInit = false;
   for (int i =0; i<populationSize;++i){
     population[i] = malloc(sizeof(int)*nbSommets);
     randomSolution(population[i]);
-    //initialArray(weightsLearned, nbSommets, 0);
+
+
     feasibleInit = tabuCol(population[i],graph, nbColor, 
 			   MAX_LocalSearch_Iteration);
     if (feasibleInit){ 
@@ -2631,17 +2620,10 @@ bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
     }
   }
 
-  
-  int* freqParents = malloc(sizeof(int)*populationSize);
-  
-  initialArray(freqParents,  populationSize, 0);
+  //printf("finish random solution\n");
 
   // initialize the population
-
-  //bool setBest = false;
   int* bestSolution = malloc(sizeof(int)*nbSommets);
-  //int* tmpSolution = malloc(sizeof(int)*nbSommets);
-  
   int nbChildren = 3;
   int **tmpSolutions = malloc(sizeof(int*)*nbChildren);
 
@@ -2653,70 +2635,50 @@ bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
   int tCost = -1;
   int crossCost = -1;
   
-
   // iterate the generation
   int cent = 0;
-  //bool switchX = true; // should be true
-  //int gen = 0; // crossover number
   int switchIteration = populationSize;
-
-  //int MaxRemoveColor = 5;
-  //int MinRemoveColor = 0;
-  //int removeColor = MinRemoveColor;
   int totalMutationNb = 0;
-  //int Max_MutationNoImprove = populationSize; // maximal number of mutaions 
-  //accepted without improvement
-  
   int removeColor = 1;
   int mutationCnt = 0;
 
   
-  initialArray(weightsLearned, nbSommets, 0);
+  
 
   int g = 0;
   time_t start_time;
   time_t now_time;
   time(&start_time);
   while(true){
-    //for (g = 0; g < Nb_Generation; ++g){
+  
     ++g;
-
-    //for (int i=0; i<populationSize; ++i)
-    //  ++freqParents[i];
 
     // re-initialize parameters
     for (int cross=0; cross<nbChildren; ++cross){
       initialArray(tmpSolutions[cross],nbSommets,-1);
     }
-      
-    /*
-      printf("n:");
-      for (int w = 0; w<nbSommets;++w){
-      
-      //if (!hasSuperWeight(w,weightsLearned))
-      //	weightsLearned[w] = 0;
-
-      printf(" %d",weightsLearned[w]);
-      }
-      printf("\n");*/
 
     //// crossover operator ==================================== BGN
-    //if (true){
     bool foundBetter = false;
     
     if (cent < switchIteration){
       ++cent;
-      
-      //cent = 0; // skip mutation
 
       crossCost = 0;
       for (int cross=0; cross<nbChildren; ++cross){
 
-	(*funcCrossPtr)(crossParentsNb, populationSize, population, tmpSolutions[cross], 
-			graph, freqParents, removeColor, weightsLearned);
+	//printf("before crossover\n");
+	
+	bool feasible = (*funcCrossPtr)(crossParentsNb, populationSize, population, 
+			tmpSolutions[cross], graph, freqParents, 
+			removeColor, weightsLearned);
 
+	/*bool feasible = crossover_enforced2(crossParentsNb, populationSize, population, 
+			tmpSolutions[cross], graph, freqParents, 
+			removeColor, weightsLearned);*/
+	//printf("after crossover\n");
 
-	if (tabuCol(tmpSolutions[cross],graph,nbColor,MAX_LocalSearch_Iteration)){
+	if (feasible){
       
 	  for (int c=0; c<nbSommets;++c){
 	    bestSolution[c] = tmpSolutions[cross][c];
@@ -2739,9 +2701,8 @@ bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
 	    for (int i = 0; i<nbSommets; ++i){
 	      bestSolution[i] = tmpSolutions[cross][i];
 	    }
+
 	    bCost = tCost;
-	    // print best solution so far 
-	    //printSolution(g, bCost, bestSolution, f);
 	    cent = 0;
 	    mutationCnt = 0;
 
@@ -2751,14 +2712,8 @@ bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
 	      maxLimit = (maxLimit + weightsLearned[w])/2;
 	    }
 	
-	    // when best so far found, reduce the weights
-	    //for (int w = 0; w<nbSommets;++w){
-	    //if (weightsLearned[w] > maxLimit)
-	    //weightsLearned[w] -= maxLimit;
-	    //else
-	    //weightsLearned[w] = 0;
-	    //}
 	    initialArray(weightsLearned, nbSommets, 0);
+
 	  }else if (bCost == tCost){
 	    for (int i = 0; i<nbSommets; ++i){
 	      bestSolution[i] = tmpSolutions[cross][i];
@@ -2769,8 +2724,6 @@ bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
 
 	    //initialArray(weightsLearned, nbSommets, 0);
 	  } 
-
-	  
 
 	}
 	
@@ -2785,26 +2738,18 @@ bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
       for (int cross=0; cross<nbChildren; ++cross){
 	selection_freq(population, graph, tmpSolutions[cross], freqParents);
       }
-      //printf("i: Crossover operator\n");
+     
     }
-
-    
-
     //// crossover operator ==================================== END
 
   
     //// mutation  operator =========================== BGN
-    //if (false){
     if (cent > (switchIteration-1)){
 
       ++totalMutationNb;
       ++mutationCnt;
-      
-
-      cent = 0;
-      //if (mutation_iteration != MAX_LocalSearch_Iteration && tval > 4){
-      //printf("in mutation sub\n");
-
+      cent = 0; // switch to crossover
+     
       for (int mi=0; mi<populationSize;++mi){
 
 	// in case the remove color number greater than authorised remove number
@@ -2825,7 +2770,6 @@ bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
 
 	bool isConsistent = false;
 	
-	//isConsistent = mutation_identifyClasses(population[jth], graph);
 	isConsistent = (*funcMutationPtr)(population[jth], graph, weightsLearned);
 
 	if (isConsistent){
@@ -2847,43 +2791,25 @@ bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
 
     }
 
-    // print info
-    
-    //if (true){
-    if (foundBetter){
-
-      
+    // print best so far solution 
+    if (foundBetter){  
       printf("p:");
-      //for (int i=0; i<populationSize;++i){
-      //	int cx = cost(population[i],graph);
-      //	printf("\t%d[%d]",cx,freqParents[i]);
-      //}
-     
-
-      //int diffT = (int)floor(difftime(now_time, start_time)/60.0); 
       printf("\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
       if (foundBetter){
-      fprintf(f,"p:\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
-      fflush ( stdout );/* this line */
+	fprintf(f,"p:\t%d\t%d\t%d\t%d mins\n",g,bCost,totalMutationNb, Nb_Generation/60);
+	fflush ( stdout );/* this line */
       }
     }
     
 
     time(&now_time);
-
-    if (difftime(now_time, start_time) > Nb_Generation) break;
-      
-    
-
-    
-    if (bCost<1) break;
+    if (difftime(now_time, start_time) > Nb_Generation) break; // time out
+    if (bCost<1) break; // best solution found
   }
   
   printf("r:\t%d\t%d\t%d\t%d\t%d\n", g, g, totalMutationNb,Nb_Generation/60, bCost);
   fprintf(f,"r: %d\t%d\t%d\t%d\t%d\n", g, g, totalMutationNb,Nb_Generation/60, bCost);
   
-
-
   
   // verify the solution
   bool consistent = true;
@@ -2911,8 +2837,6 @@ bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
     consistent = false;
   }
 
-
-
   
   time(&endtime);
 
@@ -2922,12 +2846,10 @@ bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
     exit(0);
   }
 
-
-      
     
   fprintf(f, "r: endtime:\t%04d-%02d-%02d %02d:%02d:%02d\n",
-    tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
-    tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
+	  tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
+	  tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
 
   
 
@@ -2936,13 +2858,12 @@ bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
     //printf("feasible\n");
     fprintf(f,"r: feasible\t=========================== END\n");
   }else{
-  //  printf("infeasible\n");
-  fprintf(f,"r: reach infeasible\t=========================== END\n");
+    //  printf("infeasible\n");
+    fprintf(f,"r: reach infeasible\t=========================== END\n");
   }
 
-    fflush ( stdout );/* this line */
-  
-fclose(f);
+  fflush ( stdout );/* this line */  
+  fclose(f);
 
 
 
@@ -2973,30 +2894,6 @@ fclose(f);
 
   freeTabuColMemory();
   freeCrossOverMemory(crossParentsNb);
-
-  //time_t endtime;
-  //struct tm *tmx;
-  //time(&endtime);
-
-  
-  //if ((tmx = localtime (&endtime)) == NULL) {
-  //  printf ("Error extracting time stuff\n");
-  //  return 1;
-  //}
-
-
-      
-  //fprintf(f, "t: %s",buffer);
-  //printf("t: %d mins\n",Nb_Generation/60);
-    
-  /*fprintf(f, "\t%04d-%02d-%02d %02d:%02d:%02d\n",
-    tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
-    tmx->tm_hour, tmx->tm_min, tmx->tm_sec);*/
-  //printf("\t%04d-%02d-%02d %02d:%02d:%02d\n",
-  //	 tmx->tm_year+1900, tmx->tm_mon+1, tmx->tm_mday,
-  //	 tmx->tm_hour, tmx->tm_min, tmx->tm_sec);
-
-  
 
   return consistent;
   
@@ -3054,8 +2951,9 @@ bool testTabu(char** graph){
 bool testEA(char** graph, char *savefilename, char *inputFile){
 
   // define the operators
-  FuncCrossover* cross = &crossover_enforced2;
-  FuncMutation* mutation = &mutation_identifyClasses;
+  CrossoverFuncPtr* cross = &crossover_enforced2;
+  //FuncMutation* mutation = &mutation_identifyClasses;
+  MutationFuncPtr* mutation = &mutation_grenade;
 
   return ea(cross, mutation, graph, savefilename, inputFile);
 }
@@ -3129,13 +3027,13 @@ void testCritical(char** graph){
     for (int i=0; i<k; ++i){
 
       if ( maxNeighbors < 0 || certio[i][1] > maxNeighbors){
-	 maxNeighbors = certio[i][1];
-	 labelNeighbors = i;
+	maxNeighbors = certio[i][1];
+	labelNeighbors = i;
       }
       
       if ( maxSelf < 0 || certio[i][0] > maxSelf){
-	 maxSelf = certio[i][0];
-	 labelSelf = i;
+	maxSelf = certio[i][0];
+	labelSelf = i;
       }
 
 
@@ -3288,9 +3186,12 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   //bool feasible = testTabu(tConnect);
 
   // Test 2: ea algorithm
-  //bool feasible = testEA(tConnect, savefilename,filename);
-  bool feasible = false;
-  testCritical(tConnect);
+  bool feasible = testEA(tConnect, savefilename,filename);
+
+
+  // Test 3: critical subgraph
+  //bool feasible = false;
+  //testCritical(tConnect);
 
   printf("d: %s nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tTimeLimit:%d mins\tMaximalColorRemove:%d\n",
   	 filename, nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,

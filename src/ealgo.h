@@ -33,9 +33,11 @@ int MAX_RemoveColors;
  * @param 5 counter the participation number of each parent
  * @param 6 maximal number of removed colors
  * @param 7 weights on variables/nodes
+ * @return  true if find consistent solution
  */
-typedef void (*FuncCrossover)(int, int, int**, int*, 
-			      char**, int*,int, int*);
+typedef bool (*CrossoverFuncPtr)(int, int, int**, 
+			      int*, char**, int*,
+			      int, int*);
 
 /*!
  * mutation operator
@@ -43,7 +45,7 @@ typedef void (*FuncCrossover)(int, int, int**, int*,
  * @param 1 adjacent matrix
  * @return true if the individual is complete and consistent
  */
-typedef bool (*FuncMutation)(int*, char**, int*);
+typedef bool (*MutationFuncPtr)(int*, char**, int*);
 //==================================================== END
 
 
@@ -62,7 +64,7 @@ bool tabuCol(int* a, char** graph, int colorNB,
  * @param inputFile input file
  * @return true if the solution found is consistent, otherwise false 
  */
-bool ea(FuncCrossover* funcCrossPtr, FuncMutation* funcMutationPtr,
+bool ea(CrossoverFuncPtr funcCrossPtr, MutationFuncPtr funcMutationPtr,
 	char** graph, char *filename, char *inputFile); /// ea + distance 
 
 
