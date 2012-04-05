@@ -2110,7 +2110,7 @@ bool mutation_grenade(int *a, char **graph, int** varWeights){
 
   //  printf("in mutation_grenade\n");
   char* neighborArray = malloc(sizeof(char)*nbSommets);
-  for (int k=0; k<7; ++k){
+  for (int k=0; k<1; ++k){
     int grenade = 0; // the grenade node
     int minWeight = -1;
   
@@ -2464,7 +2464,7 @@ bool crossover_enforced2(int crossParents, int nbParents, int** parents,
       }
     }
 
-    //+freqParents[crossParentsIdx[i]];
+    //++freqParents[crossParentsIdx[i]];
     //generate_sub_simple(parentsCopies[i], graph, weightVars);      
     //generate_sub_disjoint(parentsCopies[i], graph);      
     //generate_sub_weighted_all(parentsCopies[i], graph, weightVars);      
@@ -2478,11 +2478,12 @@ bool crossover_enforced2(int crossParents, int nbParents, int** parents,
   for (int i=1; i< nbColor; ++i){
     
 
-    // maxIndependentSet(crossParents, parentsCopies, offspring, 
-    //  	      graph, conflictColors, crossMove);
+     maxIndependentSet(crossParents, parentsCopies, offspring, 
+      	      graph, conflictColors, crossMove);
 
-      maxIndependentSetPure(crossParents, parentsCopies, offspring, 
-      		      graph, crossMove);	
+    
+     //  maxIndependentSetPure(crossParents, parentsCopies, offspring, 
+     //		      graph, crossMove);	
  
 
     colorIdx = crossMove->color;
@@ -2565,7 +2566,7 @@ void selection_freq(int** population, char** graph, int* offspring,
   }
 
   if (foundBetter)
-    freqParents[index] = - nbColor;
+    freqParents[index] = - 2*nbColor/3;
   else
     freqParents[index] = 0;
 }
@@ -2679,7 +2680,7 @@ bool ea(CrossoverFuncPtr funcCrossPtr, MutationFuncPtr funcMutationPtr,
   
   // iterate the generation
   int cent = 0;
-  int switchIteration = populationSize;
+  int switchIteration = populationSize/2;
   int totalMutationNb = 0;
   int removeColor = 1;
   int mutationCnt = 0;
@@ -2800,7 +2801,7 @@ bool ea(CrossoverFuncPtr funcCrossPtr, MutationFuncPtr funcMutationPtr,
 	}
 
 
-	freqParents[pIdx] = 0;
+	freqParents[pIdx] = -1;
 
 	// mutation operator 
 	bool isConsistent = (*funcMutationPtr)(population[pIdx], graph, weightsLearned);
@@ -2836,7 +2837,9 @@ bool ea(CrossoverFuncPtr funcCrossPtr, MutationFuncPtr funcMutationPtr,
     
     printf("parents:\t%d",g);
     for (int parentIdx = 0; parentIdx < populationSize; ++parentIdx){
-      printf("\t%d", cost(population[parentIdx],graph));
+      if (freqParents[parentIdx] > -1)
+	freqParents[parentIdx] += nbColor/nbChildren/2; // oldest strategy
+      printf("\t%d[%d]", cost(population[parentIdx],graph), freqParents[parentIdx]);
     }
     printf("\n");
 
