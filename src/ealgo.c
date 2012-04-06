@@ -2110,7 +2110,7 @@ bool mutation_grenade(int *a, char **graph, int** varWeights){
 
   //  printf("in mutation_grenade\n");
   char* neighborArray = malloc(sizeof(char)*nbSommets);
-  for (int k=0; k<1; ++k){
+  for (int k=0; k<MAX_RemoveColors; ++k){
     int grenade = 0; // the grenade node
     int minWeight = -1;
   
@@ -2566,7 +2566,7 @@ void selection_freq(int** population, char** graph, int* offspring,
   }
 
   if (foundBetter)
-    freqParents[index] = - 2*nbColor/3;
+    freqParents[index] = - nbColor*1.5;
   else
     freqParents[index] = 0;
 }
@@ -2674,13 +2674,13 @@ bool ea(CrossoverFuncPtr funcCrossPtr, MutationFuncPtr funcMutationPtr,
     tmpSolutions[i] = malloc(sizeof(int)*nbSommets);
   }
   
-  int bCost = -1;
+  int bCost = nbSommets;
   int tCost = -1;
   int crossCost = -1;
   
   // iterate the generation
   int cent = 0;
-  int switchIteration = populationSize/2;
+  int switchIteration = 20;
   int totalMutationNb = 0;
   int removeColor = 1;
   int mutationCnt = 0;
@@ -2736,25 +2736,15 @@ bool ea(CrossoverFuncPtr funcCrossPtr, MutationFuncPtr funcMutationPtr,
 	  tCost = cost(tmpSolutions[cross],graph);
 	  
 	  // find best solution so far
-	  if (bCost < 0 || bCost > tCost){
+	  if (bCost > tCost){
+
 	    foundBetter = true;
 	    bestSolutionSoFarIdx = cross;
-	    for (int i = 0; i<nbSommets; ++i){
-	      bestSolution[i] = tmpSolutions[cross][i];
-	    }
-
-	    bCost = tCost;
-	    cent = 0;
+   	    bCost = tCost;
+	    //cent = 0; // switch the operator
 	    mutationCnt = 0;
 
 
-	    int maxLimit = weightsLearned[0];
-	    for (int w = 0; w<nbSommets;++w){
-	      maxLimit = (maxLimit + weightsLearned[w])/2;
-	    }
-	
-
-	  }else if (bCost == tCost){
 	    for (int i = 0; i<nbSommets; ++i){
 	      bestSolution[i] = tmpSolutions[cross][i];
 	    }
@@ -2770,6 +2760,10 @@ bool ea(CrossoverFuncPtr funcCrossPtr, MutationFuncPtr funcMutationPtr,
       }
 
       
+      for (int parentIdx = 0; parentIdx < populationSize; ++parentIdx){
+	  freqParents[parentIdx] += populationSize; // oldest strategy
+      }
+      
       // replace the highest frequenced parent
       for (int cross=0; cross<nbChildren; ++cross){
 	if (cross != bestSolutionSoFarIdx)
@@ -2777,6 +2771,7 @@ bool ea(CrossoverFuncPtr funcCrossPtr, MutationFuncPtr funcMutationPtr,
 	else
 	  selection_freq(population, graph, tmpSolutions[cross], freqParents,true);
       }
+
      
     }
     //// crossover operator ==================================== END
@@ -2800,9 +2795,6 @@ bool ea(CrossoverFuncPtr funcCrossPtr, MutationFuncPtr funcMutationPtr,
 	  }
 	}
 
-
-	freqParents[pIdx] = -1;
-
 	// mutation operator 
 	bool isConsistent = (*funcMutationPtr)(population[pIdx], graph, weightsLearned);
 
@@ -2817,6 +2809,15 @@ bool ea(CrossoverFuncPtr funcCrossPtr, MutationFuncPtr funcMutationPtr,
 	  break;
 	}
 
+	
+	int mutationCost = cost(population[pIdx],graph);
+	double diff = (double)(mutationCost -bCost)/(double)bCost;
+	
+	if (diff < 0.5)
+	  freqParents[pIdx] = nbColor*1.5;
+	else
+	  freqParents[pIdx] = 0;
+	
       }
 
       
@@ -2837,8 +2838,8 @@ bool ea(CrossoverFuncPtr funcCrossPtr, MutationFuncPtr funcMutationPtr,
     
     printf("parents:\t%d",g);
     for (int parentIdx = 0; parentIdx < populationSize; ++parentIdx){
-      if (freqParents[parentIdx] > -1)
-	freqParents[parentIdx] += nbColor/nbChildren/2; // oldest strategy
+      //if (freqParents[parentIdx] > -1)
+      //freqParents[parentIdx] += nbColor/nbChildren/2; // oldest strategy
       printf("\t%d[%d]", cost(population[parentIdx],graph), freqParents[parentIdx]);
     }
     printf("\n");
@@ -3190,7 +3191,7 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   //MAX_LocalSearch_Iteration = 15000;
   //Nb_Generation = 10000;
 
-  printf("d :%s nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tTimeLimit:%d mins\tMaximalColorRemove:%d\n",
+  printf("d :%s nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tTimeLimit:%d mins\tMutationParameter:%d\n",
   	 filename, nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,
   	 Nb_Generation/60, MAX_RemoveColors);
 
@@ -3235,7 +3236,7 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   //bool feasible = false;
   //testCritical(tConnect);
 
-  printf("d: %s nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tTimeLimit:%d mins\tMaximalColorRemove:%d\n",
+  printf("d: %s nbColor:%d\tpopulationSize:%d\tnbLocalSearch:%d - %d\tTimeLimit:%d mins\tMutationParameter:%d\n",
   	 filename, nbColor,populationSize,nbLocalSearch,MAX_LocalSearch_Iteration,
   	 Nb_Generation/60, MAX_RemoveColors);
 
