@@ -2566,7 +2566,7 @@ void selection_freq(int** population, char** graph, int* offspring,
   }
 
   if (foundBetter)
-    freqParents[index] = - nbColor*1.5;
+    freqParents[index] = - nbColor;
   else
     freqParents[index] = 0;
 }
@@ -2680,7 +2680,7 @@ bool ea(CrossoverFuncPtr funcCrossPtr, MutationFuncPtr funcMutationPtr,
   
   // iterate the generation
   int cent = 0;
-  int switchIteration = 20;
+  int switchIteration = 10;
   int totalMutationNb = 0;
   int removeColor = 1;
   int mutationCnt = 0;
@@ -3168,7 +3168,7 @@ void testShortest(char** graph){
   free(distance);
 }
 
-// ============ UNIT TESTING ============
+// ============ TESTING ============
 void testAlgo(char *filename, char *inNbColor, char *inPopuSize, 
 	      char *inLSIter, char *inMaxLSIter, char *inGenItr,
 	      char *inMaxRemoveColor, char *savefilename){
