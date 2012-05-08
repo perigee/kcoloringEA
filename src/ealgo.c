@@ -560,9 +560,10 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration){//, int *weigh
     //rdx += weightPercent*nbConflict;
    
     rdx +=  lambdaValue*(tabuMove->nbVars);
-     
+    tTabu[tabuMove->sommet][tTmpColor[tabuMove->sommet]] = rdx; // tabu duration     
     tTmpColor[tabuMove->sommet] =tabuMove->color;
-    tTabu[tabuMove->sommet][tTmpColor[tabuMove->sommet]] = rdx; // tabu duration
+
+
     obj += delta;
     
 
@@ -678,9 +679,9 @@ bool tabuColLearntWeights(int* a, char** graph,
     //rdx += weightPercent*nbConflict;
    
     rdx +=  lambdaValue*(tabuMove->nbVars);
-     
+    tTabu[tabuMove->sommet][tTmpColor[tabuMove->sommet]] = rdx; // tabu duration     
     tTmpColor[tabuMove->sommet] =tabuMove->color;    
-    tTabu[tabuMove->sommet][tTmpColor[tabuMove->sommet]] = rdx; // tabu duration
+
 
 
     obj += delta;
@@ -2947,34 +2948,7 @@ bool testTabu(char** graph){
 
   //int *weightsLearned = malloc(sizeof(int)*nbSommets);
   mallocTabuColMemory();
-  
-  char *conflictList = malloc(sizeof(char)*nbSommets);
-  int *partitionSolution = malloc(sizeof(int)*nbSommets);
-  
-  int colorIdx = nbColor-1;
-
-  while(!tabuCol(a, graph, colorIdx, nbLocalSearch)){
-    generate_sub_simple(a, graph, partitionSolution);
-    for (int i=0; i<nbSommets; ++i){
-      conflictList[i] = 0;
-      if (a[i] < 0){
-	conflictList[i] = 1;
-	a[i] = 0;
-      }
-    }
-    
-  }
-  
-
-  for (int i=nbColor; i>0; --i){
-    tabuCol(a, graph, nbColor, nbLocalSearch);
-    
-    
-  }
-
-  
-  
-  
+   
 
   bool feasible = tabuCol(a, graph, nbColor, nbLocalSearch);//, weightsLearned);
   freeTabuColMemory();
@@ -3224,10 +3198,10 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
 
 
   // Test 1: tabuCol algorithm
-  //bool feasible = testTabu(tConnect);
+  bool feasible = testTabu(tConnect);
 
   // Test 2: ea algorithm
-  bool feasible = testEA(tConnect, savefilename,filename);
+  //bool feasible = testEA(tConnect, savefilename,filename);
 
 
   // Test 3: critical subgraph
