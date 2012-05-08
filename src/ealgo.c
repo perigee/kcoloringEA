@@ -561,10 +561,8 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration){//, int *weigh
    
     rdx +=  lambdaValue*(tabuMove->nbVars);
      
-    
-    tTabu[tabuMove->sommet][tTmpColor[tabuMove->sommet]] = rdx; // tabu duration
-
     tTmpColor[tabuMove->sommet] =tabuMove->color;
+    tTabu[tabuMove->sommet][tTmpColor[tabuMove->sommet]] = rdx; // tabu duration
     obj += delta;
     
 
@@ -681,10 +679,10 @@ bool tabuColLearntWeights(int* a, char** graph,
    
     rdx +=  lambdaValue*(tabuMove->nbVars);
      
-    
+    tTmpColor[tabuMove->sommet] =tabuMove->color;    
     tTabu[tabuMove->sommet][tTmpColor[tabuMove->sommet]] = rdx; // tabu duration
 
-    tTmpColor[tabuMove->sommet] =tabuMove->color;
+
     obj += delta;
     
 
