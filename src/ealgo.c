@@ -487,6 +487,7 @@ bool tabuCol(int* a, char** graph, int colorNB, int maxIteration){//, int *weigh
     //copy color assignment     
     tTmpColor[i] = a[i];
   
+    // clean the gamma table
     for (int j=0; j<colorNB; ++j) {
       tTabu[i][j]=-1;
       tGamma[i][j] = 0;
