@@ -321,3 +321,12 @@ bool tabuCol(int* a, char** graph, int nbNodes, int colorNB,
   return false;
 }
 
+
+/*!========================================================================
+ * 
+
+  ========================================================================*/
+
+
+
+// projection between N(x) to matrix
