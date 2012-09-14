@@ -330,3 +330,10 @@ bool tabuCol(int* a, char** graph, int nbNodes, int colorNB,
 
 
 // projection between N(x) to matrix
+
+void (){
+  
+  //
+
+
+}

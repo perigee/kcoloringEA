@@ -434,6 +434,8 @@ bool hasSuperWeight(int i, int *weightVars){
   return true;
 }
 
+
+
 void mallocTabuColMemory(){
   
   tTabu = malloc(sizeof(int*)*nbSommets);
