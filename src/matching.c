@@ -45,7 +45,9 @@ void freeTabuColMemory(int nbNodes, int** tTabu, int** tGamma){
  * @param tGamma gamma table for total incremental objective function computing n*k
  * @return the number of violated edges
  */
-int initGammaTable(int* a, char** graph, int nbNodes, int** tGamma){//, int *tConflict){
+int initGammaTable(int* a, char** graph, int** tGamma, 
+		   int nbNodes){
+
   /// determine les conflits entre les noeuds
   int nbConflict=0;    
 	
@@ -80,14 +82,16 @@ int initGammaTable(int* a, char** graph, int nbNodes, int** tGamma){//, int *tCo
  * @param individual individual color table
  * @return the change of objective function
  */
-int bestMove(Move* move, int** tGamma,  int** tTabu, int* individual, int colorNB){
+int bestMove(Move* move, int** tGamma,  int** tTabu, 
+	     int* individual, int colorNB, int nbNodes){
+
   int delta = -1;// best delta found, be careful the value 
   bool isSet = false;
   int bestCnt = 0;
   int bestVarCnt = 0;
 
   // traverse all the nodes
-  for (int i=0; i<nbSommets; ++i){
+  for (int i=0; i<nbNodes; ++i){
     if (individual[i] > -1 && tGamma[i][individual[i]]>0){
       // traverse all the non-tabu colors of sommet i
       int minGamma = -1;
@@ -176,7 +180,8 @@ int bestMove(Move* move, int** tGamma,  int** tTabu, int* individual, int colorN
  * @param ind individual coloring
  */
 void updateMove(int sommet, int colorOrigin, int colorCandidate, 
-		int** tGamma, char** graph, int* ind, int nbNodes){//, int *tConflict){
+		int** tGamma, char** graph, int* ind, 
+		int nbNodes){
   
   for (int i=0; i< nbNodes; ++i){
     if (graph[sommet][i]){
@@ -229,7 +234,7 @@ bool tabuCol(int* a, char** graph, int nbNodes, int colorNB,
   }
     
   
-  int obj = initGammaTable(a,graph,tGamma); // init gamma table
+  int obj = initGammaTable(a,graph,tGamma,nbNodes); // init gamma table
 
   if (obj<1) return true;
 
@@ -249,7 +254,8 @@ bool tabuCol(int* a, char** graph, int nbNodes, int colorNB,
     if(bestObj < 1) break; // find consistent solution
 
     // find best move based on gamma table
-    int delta = bestMove(tabuMove, tGamma, tTabu, tTmpColor, colorNB);
+    int delta = bestMove(tabuMove, tGamma, tTabu, 
+			 tTmpColor, colorNB, nbNodes);
 
     //printf("%d,%d",move->sommet,move->color);
     
@@ -283,7 +289,7 @@ bool tabuCol(int* a, char** graph, int nbNodes, int colorNB,
 
     // update move
     updateMove(tabuMove->sommet, tTmpColor[tabuMove->sommet], tabuMove->color, 
-	       tGamma, graph, tTmpColor);
+	       tGamma, graph, tTmpColor, nbNodes);
     // ============================= Record circle variable ===== BGN
     //if (stableCnt > StableItr)
     //++weightVars[move->sommet];
