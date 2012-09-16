@@ -6,7 +6,7 @@
 
 
 // initialize the matrix memory for tabucol
-void mallocTabuColMemory(int nbNodes, int nbColors
+void mallocTabuColMemory(int nbNodes, int nbColors,
 			 int** tTabu, int** tGamma){
   
   tTabu = malloc(sizeof(int*)*nbNodes);
@@ -309,16 +309,14 @@ bool tabuCol(int* a, char** graph, int nbNodes, int colorNB,
     
 
   }
-  
+
   // release memory
   free(tabuMove);
   tabuMove = NULL;
   free(tTmpColor);
   tTmpColor = NULL;
 
-  if(bestObj < 1) return true;
-  
-  return false;
+  return bestObj < 1;
 }
 
 
@@ -328,12 +326,73 @@ bool tabuCol(int* a, char** graph, int nbNodes, int colorNB,
   ========================================================================*/
 
 
+void initMatrix(int lineNb, int colNb, int** table){
+    for (int i=0; i<lineNb; ++i)
+      for (int j=0; j<colNb; ++j)
+	table[i][j]= -1;
+}
 
-// projection between N(x) to matrix
+
+/*
+ * The color table which stores the color partition
+ * create the nbColor lines and nbNodes columns
+ */
+int** createMatrix(int lineNb, int colNb){
+  int** table = malloc(sizeof(int*)*lineNb);
+  for (int i=0;i<lineNb; ++i)
+    table[i] = malloc(sizeof(int)*colNb);
+  
+  return table;
+}
+
+void deleteMatrix(int lineNb, int colNb, int** table){
+  for (int i = 0; i<lineNb; ++i){
+    free(table[i]);
+    table[i] = NULL;
+  }
+
+  free(table);
+
+  table = NULL; 
+}
+
+// projection between N(x) to subgraph matrix
+
+void generateCft(int* solution,  char** graph, int conflictList){
+  
+}
+
 
 void partitionMatch(){
-  
-  //
 
+  // generate a tabu assignment
+  // initialize two matrix for entire graph
+  int** graphGamma;
+  int** graphTabu;
+  int* graphSol = malloc(sizeof(int)*nbSommets);
+  int* graphCft = malloc(sizeof(int)*nbSommets);
+  
+  mallocTabuColMemory(nbSommets, nbColor, graphTabu, graphTabu);
+
+  bool feasible = tabuColor(graphSol, graph, nbSommets, 
+	    nbColor, 10000, graphGramma, 
+	    graphTabu); 
+
+
+  if (!feasible){
+    
+    
+  }
+  // find a conflict node and its neighbors N(x)
+  
+  
+  // create subgraph exclusively with neighbors N(x)
+  int** subgraph = createMatrix();
+  
+  void
+  
+  
+  // initialize two matrix for sub-graph
+  
 
 }
