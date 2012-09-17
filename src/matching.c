@@ -491,8 +491,10 @@ bool partitionMatch(){
   bool subfeasible = tabuCol(subSol, subgraph, proj->nb, 
 			     nbColor-1, 10000, subGamma,
 			     subTabu);
- 
+  // ignore the satisfiability of the subgraph
   freeTabuColMemory(proj->nb, subTabu, subGamma);
+  
+  // verify the connection among the partition
   
   
   
