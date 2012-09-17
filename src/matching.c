@@ -345,6 +345,31 @@ int** createMatrix(int lineNb, int colNb){
   return table;
 }
 
+
+
+char** createSubgraph(char** graph, int subNb, int* sub){
+
+  char** table = malloc(sizeof(char*)*subNb);
+  for (int i=0;i<subNb; ++i)
+    table[i] = malloc(sizeof(char)*subNb);
+
+
+  for (int i=0; i<subNb; ++i){
+    for (int j=i; j<subNb; ++j){
+      if (graph[sub[i]][sub[j]]){
+	table[i][j] = 1;
+	table[j][i] = 1;
+      }else{
+	table[i][j] = 0;
+	table[j][i] = 0;
+      }
+    }
+  }
+
+  
+  return table;
+}
+
 void deleteMatrix(int lineNb, int colNb, int** table){
   for (int i = 0; i<lineNb; ++i){
     free(table[i]);
@@ -358,12 +383,65 @@ void deleteMatrix(int lineNb, int colNb, int** table){
 
 // projection between N(x) to subgraph matrix
 
-void generateCft(int* solution,  char** graph, int conflictList){
-  
+int generateCft(int nbNodes, int* solution,  char** graph, int conflictList){
+
+  int nb = 0;
+  for (int i=0; i < nbNodes; ++i) conflictList[i] = -1;
+
+  for (int i=0; i < nbNodes; ++i){    
+    if (conflictList[i] >0) continue;
+
+    bool consistent = true;
+    for (int j=i; j < nbNodes; ++j){
+      if (graph[i][j]){ 
+	if (solution[i] != solution[j])
+	  continue;
+	
+	consistent = false;
+	conflictList[j] = 1;
+	++nb;
+      }
+    }
+    if (!consistent){ 
+      conflictList[i] = 1;
+      ++nb;
+    }
+  }
+
+  return nb;
 }
 
 
-void partitionMatch(){
+
+
+typedef struct struct_projection{
+  int nb;
+  int* sub;
+} Projection;
+
+
+void createProjection(int nbNodes, int* conflictList, int* projection){
+  int j=-1;
+  for (int = i; i<nbNodes; ++i){
+    if (conflictList[i]>0){
+      ++j;
+      projection[j] = i;
+    }
+  }
+}
+
+void createSubgraph(int nbSub, int sub, char**graph, char** subgraph){
+  for (int i=0; i<nbSub; ++i){
+    for (int j=i; j<nbSub; ++j){
+      if (i != j)
+	subgraph[i][j] = 0;
+
+      subgraph[j][i] = 0;
+    }
+  }
+}
+
+bool partitionMatch(){
 
   // generate a tabu assignment
   // initialize two matrix for entire graph
@@ -371,28 +449,55 @@ void partitionMatch(){
   int** graphTabu;
   int* graphSol = malloc(sizeof(int)*nbSommets);
   int* graphCft = malloc(sizeof(int)*nbSommets);
+  int* colorTable = malloc(sizeof(int)*nbColor);
   
-  mallocTabuColMemory(nbSommets, nbColor, graphTabu, graphTabu);
+  
+  mallocTabuColMemory(nbSommets, nbColor, graphTabu, graphGamma);
 
   bool feasible = tabuColor(graphSol, graph, nbSommets, 
 	    nbColor, 10000, graphGramma, 
 	    graphTabu); 
-
-
-  if (!feasible){
+  
+  if(feasible) return true;
     
-    
+  int nbCft = generateCft(nbSommets, graphSol, graph, graphCft);
+
+  int idxCft = 0;
+  int nbNeighbors = 0; 
+ 
+  for (int i=0; i>nbSommets; ++i){
+    if (graphCft[i] > 0){
+      idxCft = i;
+
+      for (int j=0; j<nbSommets; ++j){
+	if (graph[idxCft][j]) ++nbNeighbors;
+      }
+      
+      break;
+    }
   }
-  // find a conflict node and its neighbors N(x)
+
   
+  Projection* proj = malloc(sizeof(Projection));
+  proj->nb = nbNeighbors;
+  proj->sub = malloc(sizeof(int)*nbNeighbors);
+  createProjection(nbSommets, graph[idxCft], proj->sub); 
+
+  char** subgraph = createSubgraph(graph, proj->nb, proj->sub);
   
-  // create subgraph exclusively with neighbors N(x)
-  int** subgraph = createMatrix();
+  int* subSol = malloc(sizeof(int)*nbNeighbors);
+  int** subGamma; int** subTabu; 
+  mallocTabuColMemory(nbNeighbors, nbColor-1, subTabu, subGamma);
+  bool subfeasible = tabuCol(subSol, subgraph, proj->nb, 
+			     nbColor-1, 10000, subGamma,
+			     subTabu);
+ 
+  freeTabuColMemory(proj->nb, subTabu, subGamma);
   
-  void
   
   
   // initialize two matrix for sub-graph
-  
+  free(proj->sub); proj->sub = NULL;
+  free(proj); proj = NULL;
 
 }
