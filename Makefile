@@ -5,7 +5,8 @@ VPATH = src/util:src #space seperate the different dirs
 #BIN_DIR = bin
 OBJECTS = $(wildcard *.o)
 
-all : main.o gfile.o graphe.o ealgo.o analyseGraphe.o
+#all : main.o gfile.o graphe.o ealgo.o matching.o analyseGraphe.o
+all : main.o gfile.o graphe.o matching.o analyseGraphe.o
 	#$(CC) -o $(TARGET) $^ -pg -lm -O2 -mtune=native -march=native
 	$(CC) -o $(TARGET) $^ -pg -O2 -mtune=native -march=native
 
@@ -16,8 +17,8 @@ gfile.o : gfile.c gfile.h
 	$(CC) -c $(CFLAGS) $< -o $@
 graphe.o: graphe.c graphe.h
 	$(CC) -c $(CFLAGS) $< -o $@
-ealgo.o : ealgo.c kmeans.c ealgo.h
-	$(CC) -c $(CFLAGS) $< -o $@
+matching.o : matching.c matching.h
+	$(CC) -c $(CFLAGS) $< -o $@ 
 analyseGraphe.o: analyseGraphe.c analyseGraphe.h
 	$(CC) -c $(CFLAGS) $< -o $@
 

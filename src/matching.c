@@ -3,6 +3,24 @@
 // ====================================================
 
 
+#include <stdlib.h>
+#include <assert.h>
+#include "util/gfile.h"
+#include "matching.h"
+
+
+
+float lambdaValue = 0.6;
+int LValue = 10;
+int MAX_Gamma = 100;
+
+
+
+typedef struct assignment{
+  int sommet;
+  int color;
+  int nbVars;
+} Move;
 
 
 // initialize the matrix memory for tabucol
@@ -210,7 +228,7 @@ void updateMove(int sommet, int colorOrigin, int colorCandidate,
 bool tabuCol(int* a, char** graph, int nbNodes, int colorNB, 
 	     int maxIteration, int** tGamma, int** tTabu){
 
-  assert(tTabu != NULL && tGamma != NULL && tTmpColor != NULL);
+  //assert(tTabu != NULL && tGamma != NULL && tTmpColor != NULL);
   
   // init the memory 
   Move* tabuMove = malloc(sizeof(Move));
@@ -383,7 +401,7 @@ void deleteMatrix(int lineNb, int colNb, int** table){
 
 // projection between N(x) to subgraph matrix
 
-int generateCft(int nbNodes, int* solution,  char** graph, int conflictList){
+int generateCft(int nbNodes, int* solution,  char** graph, int* conflictList){
 
   int nb = 0;
   for (int i=0; i < nbNodes; ++i) conflictList[i] = -1;
@@ -422,7 +440,7 @@ typedef struct struct_projection{
 
 void createProjection(int nbNodes, int* conflictList, int* projection){
   int j=-1;
-  for (int = i; i<nbNodes; ++i){
+  for (int i=0; i<nbNodes; ++i){
     if (conflictList[i]>0){
       ++j;
       projection[j] = i;
@@ -430,36 +448,36 @@ void createProjection(int nbNodes, int* conflictList, int* projection){
   }
 }
 
-void createSubgraph(int nbSub, int sub, char**graph, char** subgraph){
-  for (int i=0; i<nbSub; ++i){
-    for (int j=i; j<nbSub; ++j){
-      if (i != j)
-	subgraph[i][j] = 0;
 
-      subgraph[j][i] = 0;
-    }
-  }
-}
 
 bool partitionMatch(){
 
+
+  char** graph = tConnect;
   // generate a tabu assignment
   // initialize two matrix for entire graph
-  int** graphGamma;
-  int** graphTabu;
+  int** graphGamma = NULL;
+  int** graphTabu = NULL;
   int* graphSol = malloc(sizeof(int)*nbSommets);
   int* graphCft = malloc(sizeof(int)*nbSommets);
-  int* colorTable = malloc(sizeof(int)*nbColor);
   
+// store the color partition, line with nb of color
+  char** colorPartition = malloc(sizeof(char*)*nbColor);
+  for (int i= 0; i<nbColor; i++){
+    colorPartition[i] = malloc(sizeof(char)*nbSommets);
+  }
+   
   
   mallocTabuColMemory(nbSommets, nbColor, graphTabu, graphGamma);
 
-  bool feasible = tabuColor(graphSol, graph, nbSommets, 
-	    nbColor, 10000, graphGramma, 
+  bool feasible = tabuCol(graphSol, graph, nbSommets, 
+	    nbColor, 10000, graphGamma, 
 	    graphTabu); 
   
   if(feasible) return true;
-    
+
+
+  // create the subgraph based on N(x) 
   int nbCft = generateCft(nbSommets, graphSol, graph, graphCft);
 
   int idxCft = 0;
@@ -477,29 +495,29 @@ bool partitionMatch(){
     }
   }
 
-  // create the subgraph based on N(x) 
-  Projection* proj = malloc(sizeof(Projection));
-  proj->nb = nbNeighbors;
-  proj->sub = malloc(sizeof(int)*nbNeighbors);
-  createProjection(nbSommets, graph[idxCft], proj->sub); 
 
-  char** subgraph = createSubgraph(graph, proj->nb, proj->sub);
+  Projection* neighborSub = malloc(sizeof(Projection));
+  neighborSub->nb = nbNeighbors;
+  neighborSub->sub = malloc(sizeof(int)*nbNeighbors);
+  createProjection(nbSommets, graph[idxCft], neighborSub->sub); 
+
+  char** subgraph = createSubgraph(graph, neighborSub->nb, neighborSub->sub);
   
   int* subSol = malloc(sizeof(int)*nbNeighbors);
   int** subGamma; int** subTabu; 
   mallocTabuColMemory(nbNeighbors, nbColor-1, subTabu, subGamma);
-  bool subfeasible = tabuCol(subSol, subgraph, proj->nb, 
+  bool subfeasible = tabuCol(subSol, subgraph, neighborSub->nb, 
 			     nbColor-1, 10000, subGamma,
 			     subTabu);
   // ignore the satisfiability of the subgraph
-  freeTabuColMemory(proj->nb, subTabu, subGamma);
+  freeTabuColMemory(neighborSub->nb, subTabu, subGamma);
   
   // verify the connection among the partition
   
   
   
   // initialize two matrix for sub-graph
-  free(proj->sub); proj->sub = NULL;
-  free(proj); proj = NULL;
+  free(neighborSub->sub); neighborSub->sub = NULL;
+  free(neighborSub); neighborSub = NULL;
 
 }
