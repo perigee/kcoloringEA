@@ -24,6 +24,26 @@ typedef struct assignment{
 
 
 // initialize the matrix memory for tabucol
+
+
+
+
+int** mallocTabuColTable(int nbNodes, int nbColors){
+  
+  int** table = malloc(sizeof(int*)*nbNodes);
+  //tGamma = malloc(sizeof(int*)*nbNodes);
+
+
+  
+  for (int i=0; i<nbNodes;++i){
+    table[i] = malloc(sizeof(int)*nbColors);
+    //tGamma[i]= malloc(sizeof(int)*nbColors);
+  }
+
+  return table;
+}
+
+
 void mallocTabuColMemory(int nbNodes, int nbColors,
 			 int** tTabu, int** tGamma){
   
@@ -68,7 +88,8 @@ int initGammaTable(int* a, char** graph, int** tGamma,
 
   /// determine les conflits entre les noeuds
   int nbConflict=0;    
-	
+
+  //  printf("in init\n");
   // check the link
   for (int i=0; i<nbNodes; ++i){
     if (a[i] < 0) continue;
@@ -87,7 +108,7 @@ int initGammaTable(int* a, char** graph, int** tGamma,
     }
   }
 
-
+  //printf("after init\n");
   return nbConflict;
 }
 
@@ -228,8 +249,10 @@ void updateMove(int sommet, int colorOrigin, int colorCandidate,
 bool tabuCol(int* a, char** graph, int nbNodes, int colorNB, 
 	     int maxIteration, int** tGamma, int** tTabu){
 
-  //assert(tTabu != NULL && tGamma != NULL && tTmpColor != NULL);
+  assert(tTabu != NULL && tGamma != NULL);
   
+  
+
   // init the memory 
   Move* tabuMove = malloc(sizeof(Move));
   int* tTmpColor = malloc(sizeof(int)*nbNodes);
@@ -237,10 +260,10 @@ bool tabuCol(int* a, char** graph, int nbNodes, int colorNB,
   int maxNoImpIteration = maxIteration;
 
  
-  //printf("in tabucol\n");
+  //  printf("in tabucol\n");
  
   // init Tabu and Gamma Tables
-  for (int i=0; i<nbSommets; ++i) {
+  for (int i=0; i<nbNodes; ++i) {
     //copy color assignment     
     tTmpColor[i] = a[i];
   
@@ -253,6 +276,8 @@ bool tabuCol(int* a, char** graph, int nbNodes, int colorNB,
     
   
   int obj = initGammaTable(a,graph,tGamma,nbNodes); // init gamma table
+
+  //printf("after obj\n");
 
   if (obj<1) return true;
 
@@ -285,7 +310,7 @@ bool tabuCol(int* a, char** graph, int nbNodes, int colorNB,
     // in case find best delta 
     if( delta < 0 && obj+delta < bestObj){
       bestObj = obj+delta;
-      for (int j=0; j<nbSommets; ++j){
+      for (int j=0; j<nbNodes; ++j){
 	a[j] = tTmpColor[j];
       }
       
@@ -295,7 +320,7 @@ bool tabuCol(int* a, char** graph, int nbNodes, int colorNB,
       
       int tval = (rand()/(float)RAND_MAX) * 10 ;
       if (tval > 4){
-	for (int j=0; j<nbSommets; ++j){
+	for (int j=0; j<nbNodes; ++j){
 	  a[j] = tTmpColor[j];
 	}
 
@@ -449,8 +474,138 @@ void createProjection(int nbNodes, char* conflictList, int* projection){
 }
 
 
+void randomSolution(int nbNodes, int nbColors, int* a){
+  for (int i=0; i<nbNodes; ++i){
+    a[i] = (rand()/(float)RAND_MAX) * nbColors;
+    //printf("%d:[%d]\t",i,a[i]);
+  }
+  //printf("\n");
+}
+
+
+void solveSub(int idxCft, int nbNeighbors, int nbColors, 
+	      char** graph, int* graphSol, int maxIter){
+  
+  
+  //======================================================= Neighbor ======== BGN
+
+  Projection* neighborSub = malloc(sizeof(Projection));
+
+
+  neighborSub->nb = nbNeighbors;
+  
+  assert(nbNeighbors != 0);
+  
+  printf("r: neighbors nodes number = %d\n", nbNeighbors);
+
+  neighborSub->sub = malloc(sizeof(int)*nbNeighbors);
+
+  
+  // specific
+  createProjection(nbSommets, graph[idxCft], neighborSub->sub);
+
+
+ 
+  char** subgraph = createSubgraph(graph, neighborSub->nb, neighborSub->sub);
+  assert(subgraph != NULL);
+
+
+  //  for (int i= 0; i<nbNeighbors;++i){
+  //  for (int j= 0; j<nbNeighbors;++j){
+  //    printf("%d ", subgraph[i][j]);
+  //  }
+  //    printf("\n ");
+  //}
+
+
+  int* subSol = malloc(sizeof(int)*nbNeighbors);
+
+    printf("before malloc sub\n");
+  int** subGamma = mallocTabuColTable(nbNeighbors, nbColors); 
+  int** subTabu = mallocTabuColTable(nbNeighbors, nbColors); 
+  //mallocTabuColMemory(nbNeighbors, nbColor-1, subTabu, subGamma);
+
+  randomSolution(nbNeighbors, nbColors, subSol);
+
+  bool subfeasible = tabuCol(subSol, subgraph, neighborSub->nb, 
+			     nbColors, maxIter, subGamma,
+			     subTabu);
+  // ignore the satisfiability of the subgraph
+  if (subfeasible)
+    printf("sub feasible\n");
+  else
+    printf("sub infeasible\n");
+
+  freeTabuColMemory(neighborSub->nb, subTabu, subGamma);
+  //    printf("after free\n");
+
+    assert(subTabu != NULL);
+  // verify the connection among the partition
+  // remove the neighbors nodes 
+  char* colorTable = malloc(sizeof(char)*nbColor);
+  
+  //========== loop begin
+
+  int tabCnt = 0;
+  for (int c=0; c < nbColors; ++c){
+
+    
+
+    if(tabCnt>=5){
+        printf("\n");
+	tabCnt = 0;
+    }
+
+    ++tabCnt;
+
+    for (int ni=0; ni < nbColor; ni++){
+      colorTable[ni] = 0;
+    }
+
+        int nbCp = 0;
+
+	int nbNp = 0;
+  for (int i= 0; i< (neighborSub->nb); i++){
+
+    if(subSol[i]!=c) continue;
+
+    ++nbNp;
+
+    for (int j=0; j< nbSommets; ++j){
+      if (graph[neighborSub->sub[i]][j] && !graph[idxCft][j]){
+	colorTable[graphSol[j]]=1;
+      }
+    }
+
+ }
+
+  
+    for (int ni=0; ni < nbColor; ni++){
+      if (colorTable[ni]) ++nbCp;
+    }
+    printf("color[%d,%d] -- %d\t", c,nbNp, nbCp);
+  }
+  printf("\n");
+  
+  
+  //========== loop end
+
+  
+  
+  // free the memory
+  free(neighborSub->sub); neighborSub->sub = NULL;
+  free(neighborSub); neighborSub = NULL;
+  free(colorTable); colorTable = NULL;
+
+
+}
+
 // main solver of coloring problem
-bool partitionMatch(){
+bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
+
+  nbColor = atoi(inNbColor);
+  int maxIter =  atoi(inMaxIter);
+  loadGrapheSimple(filename);
 
 
   char** graph = tConnect;
@@ -467,23 +622,38 @@ bool partitionMatch(){
   //  disCp[i] = malloc(sizeof(char)*nbSommets);
   //}
    
+  printf("nbColor = %d\n", nbColor);
+  //mallocTabuColMemory(nbSommets, nbColor, graphTabu, graphGamma);
+  graphGamma = mallocTabuColTable(nbSommets, nbColor);
+  graphTabu = mallocTabuColTable(nbSommets, nbColor);
   
-  mallocTabuColMemory(nbSommets, nbColor, graphTabu, graphGamma);
-
+  printf("nbSommets = %d\n",nbSommets);
+  randomSolution(nbSommets, nbColor, graphSol);
+  
+  
+  printf("maxIter  = %d\n", maxIter);
   bool feasible = tabuCol(graphSol, graph, nbSommets, 
-	    nbColor, 10000, graphGamma, 
-	    graphTabu); 
-  
+			  nbColor, maxIter, graphGamma, 
+			  graphTabu); 
+  printf("before malloc = \n");
   if(feasible) return true;
+  
 
+  
 
   // create the subgraph based on N(x) 
   int nbCft = generateCft(nbSommets, graphSol, graph, graphCft);
 
+
+  printf("r: conflict nodes number = %d\n", nbCft);
+  
+  //return false;
+
+
   int idxCft = 0;
   int nbNeighbors = 0; 
  
-  for (int i=0; i>nbSommets; ++i){
+  for (int i=0; i<nbSommets; ++i){
     if (graphCft[i] > 0){
       idxCft = i;
 
@@ -500,59 +670,9 @@ bool partitionMatch(){
   //  disCp[graphSol[i]][i] = 1;
 
 
-  Projection* neighborSub = malloc(sizeof(Projection));
-  neighborSub->nb = nbNeighbors;
-  neighborSub->sub = malloc(sizeof(int)*nbNeighbors);
-  createProjection(nbSommets, graph[idxCft], neighborSub->sub); 
 
-  char** subgraph = createSubgraph(graph, neighborSub->nb, neighborSub->sub);
-  
-  int* subSol = malloc(sizeof(int)*nbNeighbors);
-  int** subGamma = NULL; 
-  int** subTabu = NULL; 
-  mallocTabuColMemory(nbNeighbors, nbColor-1, subTabu, subGamma);
-  bool subfeasible = tabuCol(subSol, subgraph, neighborSub->nb, 
-			     nbColor-1, 10000, subGamma,
-			     subTabu);
-  // ignore the satisfiability of the subgraph
-  freeTabuColMemory(neighborSub->nb, subTabu, subGamma);
-  
-  // verify the connection among the partition
-  // remove the neighbors nodes 
-  char* colorTable = malloc(sizeof(char)*nbColor);
-  
-  //========== loop begin
 
-  for (int i= 0; i< neighborSub->nb; i++){
-    for (int ni=0; ni<neighborSub->nb; ni++){
-      colorTable[ni] = 0;
-    }
-
-    int nbCp = 0;
-    for (int j=0; j< nbSommets; ++j){
-      if (graph[neighborSub->sub[i]][j] && !graph[idxCft]){
-	colorTable[graphSol[j]]=1;
-      }
-    }
-
-    for (int ni=0; ni<neighborSub->nb; ni++){
-      if (colorTable[ni]) ++nbCp;
-    }
-
-    if (nbCp == nbColor){
-      printf("max connected\n");
-      return false;
-    }
-  }
-  
-  //========== loop end
-
-  
-  
-  // free the memory
-  free(neighborSub->sub); neighborSub->sub = NULL;
-  free(neighborSub); neighborSub = NULL;
-  free(colorTable); colorTable = NULL;
+  //======================================================= Neighbor ======== BGN
 
   printf("exists disjoint edges\n");
   return true;

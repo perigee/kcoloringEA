@@ -35,10 +35,13 @@ int main (int argc, char * const argv[]) {
   srand((unsigned)time(NULL));
   printf("d: Procedure de calcul ======================== \n");
   
+  /*
   if(argc<5){
     printf("Erreur d'utilisation !!\n");
     exit(-1);
-  }
+  }*/
+
+  bool feasible = partitionMatch(argv[1],argv[2],argv[3]);
 
 
   //testAlgo(argv[1], argv[2],argv[3],argv[4],argv[5],
