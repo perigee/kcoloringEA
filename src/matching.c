@@ -477,7 +477,7 @@ bool partitionMatch(){
     }
   }
 
-  
+  // create the subgraph based on N(x) 
   Projection* proj = malloc(sizeof(Projection));
   proj->nb = nbNeighbors;
   proj->sub = malloc(sizeof(int)*nbNeighbors);
