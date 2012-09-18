@@ -460,6 +460,7 @@ int generateCft(int nbNodes, int* solution,  char** graph, int* conflictList){
 typedef struct struct_projection{
   int nb;
   int* sub;
+  int color;
 } Projection;
 
 
@@ -483,30 +484,18 @@ void randomSolution(int nbNodes, int nbColors, int* a){
 }
 
 
-void solveSub(int idxCft, int nbNeighbors, int nbColors, 
+void solveSub(int idxCft, Projection* subProb,
 	      char** graph, int* graphSol, int maxIter){
   
   
   //======================================================= Neighbor ======== BGN
 
-  Projection* neighborSub = malloc(sizeof(Projection));
-
-
-  neighborSub->nb = nbNeighbors;
+  //
   
-  assert(nbNeighbors != 0);
-  
-  printf("r: neighbors nodes number = %d\n", nbNeighbors);
-
-  neighborSub->sub = malloc(sizeof(int)*nbNeighbors);
-
-  
-  // specific
-  createProjection(nbSommets, graph[idxCft], neighborSub->sub);
 
 
  
-  char** subgraph = createSubgraph(graph, neighborSub->nb, neighborSub->sub);
+  char** subgraph = createSubgraph(graph, subProb->nb, subProb->sub);
   assert(subgraph != NULL);
 
 
@@ -518,17 +507,17 @@ void solveSub(int idxCft, int nbNeighbors, int nbColors,
   //}
 
 
-  int* subSol = malloc(sizeof(int)*nbNeighbors);
+  int* subSol = malloc(sizeof(int)*(subProb->nb));
 
     printf("before malloc sub\n");
-  int** subGamma = mallocTabuColTable(nbNeighbors, nbColors); 
-  int** subTabu = mallocTabuColTable(nbNeighbors, nbColors); 
+  int** subGamma = mallocTabuColTable(subProb->nb, subProb->color); 
+  int** subTabu = mallocTabuColTable(subProb->nb, subProb->color); 
   //mallocTabuColMemory(nbNeighbors, nbColor-1, subTabu, subGamma);
 
-  randomSolution(nbNeighbors, nbColors, subSol);
+  randomSolution(subProb->nb, subProb->color, subSol);
 
-  bool subfeasible = tabuCol(subSol, subgraph, neighborSub->nb, 
-			     nbColors, maxIter, subGamma,
+  bool subfeasible = tabuCol(subSol, subgraph, subProb->nb, 
+			     subProb->color, maxIter, subGamma,
 			     subTabu);
   // ignore the satisfiability of the subgraph
   if (subfeasible)
@@ -536,7 +525,7 @@ void solveSub(int idxCft, int nbNeighbors, int nbColors,
   else
     printf("sub infeasible\n");
 
-  freeTabuColMemory(neighborSub->nb, subTabu, subGamma);
+  freeTabuColMemory(subProb->nb, subTabu, subGamma);
   //    printf("after free\n");
 
     assert(subTabu != NULL);
@@ -547,7 +536,7 @@ void solveSub(int idxCft, int nbNeighbors, int nbColors,
   //========== loop begin
 
   int tabCnt = 0;
-  for (int c=0; c < nbColors; ++c){
+  for (int c=0; c < subProb->color; ++c){
 
     
 
@@ -558,21 +547,22 @@ void solveSub(int idxCft, int nbNeighbors, int nbColors,
 
     ++tabCnt;
 
-    for (int ni=0; ni < nbColor; ni++){
+    for (int ni=0; ni < subProb->color; ni++){
       colorTable[ni] = 0;
     }
 
         int nbCp = 0;
 
 	int nbNp = 0;
-  for (int i= 0; i< (neighborSub->nb); i++){
+  for (int i= 0; i< ( subProb->nb); i++){
 
     if(subSol[i]!=c) continue;
 
     ++nbNp;
 
+    // specific
     for (int j=0; j< nbSommets; ++j){
-      if (graph[neighborSub->sub[i]][j] && !graph[idxCft][j]){
+      if (graph[subProb->sub[i]][j] && !graph[idxCft][j]){
 	colorTable[graphSol[j]]=1;
       }
     }
@@ -593,8 +583,8 @@ void solveSub(int idxCft, int nbNeighbors, int nbColors,
   
   
   // free the memory
-  free(neighborSub->sub); neighborSub->sub = NULL;
-  free(neighborSub); neighborSub = NULL;
+  free(subProb->sub); subProb->sub = NULL;
+  free(subProb); subProb = NULL;
   free(colorTable); colorTable = NULL;
 
 
@@ -668,9 +658,23 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
   // create the color partition of disjoint nodes
   //for (int i=0; i<nbSommets;++i)
   //  disCp[graphSol[i]][i] = 1;
+  
+  Projection* neighborSub = malloc(sizeof(Projection));
 
 
+  neighborSub->nb = nbNeighbors;
+  neighborSub->color = nbColor-1;
+  assert(nbNeighbors != 0);
+  
+  printf("r: neighbors nodes number = %d\n", nbNeighbors);
 
+  neighborSub->sub = malloc(sizeof(int)*nbNeighbors);
+  
+  // specific
+  createProjection(nbSommets, graph[idxCft], neighborSub->sub);
+
+
+  solveSub(idxCft, neighborSub, graph, graphSol, maxIter);
 
   //======================================================= Neighbor ======== BGN
 
