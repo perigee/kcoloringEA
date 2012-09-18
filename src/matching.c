@@ -584,8 +584,6 @@ void solveSub(int idxCft, Projection* subProb,
   
   
   // free the memory
-  free(subProb->sub); subProb->sub = NULL;
-  free(subProb); subProb = NULL;
   free(colorTable); colorTable = NULL;
 
 
@@ -677,6 +675,10 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
 
 
   solveSub(idxCft, neighborSub, graph, graphSol, maxIter);
+
+  // free memory
+  free(neighborSub->sub); neighborSub->sub = NULL;
+  free(neighborSub); neighborSub  = NULL;
 
   //======================================================= Neighbor ======== BGN
 
