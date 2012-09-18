@@ -460,6 +460,7 @@ int generateCft(int nbNodes, int* solution,  char** graph, int* conflictList){
 typedef struct struct_projection{
   int nb;
   int* sub;
+  int* subSol;
   int color;
 } Projection;
 
@@ -507,7 +508,7 @@ void solveSub(int idxCft, Projection* subProb,
   //}
 
 
-  int* subSol = malloc(sizeof(int)*(subProb->nb));
+  int* subSol = subProb->subSol; 
 
     printf("before malloc sub\n");
   int** subGamma = mallocTabuColTable(subProb->nb, subProb->color); 
@@ -669,6 +670,7 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
   printf("r: neighbors nodes number = %d\n", nbNeighbors);
 
   neighborSub->sub = malloc(sizeof(int)*nbNeighbors);
+  neighborSub->subSol = malloc(sizeof(int)*nbNeighbors);
   
   // specific
   createProjection(nbSommets, graph[idxCft], neighborSub->sub);
