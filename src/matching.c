@@ -438,7 +438,7 @@ typedef struct struct_projection{
 } Projection;
 
 
-void createProjection(int nbNodes, int* conflictList, int* projection){
+void createProjection(int nbNodes, char* conflictList, int* projection){
   int j=-1;
   for (int i=0; i<nbNodes; ++i){
     if (conflictList[i]>0){
@@ -462,10 +462,10 @@ bool partitionMatch(){
   int* graphCft = malloc(sizeof(int)*nbSommets);
   
 // store the color partition, line with nb of color
-  char** colorPartition = malloc(sizeof(char*)*nbColor);
-  for (int i= 0; i<nbColor; i++){
-    colorPartition[i] = malloc(sizeof(char)*nbSommets);
-  }
+  //char** disCp = malloc(sizeof(char*)*nbColor);
+  //for (int i= 0; i<nbColor; i++){
+  //  disCp[i] = malloc(sizeof(char)*nbSommets);
+  //}
    
   
   mallocTabuColMemory(nbSommets, nbColor, graphTabu, graphGamma);
@@ -495,6 +495,10 @@ bool partitionMatch(){
     }
   }
 
+  // create the color partition of disjoint nodes
+  //for (int i=0; i<nbSommets;++i)
+  //  disCp[graphSol[i]][i] = 1;
+
 
   Projection* neighborSub = malloc(sizeof(Projection));
   neighborSub->nb = nbNeighbors;
@@ -504,7 +508,8 @@ bool partitionMatch(){
   char** subgraph = createSubgraph(graph, neighborSub->nb, neighborSub->sub);
   
   int* subSol = malloc(sizeof(int)*nbNeighbors);
-  int** subGamma; int** subTabu; 
+  int** subGamma = NULL; 
+  int** subTabu = NULL; 
   mallocTabuColMemory(nbNeighbors, nbColor-1, subTabu, subGamma);
   bool subfeasible = tabuCol(subSol, subgraph, neighborSub->nb, 
 			     nbColor-1, 10000, subGamma,
@@ -513,11 +518,43 @@ bool partitionMatch(){
   freeTabuColMemory(neighborSub->nb, subTabu, subGamma);
   
   // verify the connection among the partition
+  // remove the neighbors nodes 
+  char* colorTable = malloc(sizeof(char)*nbColor);
+  
+  //========== loop begin
+
+  for (int i= 0; i< neighborSub->nb; i++){
+    for (int ni=0; ni<neighborSub->nb; ni++){
+      colorTable[ni] = 0;
+    }
+
+    int nbCp = 0;
+    for (int j=0; j< nbSommets; ++j){
+      if (graph[neighborSub->sub[i]][j] && !graph[idxCft]){
+	colorTable[graphSol[j]]=1;
+      }
+    }
+
+    for (int ni=0; ni<neighborSub->nb; ni++){
+      if (colorTable[ni]) ++nbCp;
+    }
+
+    if (nbCp == nbColor){
+      printf("max connected\n");
+      return false;
+    }
+  }
+  
+  //========== loop end
+
   
   
-  
-  // initialize two matrix for sub-graph
+  // free the memory
   free(neighborSub->sub); neighborSub->sub = NULL;
   free(neighborSub); neighborSub = NULL;
+  free(colorTable); colorTable = NULL;
+
+  printf("exists disjoint edges\n");
+  return true;
 
 }
