@@ -449,7 +449,7 @@ void createProjection(int nbNodes, char* conflictList, int* projection){
 }
 
 
-
+// main solver of coloring problem
 bool partitionMatch(){
 
 
