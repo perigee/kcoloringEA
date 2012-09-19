@@ -1,5 +1,5 @@
 TARGET = eagraph #executive file name
-CC = gcc
+CC = gcc -g
 CFLAGS = -O2 -Wall -std=c99 -mtune=native -march=native #need the iso99 standard 
 VPATH = src/util:src #space seperate the different dirs
 #BIN_DIR = bin
