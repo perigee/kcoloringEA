@@ -1,7 +1,7 @@
 #!/bin/bash
 args=("$@")
-total=1 
+total=10 
 for (( c=1; c<=$total; c++ ))
 do
-   ./kcolor data/DSJC500.5.txt 48 10 7000 10000 30 3 tmp
+   ./eagraph data/le450_25d.txt 25 100000
 done

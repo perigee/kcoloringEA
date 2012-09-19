@@ -426,13 +426,13 @@ void deleteMatrix(int lineNb, int colNb, int** table){
 
 // projection between N(x) to subgraph matrix
 
-int generateCft(int nbNodes, int* solution,  char** graph, int* conflictList){
+int generateCft(int nbNodes, int* solution,  char** graph, char* conflictList){
 
   int nb = 0;
-  for (int i=0; i < nbNodes; ++i) conflictList[i] = -1;
+
 
   for (int i=0; i < nbNodes; ++i){    
-    if (conflictList[i] >0) continue;
+    if (conflictList[i]) continue;
 
     bool consistent = true;
     for (int j=i; j < nbNodes; ++j){
@@ -465,14 +465,17 @@ typedef struct struct_projection{
 } Projection;
 
 
-void createSublist(int nbNodes, char* conflictList, int* projection){
+void createSublist(int nbNodes, char* conflictList, int conflictNb,  int* projection){
   int j=-1;
   for (int i=0; i<nbNodes; ++i){
-    if (conflictList[i]>0){
+    if (conflictList[i]){
       ++j;
       projection[j] = i;
     }
   }
+
+  //printf("j %d and conflictnb %d\n", j+1, conflictNb);
+  assert(j == (conflictNb-1));
 }
 
 
@@ -554,7 +557,7 @@ bool maxMatching(){
 
   // verify the connection among the partition
   // remove the neighbors nodes 
-  char* colorTable = malloc(sizeof(char)*nbColor);
+  
   
 
   int tabCnt = 0;
@@ -627,26 +630,20 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
   int** graphGamma =  malloc(sizeof(int*)*nbSommets); 
   int** graphTabu = malloc(sizeof(int*)*nbSommets); 
   int* graphSol = malloc(sizeof(int)*nbSommets);
-  int* graphCft = malloc(sizeof(int)*nbSommets);
+
   
-// store the color partition, line with nb of color
-  //char** disCp = malloc(sizeof(char*)*nbColor);
-  //for (int i= 0; i<nbColor; i++){
-  //  disCp[i] = malloc(sizeof(char)*nbSommets);
-  //}
    
   printf("nbColor = %d\n", nbColor);
   //mallocTabuColMemory(nbSommets, nbColor, graphTabu, graphGamma);
 
+  
   for (int i= 0; i<nbSommets; ++i){
     graphGamma[i] =  malloc(sizeof(int*)*nbColor); 
     graphTabu[i] =  malloc(sizeof(int*)*nbColor); 
   }
-  
 
-
-  graphGamma = mallocTabuColTable(nbSommets, nbColor);
-  graphTabu = mallocTabuColTable(nbSommets, nbColor);
+  //graphGamma = mallocTabuColTable(nbSommets, nbColor);
+  //graphTabu = mallocTabuColTable(nbSommets, nbColor);
   
   printf("nbSommets = %d\n",nbSommets);
   randomSolution(nbSommets, nbColor, graphSol);
@@ -660,6 +657,13 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
   if(feasible) return true;
   
 
+  char* graphCft = malloc(sizeof(char)*nbSommets);
+  char* tmpDisNodes = malloc(sizeof(char)*nbSommets);
+
+  for (int i=0; i<nbSommets; ++i){
+    tmpDisNodes[i] = 0;
+    graphCft[i] = 0;
+  }
   
 
   // create the subgraph based on N(x) 
@@ -670,10 +674,9 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
   int nbNeighbors = 0; 
   int nbDisjoints = 0;
 
-  char* tmpDisNodes = malloc(sizeof(char)*nbSommets);
 
   for (int i=0; i<nbSommets; ++i){
-    if (graphCft[i] > 0){
+    if (graphCft[i]){
       idxCft = i;
 
       for (int j=0; j<nbSommets; ++j){
@@ -691,6 +694,8 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
   }
 
   
+  
+
   printf("r: conflict nodes number = %d\n", nbCft);
   printf("r: neighbor nodes number = %d\n", nbNeighbors);
   printf("r: disjoint nodes number = %d\n", nbDisjoints);
@@ -702,12 +707,10 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
   neighborSub->color = nbColor-1;
   assert(nbNeighbors != 0);
 
-  int* tmpNeighborSub = malloc(sizeof(int)*nbNeighbors); 
-  int* tmpNeighborSubSol = malloc(sizeof(int)*nbNeighbors);
-  neighborSub->sub = tmpNeighborSub;
-  neighborSub->subSol = tmpNeighborSubSol;
+  neighborSub->sub = malloc(sizeof(int)*nbNeighbors);
+  neighborSub->subSol = malloc(sizeof(int)*nbNeighbors);
 
-  createSublist(nbSommets, graph[idxCft], neighborSub->sub);
+  createSublist(nbSommets, graph[idxCft],neighborSub->nb, neighborSub->sub);
   bool feasibleNeighbor = solveSub(idxCft, neighborSub, graph, maxIter);
 
     // ignore the satisfiability of the subgraph
@@ -717,11 +720,6 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
     printf("sub neighbor infeasible\n");
 
 
-  
-  for (int i=0; i< neighborSub->nb; ++i){
-    printf("[%d]=%d; ", neighborSub->sub[i], neighborSub->subSol[i]);
-  }
-  printf("\n");
 
   // generate the disjoint subgraph and solve it
   Projection* disjointSub = malloc(sizeof(Projection));
@@ -729,16 +727,14 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
   disjointSub->color = nbColor;
   assert(nbDisjoints != 0);
   
-  int* tmpDisjointSub = malloc(sizeof(int)*nbDisjoints);
-  int* tmpDisjointSubSol = malloc(sizeof(int)*nbDisjoints);
 
-  disjointSub->sub = tmpDisjointSub;
-  disjointSub->subSol = tmpDisjointSubSol; 
+  disjointSub->sub = malloc(sizeof(int)*nbDisjoints);
+  disjointSub->subSol = malloc(sizeof(int)*nbDisjoints);
   
-  createSublist(nbSommets, tmpDisNodes, disjointSub->sub);
+  createSublist(nbSommets, tmpDisNodes, disjointSub->nb, disjointSub->sub);
   bool feasibleDisjoint = solveSub(idxCft, disjointSub, graph, maxIter);
 
-    // ignore the satisfiability of the subgraph
+  // ignore the satisfiability of the subgraph
   if (feasibleDisjoint)
     printf("sub disjoint feasible\n");
   else
@@ -746,36 +742,91 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
 
 
 
+  
+  // create disjoint nodes' color table
+  int* cpDisjoint = malloc(sizeof(int)*nbSommets);
+  for (int i=0; i<nbSommets; ++i) cpDisjoint[i] = -1;
 
-  // free memory
+  char* colorTable = malloc(sizeof(char)*nbColor);
+
+
+  for (int i=0; i< disjointSub->nb; ++i)
+    cpDisjoint[disjointSub->sub[i]] = disjointSub->subSol[i];
+
+
+  for (int i=0; i<nbColor-1; ++i){
+
+
+    for (int ij=0; ij<nbColor; ++ij) colorTable[ij] = 0;
+
+    int cnt = 0; 
+
+
+    for (int j=0; j<neighborSub->nb; ++j){
+      if (neighborSub->subSol[j] != i) continue;
+      
+      for (int k=0; k<nbSommets; ++k){
+	if (graph[neighborSub->sub[j]][k] && tmpDisNodes[k]){
+	  if (!colorTable[cpDisjoint[k]]){
+	    colorTable[cpDisjoint[k]] = 1;
+	    ++cnt;
+	  }
+	}
+      }      
+    }
+
+    printf("[%d]:%d\t", i, cnt);
+    
+  }
+
+    printf("\n =========================== \n");
+
+  for (int i=0; i< neighborSub->nb; ++i){
+
+   for (int ij=0; ij<nbColor; ++ij) colorTable[ij] = 0;
+    int cnt = 0; 
+
+
+
+      
+      for (int k=0; k<nbSommets; ++k){
+	if (graph[neighborSub->sub[i]][k] && tmpDisNodes[k]){
+	  if (!colorTable[cpDisjoint[k]]){
+	    colorTable[cpDisjoint[k]] = 1;
+	    ++cnt;
+	  }
+	}
+       
+
+	
+      }      
+
+	printf("[%d]:%d\t", neighborSub->sub[i], cnt);
+    
+    
+  }
+  
+    printf("\n =========================== \n");
+
+
+  free(colorTable); colorTable = NULL;
+  free(cpDisjoint); cpDisjoint = NULL;
+
+
+  // free memory ========================================================== 
   assert(neighborSub != NULL);
   assert(disjointSub != NULL);
   assert(tmpDisNodes != NULL);
-
   
 
-  assert(disjointSub->sub == tmpDisjointSub);
-  assert(disjointSub->subSol == tmpDisjointSubSol);
-
-  disjointSub->sub = NULL; 
-  disjointSub->subSol = NULL;
+  free(disjointSub->sub); disjointSub->sub = NULL; 
+  free(disjointSub->subSol);disjointSub->subSol = NULL;
   free(disjointSub); disjointSub  = NULL;
 
-  free(tmpDisjointSubSol); tmpDisjointSubSol = NULL;  
-  free(tmpDisjointSub); tmpDisjointSub = NULL;
 
-
-
-
-  assert(neighborSub->sub == tmpNeighborSub);
-  assert(neighborSub->subSol == tmpNeighborSubSol);
-
-  neighborSub->sub = NULL;
-  neighborSub->subSol = NULL;
+  free(neighborSub->sub); neighborSub->sub = NULL;
+  free(neighborSub->subSol); neighborSub->subSol = NULL;
   free(neighborSub); neighborSub  = NULL;
-
-  free(tmpNeighborSubSol); tmpNeighborSubSol = NULL;
-  free(tmpNeighborSub); tmpNeighborSub = NULL;
 
 
 
@@ -788,10 +839,12 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
     free(graphTabu[i]); graphTabu[i] = NULL;
   }
 
+  free(graphCft); graphCft = NULL;
   free(graphGamma); graphGamma = NULL;
   free(graphTabu); graphTabu = NULL;
   free(graphSol); graphSol = NULL;
-
+  
+  graph = NULL;
 
   
   //======================================================= Neighbor ======== BGN

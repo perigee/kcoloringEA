@@ -1,5 +1,5 @@
 TARGET = eagraph #executive file name
-CC = gcc -g
+CC = clang #-g
 CFLAGS = -O2 -Wall -std=c99 -mtune=native -march=native #need the iso99 standard 
 VPATH = src/util:src #space seperate the different dirs
 #BIN_DIR = bin
@@ -8,7 +8,7 @@ OBJECTS = $(wildcard *.o)
 #all : main.o gfile.o graphe.o ealgo.o matching.o analyseGraphe.o
 all : main.o gfile.o graphe.o matching.o analyseGraphe.o
 	#$(CC) -o $(TARGET) $^ -pg -lm -O2 -mtune=native -march=native
-	$(CC) -o $(TARGET) $^ -pg -O2 -mtune=native -march=native
+	$(CC) -o $(TARGET) $^  -O2 -mtune=native -march=native
 
 #create obj files
 main.o: main.c gfile.h graphe.h

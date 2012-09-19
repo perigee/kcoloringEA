@@ -3241,7 +3241,6 @@ void testAlgo(char *filename, char *inNbColor, char *inPopuSize,
   else
     printf("r: found infeasible =========== END\n");
 
-
   // free dynamic memory
   for (int i=0; i<nbSommets;++i){
     free(tConnect[i]);
