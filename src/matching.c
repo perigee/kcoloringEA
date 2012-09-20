@@ -395,6 +395,9 @@ char** createSubgraph(char** graph, int subNb, int* sub){
   char** table = malloc(sizeof(char*)*subNb);
   for (int i=0;i<subNb; ++i)
     table[i] = malloc(sizeof(char)*subNb);
+  
+  // printf("subgraph ================ BGN\n");
+  //printf("graphG\{node [shape=point];\n");
 
 
   for (int i=0; i<subNb; ++i){
@@ -402,6 +405,7 @@ char** createSubgraph(char** graph, int subNb, int* sub){
       if (graph[sub[i]][sub[j]]){
 	table[i][j] = 1;
 	table[j][i] = 1;
+	//printf("%d -- %d;\n",i,j);
       }else{
 	table[i][j] = 0;
 	table[j][i] = 0;
@@ -409,6 +413,9 @@ char** createSubgraph(char** graph, int subNb, int* sub){
     }
   }
 
+  // printf("\}\n");
+  //  printf("subgraph ================ END\n");
+  
   
   return table;
 }
@@ -430,6 +437,9 @@ int generateCft(int nbNodes, int* solution,  char** graph, char* conflictList){
 
   int nb = 0;
 
+ for (int i=0; i < nbNodes; ++i)   conflictList[i] = 0;
+
+  
 
   for (int i=0; i < nbNodes; ++i){    
     if (conflictList[i]) continue;
@@ -693,7 +703,12 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
     }
   }
 
-  
+  // get partial assignment on  disjoint nodes
+  int* partialSol = malloc(sizeof(int)*nbSommets);
+  for (int i=0; i<nbSommets; ++i){
+    partialSol[i] = -1;
+    if (!graph[idxCft][i]) partialSol[i] = graphSol[i];
+  }
   
 
   printf("r: conflict nodes number = %d\n", nbCft);
@@ -701,7 +716,7 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
   printf("r: disjoint nodes number = %d\n", nbDisjoints);
 
 
-  // generate the neighbor subgraph and solve it
+  // generate the neighbor subgraph and solve it ==========================
   Projection* neighborSub = malloc(sizeof(Projection));
   neighborSub->nb = nbNeighbors;
   neighborSub->color = nbColor-1;
@@ -721,7 +736,8 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
 
 
 
-  // generate the disjoint subgraph and solve it
+  // generate the disjoint subgraph and solve it ===========================
+  
   Projection* disjointSub = malloc(sizeof(Projection));
   disjointSub->nb = nbDisjoints;
   disjointSub->color = nbColor;
@@ -740,7 +756,7 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
   else
     printf("sub disjoint infeasible\n");
 
-
+  
 
   
   // create disjoint nodes' color table
@@ -754,6 +770,11 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
     cpDisjoint[disjointSub->sub[i]] = disjointSub->subSol[i];
 
 
+  // preserve origin solution
+  //for (int i=0; i<nbSommets; ++i) cpDisjoint[i] = partialSol[i];
+
+
+  double totalCnt = 0.0;
   for (int i=0; i<nbColor-1; ++i){
 
 
@@ -766,7 +787,7 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
       if (neighborSub->subSol[j] != i) continue;
       
       for (int k=0; k<nbSommets; ++k){
-	if (graph[neighborSub->sub[j]][k] && tmpDisNodes[k]){
+	if (graph[neighborSub->sub[j]][k] && cpDisjoint[k]>-1){
 	  if (!colorTable[cpDisjoint[k]]){
 	    colorTable[cpDisjoint[k]] = 1;
 	    ++cnt;
@@ -775,11 +796,13 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
       }      
     }
 
-    printf("[%d]:%d\t", i, cnt);
-    
+    //printf("[%d]:%d\t", i, cnt);
+    totalCnt += (double)cnt; 
   }
 
-    printf("\n =========================== \n");
+  totalCnt /= (double)(nbColor - 1);
+  printf("\nr: density per color: %f", totalCnt);
+  totalCnt = 0.0;
 
   for (int i=0; i< neighborSub->nb; ++i){
 
@@ -790,7 +813,7 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
 
       
       for (int k=0; k<nbSommets; ++k){
-	if (graph[neighborSub->sub[i]][k] && tmpDisNodes[k]){
+	if (graph[neighborSub->sub[i]][k] && cpDisjoint[k]>-1){
 	  if (!colorTable[cpDisjoint[k]]){
 	    colorTable[cpDisjoint[k]] = 1;
 	    ++cnt;
@@ -801,12 +824,36 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
 	
       }      
 
-	printf("[%d]:%d\t", neighborSub->sub[i], cnt);
-    
+      //printf("[%d]:%d\t", neighborSub->sub[i], cnt);
+	totalCnt+= cnt;
     
   }
   
-    printf("\n =========================== \n");
+  totalCnt /= (double)(neighborSub->nb);
+  printf("\nr: density per node: %f\n", totalCnt);
+
+
+  // combine the partial solution with neighbor solution in brute way
+  
+  graphSol[nbColor-1] = nbColor - 1;
+  for (int i=0; i<neighborSub->nb; ++i)
+    graphSol[neighborSub->sub[i]] = neighborSub->subSol[i];
+
+  
+  nbCft = generateCft(nbSommets, graphSol, graph, graphCft);
+  printf("before final conflict nb: %d\n", nbCft);
+
+  
+  feasible = tabuCol(graphSol, graph, nbSommets, 
+			  nbColor, maxIter, graphGamma, 
+			  graphTabu); 
+
+  if (!feasible){
+    nbCft = generateCft(nbSommets, graphSol, graph, graphCft);
+    printf("r: final conflict nb: %d\n", nbCft);
+  }else
+    printf("r: success\n");
+
 
 
   free(colorTable); colorTable = NULL;
@@ -843,6 +890,7 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
   free(graphGamma); graphGamma = NULL;
   free(graphTabu); graphTabu = NULL;
   free(graphSol); graphSol = NULL;
+  free(partialSol); partialSol = NULL;
   
   graph = NULL;
 
