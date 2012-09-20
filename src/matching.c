@@ -396,8 +396,8 @@ char** createSubgraph(char** graph, int subNb, int* sub){
   for (int i=0;i<subNb; ++i)
     table[i] = malloc(sizeof(char)*subNb);
   
-  // printf("subgraph ================ BGN\n");
-  //printf("graphG\{node [shape=point];\n");
+  printf("subgraph ================ BGN\n");
+  printf("graph G\{ node [shape=point];\n");
 
 
   for (int i=0; i<subNb; ++i){
@@ -405,7 +405,7 @@ char** createSubgraph(char** graph, int subNb, int* sub){
       if (graph[sub[i]][sub[j]]){
 	table[i][j] = 1;
 	table[j][i] = 1;
-	//printf("%d -- %d;\n",i,j);
+	printf("%d -- %d;\n",i,j);
       }else{
 	table[i][j] = 0;
 	table[j][i] = 0;
@@ -413,8 +413,8 @@ char** createSubgraph(char** graph, int subNb, int* sub){
     }
   }
 
-  // printf("\}\n");
-  //  printf("subgraph ================ END\n");
+  printf("\}\n");
+  printf("subgraph ================ END\n");
   
   
   return table;
