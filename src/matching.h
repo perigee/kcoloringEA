@@ -12,5 +12,9 @@ int MAX_RemoveColors;
 //====================================================
 
 bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter);
+bool multiPlaneAnalysis(char *filename, char* inNbColor, char *inMaxIter);
+
+
+
 
 #endif

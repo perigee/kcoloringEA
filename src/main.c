@@ -41,7 +41,8 @@ int main (int argc, char * const argv[]) {
     exit(-1);
   }*/
 
-  bool feasible = partitionMatch(argv[1],argv[2],argv[3]);
+  //bool feasible = partitionMatch(argv[1],argv[2],argv[3]);
+  bool feasible = multiPlaneAnalysis(argv[1],argv[2],argv[3]);
 
 
   

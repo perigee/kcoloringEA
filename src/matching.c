@@ -901,3 +901,119 @@ bool partitionMatch(char *filename, char* inNbColor, char *inMaxIter){
   return true;
 
 }
+
+
+
+//============================================================
+// Multi-plane algorithm 
+//============================================================
+
+int degree(int idx, int size,  char* neighbors){
+  int cnt = 0;
+  for (int i=0; i<size; ++i)
+    if (neighbors[i]) ++cnt;
+
+  return cnt;
+}
+
+
+int clique(int idx, int* inWeightConjoint, char** graph){
+  
+  int idxC = -1;
+  
+  for (int i=0; i<nbSommets; ++i){
+    //
+  }
+}
+
+
+bool multiPlaneAnalysis(char *filename, char* inNbColor, char *inMaxIter){
+  
+  nbColor = atoi(inNbColor);
+  int maxIter =  atoi(inMaxIter);
+  loadGrapheSimple(filename);
+
+  printf("%s\t", filename);
+
+
+  char** graph = tConnect;
+
+
+  // find max degree node
+  int maxDegreeNodeIdx = -1;
+  int degreeTmp = 0; 
+  
+  for (int i= 0; i<nbSommets; ++i){
+    int d=degree(i, nbSommets, graph[i]);
+    if (degreeTmp < d){
+      degreeTmp = d; 
+      maxDegreeNodeIdx = i;
+    }
+  }
+
+  assert(maxDegreeNodeIdx != -1);
+
+  // get N(x)
+  
+
+  // compute the disjoint counter and conjoint counter
+  int* weightConjoint = malloc(sizeof(int)*nbSommets);
+
+  for (int i= 0; i<nbSommets; ++i) weightConjoint[i] = 0;
+  
+
+  for (int i=0; i<nbSommets; ++i){
+    // ignore the non-neighors and non-self
+    if (!graph[maxDegreeNodeIdx][i] && maxDegreeNodeIdx != i) continue;
+    
+    for (int j=0; j<nbSommets; ++j){
+	if (graph[i][j]) ++weightConjoint[j];
+    } 
+  }
+
+
+  int minConjoint = -1;
+  int minConjointIdx = - 1;
+  for (int i= 0; i<nbSommets; ++i){
+
+    if (weightConjoint[i] < 1) continue; // ignore the zero one
+
+    if (minConjoint < 0 || minConjoint > weightConjoint[i]){
+      minConjoint = weightConjoint[i];
+      minConjointIdx = i;
+    }
+  }
+      
+  assert(minConjointIdx != -1);
+    
+  weightConjoint[minConjointIdx] = 0;
+  int candidateCnt = 0;
+  int maxConjoint = -1;
+  int maxConjointIdx = -1;
+  for (int i= 0; i<nbSommets; ++i){
+
+    if (graph[minConjointIdx][i])
+      weightConjoint[i] = 0;
+    else{
+      if (maxConjoint < weightConjoint[i]){
+	maxConjoint = weightConjoint[i];
+	maxConjointIdx = i;
+      }
+      ++candidateCnt;
+    }
+  }
+  
+  printf("candidateCnt: %d weight edges: %d\n", candidateCnt, maxConjoint);
+
+
+  // find a 3-clique by seeking in N(maxConjointIdx)
+  
+  
+
+
+  
+  free(weightConjoint); weightConjoint = NULL;
+  graph = NULL;
+
+  return true;
+}
