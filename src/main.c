@@ -42,8 +42,9 @@ int main (int argc, char * const argv[]) {
   }*/
 
   //bool feasible = partitionMatch(argv[1],argv[2],argv[3]);
-  bool feasible = multiPlaneAnalysis(argv[1],argv[2],argv[3]);
-
+  bool feasible = multiPlaneAnalysisSimple(argv[1],argv[2],argv[3]);
+  
+  printf("\n");
 
   
   // free dynamic memory

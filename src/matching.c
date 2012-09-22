@@ -917,13 +917,46 @@ int degree(int idx, int size,  char* neighbors){
 }
 
 
-int clique(int idx, int* inWeightConjoint, char** graph){
+int cliqueFinder(int nbNodeInClique, char* clique,  char* candidate,
+	   int* inWeightConjoint, char** graph){
   
-  int idxC = -1;
-  
-  for (int i=0; i<nbSommets; ++i){
-    //
+  // find max weight adjacent nodes
+  int maxWeight = -1; 
+  int idx = -1;
+
+
+  if (nbNodeInClique < 1){
+    for (int i=0; i<nbSommets; ++i){
+      if (!candidate[i]) continue;
+
+      if (maxWeight < inWeightConjoint[i]){
+	maxWeight = inWeightConjoint[i];
+	idx = i;
+      }
+    }
+    return idx;
   }
+  
+
+  for (int i=0; i<nbSommets; ++i){
+    if (!candidate[i]) continue;
+    
+    if (idx < 0 || maxWeight < inWeightConjoint[i]){
+      bool isClique = true;
+      for (int j=0; j<nbSommets; ++j){
+	if (clique[j] && !graph[i][j]){
+	  isClique = false;
+	  break;
+	}
+      }
+      if (isClique){
+	maxWeight = inWeightConjoint[i];
+	idx = i;
+      }
+      
+    }
+  }
+  return idx;
 }
 
 
@@ -990,26 +1023,170 @@ bool multiPlaneAnalysis(char *filename, char* inNbColor, char *inMaxIter){
   int candidateCnt = 0;
   int maxConjoint = -1;
   int maxConjointIdx = -1;
+  char* candidate = malloc(sizeof(char)*nbSommets);
+  char* clique = malloc(sizeof(char)*nbSommets);
+  
+  for (int i= 0; i<nbSommets; ++i){
+     candidate[i] = 0;
+     clique[i] = 0;
+  }
+
   for (int i= 0; i<nbSommets; ++i){
 
     if (graph[minConjointIdx][i])
       weightConjoint[i] = 0;
     else{
+
       if (maxConjoint < weightConjoint[i]){
 	maxConjoint = weightConjoint[i];
 	maxConjointIdx = i;
       }
       ++candidateCnt;
+      candidate[i] = 1;
     }
   }
   
-  printf("candidateCnt: %d weight edges: %d\n", candidateCnt, maxConjoint);
+  //printf("candidateCnt: %d weight edges: %d\n", candidateCnt, maxConjoint);
 
+
+
+  int defCliqueSize = maxIter;
+  int* cliqueVec = malloc(sizeof(int)*defCliqueSize);
+  
+  for (int cliqueNb = 0; cliqueNb < defCliqueSize; ++cliqueNb){
+
+    int idx = cliqueFinder(cliqueNb, clique, candidate, weightConjoint, graph);
+    assert(idx != -1);
+    
+    candidate[idx] = 0;
+    clique[idx] = 1;
+    cliqueVec[cliqueNb] = idx;
+
+  }
+
+  int Nc = 0;
+  int Dis = 0;
+
+  for (int i=0; i<nbSommets; ++i){
+    if (clique[i]) continue;
+    
+    int tmpCnt = 0;
+    for (int j=0; j<defCliqueSize; ++j){
+      if (graph[i][cliqueVec[j]]) ++tmpCnt;
+    }
+    
+    if (tmpCnt == defCliqueSize) ++Nc;
+    if (tmpCnt < 1) ++Dis;
+    
+  }
+
+  printf("%d, %d, %d, %d, ",defCliqueSize, Nc, nbSommets-defCliqueSize-Nc-Dis, Dis);
 
   // find a 3-clique by seeking in N(maxConjointIdx)
   
   
+  free(cliqueVec); cliqueVec = NULL;
+  free(clique); clique = NULL;
+  free(candidate); candidate = NULL;
 
+  
+  free(weightConjoint); weightConjoint = NULL;
+  graph = NULL;
+
+  return true;
+}
+
+
+bool multiPlaneAnalysisSimple(char *filename, char* inNbColor, char *inMaxIter){
+  
+  nbColor = atoi(inNbColor);
+  int maxIter =  atoi(inMaxIter);
+  loadGrapheSimple(filename);
+
+  printf("%s\t", filename);
+
+
+  char** graph = tConnect;
+
+
+  // compute the disjoint counter and conjoint counter
+  int* weightConjoint = malloc(sizeof(int)*nbSommets);
+  
+  for (int i= 0; i<nbSommets; ++i)
+    weightConjoint[i]=degree(i, nbSommets, graph[i]);
+
+
+  // find min connection node
+  
+  int minConjoint = -1;
+  int minConjointIdx = - 1;
+  for (int i= 0; i<nbSommets; ++i){
+
+    if (weightConjoint[i] < 1) continue; // ignore the zero one
+
+    if (minConjoint < 0 || minConjoint > weightConjoint[i]){
+      minConjoint = weightConjoint[i];
+      minConjointIdx = i;
+    }
+  }
+  
+  assert(minConjointIdx != -1);
+
+
+  int candidateCnt = 0;
+  int maxConjoint = -1;
+  int maxConjointIdx = -1;
+  char* candidate = malloc(sizeof(char)*nbSommets);
+  char* clique = malloc(sizeof(char)*nbSommets);
+  
+  for (int i= 0; i<nbSommets; ++i){
+
+    if (i != minConjointIdx && !graph[minConjointIdx][i])
+     candidate[i] = 1;
+    else
+     candidate[i] = 0;
+
+     clique[i] = 0;
+  }
+
+  int defCliqueSize = maxIter;
+  int* cliqueVec = malloc(sizeof(int)*defCliqueSize);
+  
+  for (int cliqueNb = 0; cliqueNb < defCliqueSize; ++cliqueNb){
+
+    int idx = cliqueFinder(cliqueNb, clique, candidate, weightConjoint, graph);
+    assert(idx != -1);
+    
+    candidate[idx] = 0;
+    clique[idx] = 1;
+    cliqueVec[cliqueNb] = idx;
+
+  }
+
+  int Nc = 0;
+  int Dis = 0;
+
+  for (int i=0; i<nbSommets; ++i){
+    if (clique[i]) continue;
+    
+    int tmpCnt = 0;
+    for (int j=0; j<defCliqueSize; ++j){
+      if (graph[i][cliqueVec[j]]) ++tmpCnt;
+    }
+    
+    if (tmpCnt == defCliqueSize) ++Nc;
+    if (tmpCnt < 1) ++Dis;
+    
+  }
+
+  printf("%d, %d, %d, %d, ",defCliqueSize, Nc, nbSommets-defCliqueSize-Nc-Dis, Dis);
+
+  // find a 3-clique by seeking in N(maxConjointIdx)
+  
+  
+  free(cliqueVec); cliqueVec = NULL;
+  free(clique); clique = NULL;
+  free(candidate); candidate = NULL;
 
   
   free(weightConjoint); weightConjoint = NULL;
