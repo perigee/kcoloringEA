@@ -149,6 +149,9 @@ int bestMove(Move* move, int** tGamma,  int** tTabu,
 	// skip  assigned color
 	if (j == individual[i])
 	  continue;
+
+	// skip the disable color
+	if (tGamma[i][j] <0 ) continue;
 	
 	if (minGamma < 0 || minGamma > tGamma[i][j]){
 	  minGamma = tGamma[i][j];
@@ -225,11 +228,15 @@ void updateMove(int sommet, int colorOrigin, int colorCandidate,
   for (int i=0; i< nbNodes; ++i){
     if (graph[sommet][i]){
       if (ind[i] > -1){
-	
-	if( tGamma[i][colorOrigin]>0)
+
+	// skip the disable color	
+	if( tGamma[i][colorOrigin]> -1)
 	  --tGamma[i][colorOrigin];
+	
+	assert(tGamma[i][colorOrigin] > -1);
       
-	++tGamma[i][colorCandidate];
+	if (tGamma[i][colorCandidate] > -1)
+	  ++tGamma[i][colorCandidate];
 
       }
     }
@@ -262,7 +269,8 @@ bool tabuCol(int* a, char** graph, int nbNodes, int colorNB,
  
   //  printf("in tabucol\n");
  
-  // init Tabu and Gamma Tables
+  // init Tabu and Gamma Tables - need to separate from the tabuCol
+  // ================================= working ========================= BGN
   for (int i=0; i<nbNodes; ++i) {
     //copy color assignment     
     tTmpColor[i] = a[i];
@@ -276,6 +284,7 @@ bool tabuCol(int* a, char** graph, int nbNodes, int colorNB,
     
   
   int obj = initGammaTable(a,graph,tGamma,nbNodes); // init gamma table
+  // ================================= working ========================= END
 
   //printf("after obj\n");
 
@@ -917,6 +926,51 @@ int degree(int idx, int size,  char* neighbors){
 }
 
 
+int disjointFinder(int nbNodeInDisjoint, char* disjoint, char* candidate, 
+		   int* inWeightConjoint, char** graph){
+  
+  int idx = -1;
+  int maxWeight = -1;
+
+  
+  if (nbNodeInDisjoint < 1){
+    for (int i=0; i<nbSommets; ++i){
+      if (!candidate[i]) continue;
+
+      if (maxWeight < 0 || maxWeight > inWeightConjoint[i]){
+	//      if (maxWeight < inWeightConjoint[i]){
+	maxWeight = inWeightConjoint[i];
+	idx = i;
+      }
+    }
+    return idx;
+  }
+  
+
+  for (int i=0; i<nbSommets; ++i){
+    if (!candidate[i]) continue;
+
+    if (idx < 0 || maxWeight > inWeightConjoint[i]){
+      //if (idx < 0 || maxWeight < inWeightConjoint[i]){
+      bool isDisjoint = true;
+      for (int j=0; j<nbSommets; ++j){
+	if (disjoint[j] && graph[i][j]){
+	  isDisjoint = false;
+	  break;
+	}
+      }
+      if (isDisjoint){
+	maxWeight = inWeightConjoint[i];
+	idx = i;
+      }
+      
+    }
+  }
+  return idx;
+  
+}
+
+
 int cliqueFinder(int nbNodeInClique, char* clique,  char* candidate,
 	   int* inWeightConjoint, char** graph){
   
@@ -940,6 +994,7 @@ int cliqueFinder(int nbNodeInClique, char* clique,  char* candidate,
 
   for (int i=0; i<nbSommets; ++i){
     if (!candidate[i]) continue;
+    if (clique[i]) continue;
     
     if (idx < 0 || maxWeight < inWeightConjoint[i]){
       bool isClique = true;
@@ -1103,7 +1158,7 @@ bool multiPlaneAnalysisSimple(char *filename, char* inNbColor, char *inMaxIter){
   int maxIter =  atoi(inMaxIter);
   loadGrapheSimple(filename);
 
-  printf("%s\t", filename);
+  printf("%s, ", filename);
 
 
   char** graph = tConnect;
@@ -1134,57 +1189,100 @@ bool multiPlaneAnalysisSimple(char *filename, char* inNbColor, char *inMaxIter){
 
 
   int candidateCnt = 0;
-  int maxConjoint = -1;
-  int maxConjointIdx = -1;
   char* candidate = malloc(sizeof(char)*nbSommets);
   char* clique = malloc(sizeof(char)*nbSommets);
+
+  char* disjointSet = malloc(sizeof(char)*nbSommets);
+  int defDisjointSetSize = 0;
   
   for (int i= 0; i<nbSommets; ++i){
-
-    if (i != minConjointIdx && !graph[minConjointIdx][i])
-     candidate[i] = 1;
+    if (weightConjoint[i] > 0)
+      candidate[i] = 1;
     else
-     candidate[i] = 0;
+      candidate[i] = 0;
 
      clique[i] = 0;
+     disjointSet[i] = 0;
   }
 
-  int defCliqueSize = maxIter;
-  int* cliqueVec = malloc(sizeof(int)*defCliqueSize);
+  int defCliqueSize = 0; // = maxIter;
   
-  for (int cliqueNb = 0; cliqueNb < defCliqueSize; ++cliqueNb){
+  while (true){
 
-    int idx = cliqueFinder(cliqueNb, clique, candidate, weightConjoint, graph);
-    assert(idx != -1);
+    //for (int cliqueNb = 0; cliqueNb < defCliqueSize; ++cliqueNb){
+
+    int idx = cliqueFinder(defCliqueSize, clique, candidate, weightConjoint, graph);
     
+    if(idx < 0) break;
+
+    ++defCliqueSize;    
     candidate[idx] = 0;
-    clique[idx] = 1;
-    cliqueVec[cliqueNb] = idx;
+    clique[idx] = 1; 
 
   }
 
+
+
+
+  // recover the candidate
+  for (int i=0; i<nbSommets; ++i) candidate[i]=1;
+
+
+  
+  while (true){
+
+    //for (int cliqueNb = 0; cliqueNb < defCliqueSize; ++cliqueNb){
+
+    int idx = disjointFinder(defDisjointSetSize, disjointSet, candidate, weightConjoint, graph);
+    
+    if(idx < 0) break;
+
+    ++defDisjointSetSize;    
+    candidate[idx] = 0;
+    disjointSet[idx] = 1; 
+
+  }
+
+
+  
   int Nc = 0;
   int Dis = 0;
-
+  int meanN = 0;
+  int meanDis = 0;
   for (int i=0; i<nbSommets; ++i){
-    if (clique[i]) continue;
+    if (clique[i]){
+      meanN += weightConjoint[i];
+      continue;
+    } 
+
+
+    if (disjointSet[i]) meanDis += weightConjoint[i]; 
     
-    int tmpCnt = 0;
-    for (int j=0; j<defCliqueSize; ++j){
-      if (graph[i][cliqueVec[j]]) ++tmpCnt;
+    bool connected = false;
+
+    for (int j=0; j<nbSommets; ++j){
+      if (clique[j] && graph[i][j]){
+	connected = true;
+	break;
+      }
     }
     
-    if (tmpCnt == defCliqueSize) ++Nc;
-    if (tmpCnt < 1) ++Dis;
+    if (!connected) ++Dis;
     
   }
 
-  printf("%d, %d, %d, %d, ",defCliqueSize, Nc, nbSommets-defCliqueSize-Nc-Dis, Dis);
+  meanN /= defCliqueSize;
+  meanDis /= defDisjointSetSize;
+
+
+
+  printf("%d, %d, %d, %d, %d, %d, %d, ", defCliqueSize, 
+	 nbSommets-defCliqueSize-Dis, Dis, meanN, 
+	 nbSommets-1-meanN, defDisjointSetSize, meanDis);
 
   // find a 3-clique by seeking in N(maxConjointIdx)
   
-  
-  free(cliqueVec); cliqueVec = NULL;
+  free(disjointSet); disjointSet = NULL;
   free(clique); clique = NULL;
   free(candidate); candidate = NULL;
 
