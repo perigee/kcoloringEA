@@ -775,13 +775,19 @@ void updateMove_weighted(int sommet, int colorOrigin, int colorCandidate,
 }
 
 
+
+
+// initialize the gamma table based on 
+
+
+
 /*!
  * tabuCol implementation
  * @param a individual color table
  * @param graph adjacent matrix of graph
  * @return true if consistent solution found, otherwise false
  */
-bool tabuCol_weighted(int* a, char** graph, int colorNB, 
+bool tabuCol_PreGamma(int* a, char** graph, int colorNB, 
 		      int maxIteration, char *weightedList){//, int *weightVars){
 
   assert(tTabu != NULL && tGamma != NULL && tTmpColor != NULL);
@@ -884,6 +890,10 @@ bool tabuCol_weighted(int* a, char** graph, int colorNB,
   
   return false;
 }
+
+
+
+
 
 
 

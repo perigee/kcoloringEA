@@ -5,6 +5,8 @@ if __name__ == "__main__":
     print("in progress")
     path = "angerData"
     outputfile = "analysis/clique.csv"
+    cmd = "echo run ======= >> " + outputfile
+    os.system(cmd)
     for infile in glob.glob(os.path.join(path, '*.col') ):
         cmd = "./eagraph " + infile + " 2 2" + " >> " + outputfile
         os.system(cmd)

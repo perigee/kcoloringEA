@@ -1205,6 +1205,38 @@ bool multiPlaneAnalysisSimple(char *filename, char* inNbColor, char *inMaxIter){
      disjointSet[i] = 0;
   }
 
+  
+  while (true){
+
+    //for (int cliqueNb = 0; cliqueNb < defCliqueSize; ++cliqueNb){
+
+    int idx = disjointFinder(defDisjointSetSize, disjointSet, candidate, weightConjoint, graph);
+    
+    if(idx < 0) break;
+
+    ++defDisjointSetSize;    
+    candidate[idx] = 0;
+    disjointSet[idx] = 1; 
+    for (int i=1; i<nbSommets; ++i){
+      if (graph[idx][i] && candidate[i]) candidate[i]=0;
+    }
+
+  }
+
+
+
+  // recover the candidate
+  for (int i=0; i<nbSommets; ++i){
+    if (weightConjoint[i]<1){
+      candidate[i]=0;
+      continue;
+    }
+ 
+    if (disjointSet[i]) candidate[i]=0;
+    else candidate[i] = 1;
+  }
+    
+
   int defCliqueSize = 0; // = maxIter;
   
   while (true){
@@ -1218,30 +1250,12 @@ bool multiPlaneAnalysisSimple(char *filename, char* inNbColor, char *inMaxIter){
     ++defCliqueSize;    
     candidate[idx] = 0;
     clique[idx] = 1; 
-
+    for (int i=1; i<nbSommets; ++i){
+      if (!graph[idx][i] && candidate[i]) candidate[i]=0;
+    }
   }
 
 
-
-
-  // recover the candidate
-  for (int i=0; i<nbSommets; ++i) candidate[i]=1;
-
-
-  
-  while (true){
-
-    //for (int cliqueNb = 0; cliqueNb < defCliqueSize; ++cliqueNb){
-
-    int idx = disjointFinder(defDisjointSetSize, disjointSet, candidate, weightConjoint, graph);
-    
-    if(idx < 0) break;
-
-    ++defDisjointSetSize;    
-    candidate[idx] = 0;
-    disjointSet[idx] = 1; 
-
-  }
 
 
   
@@ -1274,11 +1288,59 @@ bool multiPlaneAnalysisSimple(char *filename, char* inNbColor, char *inMaxIter){
   meanN /= defCliqueSize;
   meanDis /= defDisjointSetSize;
 
+  int maxDegree = -1;
+  int arcsNb = 0;
+  for (int i=0; i<nbSommets; ++i){
+    int tmp = 0;
+    
+    for (int j=0; j<nbSommets; ++j){
+      if (graph[i][j]) ++tmp;
+    }
+
+    if (maxDegree < tmp)
+      maxDegree = tmp;
+
+    arcsNb += tmp;
+
+  }
 
 
-  printf("%d, %d, %d, %d, %d, %d, %d, ", defCliqueSize, 
+  double minSimilar = -1.0;
+  double maxSimilar = -1.0; 
+
+  for (int i=0; i<nbSommets; ++i){
+    if (!disjointSet[i]) continue;
+
+    int commonTmp = 0; 
+    int totalTmp = 0;
+    for (int j=i; j<nbSommets; ++j){
+      
+      if (i == j) continue;
+      if (!disjointSet[i]) continue;
+      
+      for (int k=0; k<nbSommets; ++k){
+	if (graph[i][k] && graph[j][k]) ++commonTmp;
+	if (graph[i][k] || graph[j][k]) ++totalTmp;
+      }
+
+      double tmp = commonTmp/(double)totalTmp;
+ 
+      if (minSimilar < 0 || minSimilar > tmp)
+	minSimilar = tmp;
+      
+      if (maxSimilar < 0 || maxSimilar < tmp)
+	maxSimilar = tmp;
+      
+      
+    }
+  }
+  
+
+  printf("%d, %d, %d, %d, %d, %d, %d, %d, %d, %4.2f, %4.2f ", 
+	 arcsNb/2, maxDegree, defCliqueSize, 
 	 nbSommets-defCliqueSize-Dis, Dis, meanN, 
-	 nbSommets-1-meanN, defDisjointSetSize, meanDis);
+	 nbSommets-1-meanN, defDisjointSetSize, meanDis,
+	 minSimilar, maxSimilar);
 
   // find a 3-clique by seeking in N(maxConjointIdx)
   
