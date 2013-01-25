@@ -1,6 +1,6 @@
 TARGET = test #executive file name
 CC = clang++ 
-CFLAGS =  -std=c++11 -stdlib=libc++
+CFLAGS = -std=c++11 -stdlib=libc++
 VPATH = src/ #space seperate the different dirs
 #BIN_DIR = bin
 OBJECTS = $(wildcard *.o)
