@@ -13,7 +13,8 @@ void create_graph(AdjMatrix& graph, size_t n){
   graph.reserve(n); // fix the size of graph
 
   for (int i=0; i< n; ++i){
-
+      boost::dynamic_bitset<> lineNodes(n);
+      graph.push_back(lineNodes);
   }
 }
 
