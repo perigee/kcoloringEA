@@ -65,7 +65,8 @@ AdjMatrix read_graph(const std::string& filepath)
 
 void write_graph(const AdjMatrix& graph, size_t n, 
                  std::string& filename){
-
+  
+  // bitset will be printed in reverse order
     for (int i=0; i<n; ++i)
       std::cout << graph[i] << std::endl;
 }
