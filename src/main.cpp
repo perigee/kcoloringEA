@@ -7,6 +7,9 @@
 #include <thread>
 //#include <boost/move/move.hpp>
 
+
+#include "io.hpp"
+
 void hello(int i)
 {
   std::cout <<   "I'm a thread! "
@@ -29,6 +32,7 @@ int main(int argc, char* argv[])
   std::for_each(workers.begin(),workers.end(), [](std::thread & th){th.join();});
 
 
+  read_graph(argv[1]);
 
 
     return 0;
