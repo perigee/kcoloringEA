@@ -2,7 +2,7 @@
 #define IO_HPP
 
 
-#include <iterator>
+//#include <iterator>
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -10,6 +10,16 @@
 
 // define adjacent matrix
 typedef std::vector<boost::dynamic_bitset<> > AdjMatrix;
+typedef std::vector<int> SolutionVec;
+
+
+
+void copy_graph(const AdjMatrix& graph, AdjMatrix& cGraph)
+{
+  size_t size = graph.size();
+  
+  //  std::for_each(graph.begin(),graph.end(), []()
+}
 
 
 
@@ -68,6 +78,8 @@ void write_graph(const AdjMatrix& graph, size_t n,
   for (int i=0; i<n; ++i)
     std::cout << graph[i] << std::endl;
 }
+
+
 
 
 #endif
